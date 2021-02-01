@@ -12,6 +12,7 @@ ipynb/
 
 # Environments
 .vscode
+.idea
 .env
 .venv
 env/
