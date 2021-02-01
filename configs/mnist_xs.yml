@@ -1,0 +1,20 @@
+name: mnist_s
+dataset: mnist
+
+# training
+steps: 10_000
+warmup_steps: 500
+batch_size: 16
+accumulate_grad_batches: 4
+
+learning_rate: 0.001
+
+# architecture 
+embed_dim: 256
+num_heads: 4
+num_layers: 16
+num_positions: 512
+num_vocab: 3
+
+gpus: 1
+precision: 16
