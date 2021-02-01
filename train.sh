@@ -1,7 +1,8 @@
+#!/bin/bash
 #SBATCH --gres=gpu:1
-#SBATCH --partition=gpu-cluster
-#SBATCH --output=out/train.out
-#SBATCH --time=12:00:00
+# SBATCH --partition=gpu-cluster
+# SBATCH --output=out/train.out
+# SBATCH --time=12:00:00
 
 HOME=/clusterstorage/gkobsik
 source $HOME/.bashrc
