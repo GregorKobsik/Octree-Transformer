@@ -1,0 +1,18 @@
+data/
+logs/
+samples/
+
+# compiled / optimized files
+__pycache__/
+
+# Jupyter Notebook
+ipynb/
+.ipynb_checkpoints
+
+# Environments
+.vscode
+.env
+.venv
+env/
+venv/
+ENV/
