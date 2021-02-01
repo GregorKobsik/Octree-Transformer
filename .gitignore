@@ -1,6 +1,7 @@
 data/
 logs/
 samples/
+out/
 
 # compiled / optimized files
 __pycache__/
