@@ -10,7 +10,7 @@ accumulate_grad_batches: 1
 learning_rate: 0.003
 
 # architecture 
-embed_dim: 256
+embed_dim: 16
 num_heads: 2
 num_layers: 8
 num_positions: 512
