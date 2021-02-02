@@ -49,7 +49,7 @@ class ShapeTransformer(pl.LightningModule):
         parser.add_argument("--num_vocab", type=int, default=16)
         parser.add_argument("--batch_size", type=int, default=64)
         parser.add_argument("--learning_rate", type=float, default=3e-3)
-        parser.add_argument("--steps", type=int, default=25_000)
+        parser.add_argument("--epochs", type=int, default=50)
         return parser
 
     def configure_optimizers(self):

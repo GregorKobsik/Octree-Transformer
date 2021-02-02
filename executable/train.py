@@ -13,6 +13,19 @@ def train(args):
 
     name = f"{config['name']}"
 
+    train_dl, valid_dl, _ = dataloaders(config['dataset'], config['batch_size'])
+    logger = pl_loggers.TensorBoardLogger("logs", name=name)
+
+    checkpoint = pl.callbacks.ModelCheckpoint(monitor="val_loss", save_last=True)
+    trainer = pl.Trainer(
+        max_epochs=config['epochs'],
+        gpus=config['gpus'],
+        precision=config['precision'],
+        accumulate_grad_batches=config['accumulate_grad_batches'],
+        checkpoint_callback=checkpoint,
+        logger=logger,
+    )
+
     if args.pretrained is not None:
         model = ShapeTransformer.load_from_checkpoint(args.pretrained)
         model.learning_rate = config['learning_rate']
@@ -24,21 +37,8 @@ def train(args):
             num_positions=config['num_positions'],
             num_vocab=config['num_vocab'],
             learning_rate=config['learning_rate'],
-            steps=config['steps'],
+            steps=len(train_dl) * config['epochs'] / config['batch_size'],
             warmup_steps=config['warmup_steps'],
         )
-
-    train_dl, valid_dl, _ = dataloaders(config['dataset'], config['batch_size'])
-    logger = pl_loggers.TensorBoardLogger("logs", name=name)
-
-    checkpoint = pl.callbacks.ModelCheckpoint(monitor="val_loss", save_last=True)
-    trainer = pl.Trainer(
-        max_steps=config['steps'],
-        gpus=config['gpus'],
-        precision=config['precision'],
-        accumulate_grad_batches=config['accumulate_grad_batches'],
-        checkpoint_callback=checkpoint,
-        logger=logger,
-    )
 
     trainer.fit(model, train_dl, valid_dl)

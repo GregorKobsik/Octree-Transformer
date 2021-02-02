@@ -2,7 +2,7 @@ name: mnist_s
 dataset: mnist
 
 # training
-steps: 10_000
+epochs: 200
 warmup_steps: 500
 batch_size: 4 
 accumulate_grad_batches: 16
