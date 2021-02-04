@@ -7,6 +7,9 @@ scripts/
 # compiled / optimized files
 __pycache__/
 
+# debug code/configurations
+*debug*.*
+
 # Jupyter Notebook
 ipynb/
 .ipynb_checkpoints
