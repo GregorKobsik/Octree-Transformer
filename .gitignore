@@ -2,6 +2,7 @@ data/
 logs/
 samples/
 out/
+scripts/
 
 # compiled / optimized files
 __pycache__/

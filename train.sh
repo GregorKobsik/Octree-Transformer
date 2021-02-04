@@ -10,5 +10,5 @@ HOME=/clusterstorage/gkobsik
 source $HOME/.bashrc
 
 conda activate research
-python main.py train configs/mnist_xs.yml
+python main.py train "configs/$1.yml"
 # tail -f out/train.out
