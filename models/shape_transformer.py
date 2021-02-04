@@ -34,7 +34,7 @@ class ShapeTransformer(pl.LightningModule):
 
         self.num_positions = num_positions
         self.num_vocab = num_vocab
-        self.criterion = nn.CrossEntropyLoss()
+        self.loss_criterion = nn.CrossEntropyLoss()
         self.learning_rate = learning_rate
         self.steps = steps
         self.warmup_steps = warmup_steps
@@ -64,41 +64,28 @@ class ShapeTransformer(pl.LightningModule):
     def forward(self, x):
         return self.model(x)
 
-    def training_step(self, batch, batch_idx):
+    def step(self, batch, batch_idx):
         x, y = batch
-
-        x = x[:self.num_positions, :].long()  # remove all tokens exceedings max length
+        x = x[:self.num_positions, :].long()
 
         logits = self.model(x)
-        loss = self.criterion(logits.view(-1, logits.size(-1)), x.view(-1))
+        loss = self.loss_criterion(logits.view(-1, logits.size(-1)), x.view(-1))
+        return loss
 
-        self.log('train_loss', loss, on_step=False, on_epoch=False, prog_bar=True)
-        return {'loss': loss}
+    def training_step(self, batch, batch_idx):
+        loss = self.step(batch, batch_idx)
+        self.log('loss', loss)
+        return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch
-
-        x = x[:self.num_positions, :].long()  # remove all tokens exceedings max length
-
-        logits = self.model(x)
-        loss = self.criterion(logits.view(-1, logits.size(-1)), x.view(-1))
-        self.log('val_loss', loss, on_step=False, on_epoch=False, prog_bar=True)
-        return {'val_loss': loss}
-
-    def validation_epoch_end(self, outs):
-        avg_loss = torch.stack([x["val_loss"] for x in outs]).mean()
-        self.log('val_loss', avg_loss, on_step=False, on_epoch=True, prog_bar=True)
+        loss = self.step(batch, batch_idx)
+        self.log('val_loss', loss, prog_bar=True)
+        return loss
 
     def test_step(self, batch, batch_idx):
-        return self.validation_step(batch, batch_idx)
-
-    def test_epoch_end(self, outs):
-        result = self.validation_epoch_end(outs)
-
-        # replace valid stats with test stats becuase we are reusing function
-        result["log"]["test_loss"] = result["log"].pop("val_loss")
-        result["test_loss"] = result.pop("val_loss")
-        return result
+        loss = self.step(batch, batch_idx)
+        self.log('test_loss', loss)
+        return loss
 
 
 def learning_rate_schedule(warmup_steps, total_steps):
