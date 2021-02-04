@@ -1,12 +1,11 @@
-import math
 from argparse import ArgumentParser
 
 import torch.nn as nn
 from torch.optim import Adam
-from torch.optim.lr_scheduler import LambdaLR
 import pytorch_lightning as pl
 
 from models import ShapeTransformerModel
+from lr_scheduler import CosineAnnealingWarmupRestarts
 
 
 class ShapeTransformer(pl.LightningModule):
@@ -56,8 +55,16 @@ class ShapeTransformer(pl.LightningModule):
         """ Adam optimizer with cosine annealing and warmup learning rate scheduler. """
         optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         scheduler = {
-            "scheduler": LambdaLR(optimizer, learning_rate_schedule(self.warmup_steps, self.train_steps)),
-            "interval": "step",
+            "scheduler":
+                CosineAnnealingWarmupRestarts(
+                    optimizer,
+                    self.train_steps,
+                    max_lr=self.learning_rate,
+                    min_lr=0.0,
+                    warmup_steps=self.warmup_steps,
+                ),
+            "interval":
+                "step",
         }
         return [optimizer], [scheduler]
 
@@ -86,15 +93,3 @@ class ShapeTransformer(pl.LightningModule):
         loss = self.step(batch, batch_idx)
         self.log('test_loss', loss)
         return loss
-
-
-def learning_rate_schedule(warmup_steps, total_steps):
-    """Linear warmup for warmup_steps, with cosine annealing to 0 at total_steps"""
-    def learning_rate_fn(step):
-        if step < warmup_steps:
-            return float(step) / float(max(1, warmup_steps))
-        else:
-            progress = float(step - warmup_steps) / float(max(1, total_steps - warmup_steps))
-            return 0.5 * (1.0 + math.cos(math.pi * progress))
-
-    return learning_rate_fn
