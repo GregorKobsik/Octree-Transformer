@@ -1,8 +1,8 @@
 import math
 from argparse import ArgumentParser
 
-import torch
 import torch.nn as nn
+from torch.optim import Adam
 from torch.optim.lr_scheduler import LambdaLR
 import pytorch_lightning as pl
 
@@ -18,8 +18,8 @@ class ShapeTransformer(pl.LightningModule):
         num_positions=512,
         num_vocab=16,
         learning_rate=3e-3,
-        steps=10_000,
         warmup_steps=500,
+        train_steps=10_000,
         **kwargs,
     ):
         super(ShapeTransformer, self).__init__()
@@ -36,8 +36,8 @@ class ShapeTransformer(pl.LightningModule):
         self.num_vocab = num_vocab
         self.loss_criterion = nn.CrossEntropyLoss()
         self.learning_rate = learning_rate
-        self.steps = steps
         self.warmup_steps = warmup_steps
+        self.train_steps = train_steps
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -53,10 +53,10 @@ class ShapeTransformer(pl.LightningModule):
         return parser
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-
+        """ Adam optimizer with cosine annealing and warmup learning rate scheduler. """
+        optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         scheduler = {
-            "scheduler": LambdaLR(optimizer, learning_rate_schedule(self.warmup_steps, self.steps)),
+            "scheduler": LambdaLR(optimizer, learning_rate_schedule(self.warmup_steps, self.train_steps)),
             "interval": "step",
         }
         return [optimizer], [scheduler]
