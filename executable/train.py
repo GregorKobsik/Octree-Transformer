@@ -6,6 +6,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 
 from models import ShapeTransformer
 from utils.data import dataloaders
+from callbacks import WeightsAndBiasesLogger, TrackedGradientOutput
 
 
 def compute_train_steps(train_dl, epochs, accumulate_grad_batches=1, n_gpus=1, n_nodes=1):
@@ -23,16 +24,30 @@ def train(args):
     train_dl, valid_dl, _ = dataloaders(config['dataset'], config['batch_size'])
     logger = pl_loggers.TensorBoardLogger("logs", name=name)
 
+    gradient_output = TrackedGradientOutput()
+    weights_and_biases = WeightsAndBiasesLogger(log_every_n_epoch=1)
     lr_monitor = LearningRateMonitor(logging_interval='step')
-    checkpoint = ModelCheckpoint(monitor="val_loss", save_last=True, save_top_k=1)
+    checkpoint = ModelCheckpoint(
+        filename="best",
+        monitor="val_loss",
+        mode="min",
+        save_last=True,
+        save_top_k=1,
+    )
 
     trainer = pl.Trainer(
         max_epochs=config['epochs'],
         gpus=config['gpus'],
         precision=config['precision'],
         accumulate_grad_batches=config['accumulate_grad_batches'],
-        callbacks=[checkpoint, lr_monitor],
+        callbacks=[
+            checkpoint,
+            gradient_output,
+            lr_monitor,
+            weights_and_biases,
+        ],
         logger=logger,
+        track_grad_norm=2,
     )
 
     train_steps = compute_train_steps(
