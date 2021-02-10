@@ -3,7 +3,7 @@ dataset: mnist
 
 # training
 epochs: 200
-warmup_steps: 500
+warmup_steps: 0.1
 batch_size: 4 
 accumulate_grad_batches: 16
 
@@ -14,7 +14,9 @@ embed_dim: 512
 num_heads: 8
 num_layers: 24
 num_positions: 512
-num_vocab: 512
+num_vocab: 3
+tree_depth: 6
+spatial_dim: 2
 
 gpus: 1
 precision: 16

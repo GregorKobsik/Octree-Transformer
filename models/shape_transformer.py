@@ -5,7 +5,7 @@ from torch.optim import Adam
 import pytorch_lightning as pl
 
 from models import ShapeTransformerModel
-from lr_scheduler import CosineAnnealingWarmupRestarts
+from lr_scheduler import ConstantWithWarmup
 
 
 class ShapeTransformer(pl.LightningModule):
@@ -16,6 +16,8 @@ class ShapeTransformer(pl.LightningModule):
         num_layers=8,
         num_positions=512,
         num_vocab=16,
+        spatial_dim=2,
+        tree_depth=6,
         learning_rate=3e-3,
         warmup_steps=500,
         train_steps=10_000,
@@ -29,14 +31,13 @@ class ShapeTransformer(pl.LightningModule):
             num_layers=num_layers,
             num_positions=num_positions,
             num_vocab=num_vocab,
+            spatial_dim=spatial_dim,
+            tree_depth=tree_depth
         )
 
-        self.num_positions = num_positions
-        self.num_vocab = num_vocab
+        print(f"\nShape Transformer parameters:\n{self.hparams}\n")
+
         self.loss_criterion = nn.CrossEntropyLoss()
-        self.learning_rate = learning_rate
-        self.warmup_steps = warmup_steps
-        self.train_steps = train_steps
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -46,6 +47,8 @@ class ShapeTransformer(pl.LightningModule):
         parser.add_argument("--num_layers", type=int, default=8)
         parser.add_argument("--num_positions", type=int, default=512)
         parser.add_argument("--num_vocab", type=int, default=16)
+        parser.add_argument("--spatial_dim", type=int, default=2)
+        parser.add_argument("--tree_depth", type=int, default=6)
         parser.add_argument("--batch_size", type=int, default=64)
         parser.add_argument("--learning_rate", type=float, default=3e-3)
         parser.add_argument("--epochs", type=int, default=50)
@@ -53,30 +56,32 @@ class ShapeTransformer(pl.LightningModule):
 
     def configure_optimizers(self):
         """ Adam optimizer with cosine annealing and warmup learning rate scheduler. """
-        optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
+        optimizer = Adam(self.model.parameters(), lr=self.hparams.learning_rate)
         scheduler = {
             "scheduler":
-                CosineAnnealingWarmupRestarts(
+                ConstantWithWarmup(
                     optimizer,
-                    self.train_steps,
-                    max_lr=self.learning_rate,
+                    self.hparams.train_steps,
+                    max_lr=self.hparams.learning_rate,
                     min_lr=0.0,
-                    warmup_steps=self.warmup_steps,
+                    warmup_steps=self.hparams.warmup_steps,
                 ),
             "interval":
                 "step",
         }
         return [optimizer], [scheduler]
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, seq, depth, pos):
+        return self.model(seq, depth, pos)
 
     def step(self, batch, batch_idx):
-        x, y = batch
-        x = x[:self.num_positions, :].long()
+        seq, depth, pos, _ = batch
+        seq = seq[:self.hparams.num_positions].long()
+        depth = depth[:self.hparams.num_positions].long()
+        pos = pos[:, :self.hparams.num_positions].long()
 
-        logits = self.model(x)
-        loss = self.loss_criterion(logits.view(-1, logits.size(-1)), x.view(-1))
+        logits = self.model(seq, depth, pos)
+        loss = self.loss_criterion(logits.view(-1, logits.size(-1)), seq.view(-1))
         return loss
 
     def training_step(self, batch, batch_idx):

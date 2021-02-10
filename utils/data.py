@@ -12,21 +12,8 @@ DATASETS = {
 }
 
 
-def pad_collate(batch):
-    """ Pads input sequence in each batch individually.
-
-    Returns:
-        xx_pad: padded input sequences
-        yy: targets
-    """
-    (xx, yy) = zip(*batch)
-    # TODO: select a more generic padding value, e.g. `<pad>` if possible
-    xx_pad = pad_sequence(xx, batch_first=False, padding_value=2)
-    return xx_pad, torch.tensor(yy)
-
-
-def dataloaders(dataset, batch_size, datapath="data"):
-    """ Creates dataloaders for training, validation and testing.
+def datasets(dataset, datapath="data"):
+    """ Loads datasets for training, validation and testing.
 
     Args:
         dataset: Selects the dataset. Currently only 'mnist' available.
@@ -35,9 +22,9 @@ def dataloaders(dataset, batch_size, datapath="data"):
             the data automatically downloaded to the specified location.
 
     Returns:
-        train_dl: Dataloader with training data.
-        valid_dl: Dataloader with validation data.
-        test_dl: Dataloader with test data.
+        train_ds: Dataset with training data.
+        valid_ds: Dataset with validation data.
+        test_ds: Dataset with test data.
 
     """
     num_cpus = mp.cpu_count()
@@ -55,11 +42,46 @@ def dataloaders(dataset, batch_size, datapath="data"):
         generator=torch.Generator().manual_seed(0),
     )
 
-    train_dl = DataLoader(
-        train_ds, shuffle=True, batch_size=batch_size, num_workers=num_cpus, pin_memory=True, collate_fn=pad_collate
-    )
-    valid_dl = DataLoader(
-        valid_ds, batch_size=batch_size, num_workers=num_cpus, pin_memory=True, collate_fn=pad_collate
-    )
-    test_dl = DataLoader(test_ds, batch_size=batch_size, num_workers=num_cpus, pin_memory=True, collate_fn=pad_collate)
+    return train_ds, valid_ds, test_ds
+
+
+def pad_collate(batch):
+    """ Pads input sequence in each batch individually.
+
+    Returns:
+        seq_pad: padded input sequences
+        depth_pad: padded depth layer sequences
+        pos_pad: padded and stacked spatial position sequences
+        target: targets
+    """
+    (seq, depth, pos_x, pos_y, target) = zip(*batch)
+    seq_pad = pad_sequence(seq, batch_first=False, padding_value=0)
+    depth_pad = pad_sequence(depth, batch_first=False, padding_value=0)
+    pos_x_pad = pad_sequence(pos_x, batch_first=False, padding_value=0)
+    pos_y_pad = pad_sequence(pos_y, batch_first=False, padding_value=0)
+    pos_pad = torch.stack([pos_x_pad, pos_y_pad])
+    return seq_pad, depth_pad, pos_pad, target
+
+
+def dataloaders(dataset, batch_size, datapath="data"):
+    """ Creates dataloaders for training, validation and testing.
+
+    Args:
+        dataset: Selects the dataset. Currently only 'mnist' available.
+        batch_size: Defines the batch size for the data loader
+        datapath: Path to the dataset. If the dataset is not found then
+            the data automatically downloaded to the specified location.
+
+    Returns:
+        train_dl: Dataloader with training data.
+        valid_dl: Dataloader with validation data.
+        test_dl: Dataloader with test data.
+
+    """
+    train_ds, valid_ds, test_ds = datasets(dataset, datapath)
+
+    train_dl = DataLoader(train_ds, shuffle=True, batch_size=batch_size, pin_memory=True, collate_fn=pad_collate)
+    valid_dl = DataLoader(valid_ds, batch_size=batch_size, pin_memory=True, collate_fn=pad_collate)
+    test_dl = DataLoader(test_ds, batch_size=batch_size, pin_memory=True, collate_fn=pad_collate)
+
     return train_dl, valid_dl, test_dl

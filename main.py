@@ -13,6 +13,7 @@ if __name__ == "__main__":
 
     # TRAINING
     parser_train = subparsers.add_parser("train")
+    parser_train.add_argument("config", type=str)
     parser_train.add_argument("--pretrained", type=str, default=None)
     parser_train.add_argument("config", type=str)
     parser_train.set_defaults(func=train)

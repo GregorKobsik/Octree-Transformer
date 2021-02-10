@@ -61,15 +61,6 @@ def train(args):
         model = ShapeTransformer.load_from_checkpoint(args.pretrained)
         model.learning_rate = config['learning_rate']
     else:
-        model = ShapeTransformer(
-            embed_dim=config['embed_dim'],
-            num_heads=config['num_heads'],
-            num_layers=config['num_layers'],
-            num_positions=config['num_positions'],
-            num_vocab=config['num_vocab'],
-            learning_rate=config['learning_rate'],
-            warmup_steps=config['warmup_steps'],
-            train_steps=train_steps,
-        )
+        model = ShapeTransformer(train_steps=train_steps, **config)
 
     trainer.fit(model, train_dl, valid_dl)
