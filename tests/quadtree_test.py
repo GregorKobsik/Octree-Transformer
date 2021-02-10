@@ -5,8 +5,8 @@ import matplotlib.image as mpimg
 from utils.quadtree import QuadTree
 
 
-def binarize(x, threshold=0.5, lower=0.0, upper=1.0):
-    return np.where(x > threshold, upper, lower)
+def binarize(x):
+    return np.add(x > 0.1, x == 1, dtype=int)
 
 
 def mnist_28x28():
@@ -41,7 +41,7 @@ class TestQuadtreeCreation(unittest.TestCase):
         qtree = QuadTree().insert_image(mnist_32x32())
         np_test.assert_array_equal(qtree.north_west.north_west.value, 0)
         np_test.assert_array_equal(qtree.south_west.south_west.value, 0)
-        np_test.assert_array_almost_equal(qtree.south_west.north_east.north_east.north_east.south_west.value, 0.992157)
+        np_test.assert_array_almost_equal(qtree.south_west.north_east.north_east.north_east.value, 2)
 
 
 class TestImageRetrival(unittest.TestCase):
@@ -57,14 +57,14 @@ class TestImageRetrival(unittest.TestCase):
 
     def test_image_shape_32x32_binarized(self):
         img_bin = mnist_32x32_binarized()
-        qtree = QuadTree().insert_image(img_bin, mode='binary')
-        np_test.assert_array_equal(qtree.get_image(5), img_bin)
+        qtree = QuadTree().insert_image(img_bin)
+        self.assertEqual(qtree.get_image(10).shape, img_bin.shape)
 
-    def test_image2sequence2image(self):
+    def test_image2sequence2image_shape(self):
         img_bin = mnist_32x32_binarized()
-        qtree = QuadTree().insert_image(img_bin, mode='binary')
+        qtree = QuadTree().insert_image(img_bin)
         qtree = QuadTree().insert_sequence(qtree.get_sequence(), resolution=img_bin.shape)
-        np_test.assert_array_equal(qtree.get_image(10), img_bin)
+        np_test.assert_array_equal(qtree.get_image(10).shape, img_bin.shape)
 
 
 class TestSequenceRetrival(unittest.TestCase):
