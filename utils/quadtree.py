@@ -3,6 +3,13 @@ import numpy as np
 from operator import add
 from functools import reduce
 
+_cmap = {
+    0: 0.7,  # - padding value
+    1: 1.0,  # - all pixels are white
+    2: 0.3,  # - pixels are white and black
+    3: 0.0,  # - all pixels are black
+}
+
 
 class QuadTree():
     def _split4(self, image):
@@ -15,31 +22,34 @@ class QuadTree():
         bottom = np.concatenate((south_west, south_east), axis=1)
         return np.concatenate((top, bottom), axis=0)
 
-    def insert_image(self, img, mode='mean', max_depth=float('Inf'), depth=0):
+    def insert_image(self, img, max_depth=float('Inf'), depth=1, pos=None):
         self.depth = depth
-        self.resolution = img.shape
+        self.resolution = np.array(img.shape)
         self.final = True
-        if mode == 'mean':
-            self.value = np.mean(img, axis=(0, 1))
-        elif mode == 'median':
-            self.value = np.median(img, axis=(0, 1))
-        elif mode == 'max':
-            self.value = np.max(img, axis=(0, 1))
-        elif mode == 'binary':
-            self.value = 1 if np.max(img, axis=(0, 1)) > 0 else 0
+        self.pos = np.array(img.shape) if pos is None else pos
+        # '1' - all pixels are white
+        # '2' - pixels are white and black
+        # '3' - all pixels are black
+        self.value = 1 if np.max(img) == 0 else 3 if np.min(img) > 0 else 2
 
-        if depth < max_depth:
-            if np.any(img > 0):  # check split
-                if np.any(np.asarray(img.shape) <= 1, axis=-1):
-                    return self  # image has width or height of 1 and thus is cannot be splitted
+        # splitt only when pixels are mixed and we are not at maximum depth
+        if self.value == 2 and depth <= max_depth:
 
-                split_img = self._split4(img)
+            # image has width or height of 1 and thus cannot be split anymore
+            if np.any(np.array(img.shape) <= 1):
+                return self
 
-                self.final = False
-                self.north_west = QuadTree().insert_image(split_img[0], mode, max_depth, depth + 1)
-                self.north_east = QuadTree().insert_image(split_img[1], mode, max_depth, depth + 1)
-                self.south_west = QuadTree().insert_image(split_img[2], mode, max_depth, depth + 1)
-                self.south_east = QuadTree().insert_image(split_img[3], mode, max_depth, depth + 1)
+            split_img = self._split4(img)
+
+            # compute new positions for future nodes - center of all pixels
+            delta_pos = np.array([[-1, -1], [+1, -1], [-1, 1], [+1, +1]])
+            new_pos = [self.pos + img.shape * delta for img, delta in zip(split_img, delta_pos)]
+
+            self.final = False
+            self.north_west = QuadTree().insert_image(split_img[0], max_depth, depth + 1, new_pos[0])
+            self.north_east = QuadTree().insert_image(split_img[1], max_depth, depth + 1, new_pos[1])
+            self.south_west = QuadTree().insert_image(split_img[2], max_depth, depth + 1, new_pos[2])
+            self.south_east = QuadTree().insert_image(split_img[3], max_depth, depth + 1, new_pos[3])
 
         return self
 
@@ -47,6 +57,8 @@ class QuadTree():
         if (self.final or self.depth == depth):
             if mode == 'value':
                 return np.tile(self.value, self.resolution)
+            elif mode == 'color':
+                return np.tile(_cmap[self.value], self.resolution)
             elif mode == 'depth':
                 return np.tile(self.depth, self.resolution)
             elif mode == 'random':
@@ -61,90 +73,122 @@ class QuadTree():
 
     def insert_sequence(self, seq, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
         # fail-fast: malformed input sequence
-        all_binary = all(str(c) in '01' for c in seq)
-        if not all_binary:
+        all_tokens_valid = all(str(c) in '123' for c in seq)
+        if not all_tokens_valid:
             if not silent:
-                print("Error: Input sequence is not in binary format.", "Sequence:", seq)
+                print(
+                    "Error: Input sequence consists of invalid tokens. " +
+                    "Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). " + f"Sequence: {seq}"
+                )
             raise ValueError
 
         # initialize parser
-        depth = 0
-        open_set = []
-        open_set.append(self)
+        depth = 1
+        open_set = [self]
+        pos_set = [np.array(resolution)]
         node_counter = 1
-        final_node = False
+        final_layer = False
 
-        while len(seq) > 0 and depth < max_depth and len(open_set) > 0:
+        while len(seq) > 0 and depth <= max_depth and len(open_set) > 0:
             # consume first token of sequence
             head = int(seq[0])
             seq = seq[1:] if len(seq) > 0 else seq
+            node_counter -= 1
 
             # get next node that should be populated
             node = open_set.pop(0)
 
             # assign values to node
-            node_counter -= 1
             node.value = head
             node.depth = depth
-            node.resolution = resolution
+            node.resolution = np.array(resolution)
+            node.pos = pos_set.pop(0)
 
-            # final node: if head is `0` or we are in the last depth layer or the node is final
-            node.final = final_node or not head or resolution == (1, 1)
-            # branching: if head is `1` and we are NOT in the last depth layer, add new nodes
-            if not final_node and head:
+            # final node:
+            # - head is '1' or '3', thus all pixels have the same color
+            # - the resolution is (1, 1), thus the image cannot be split anymore
+            # - we are in the last depth layer, thus all nodes are final
+            node.final = head in (1, 3) or np.array_equal(resolution, [1, 1]) or final_layer
+            if not node.final:
                 node.north_west = QuadTree()
                 node.north_east = QuadTree()
                 node.south_west = QuadTree()
                 node.south_east = QuadTree()
                 open_set.extend([node.north_west, node.north_east, node.south_west, node.south_east])
 
+                # compute new positions for future nodes - center of all pixels
+                delta_pos = [[-1, -1], [+1, -1], [-1, 1], [+1, +1]]
+                pos_set.extend([node.pos + node.resolution // 2 * delta for delta in delta_pos])
+
             # update depth
             if node_counter <= 0:
                 depth += 1
                 # TODO: only assumes quadratic resolution with edge length 2 ** n
-                resolution = tuple(int(i / 2) for i in resolution)
+                resolution = np.array([i // 2 for i in resolution])
                 node_counter = len(open_set)
-                if len(seq) < node_counter:  # fail-fast: malformed input sequence
+
+                # fail-fast: malformed input sequence
+                if len(seq) < node_counter:
                     if not silent:
                         print(
-                            "Error: Remaining input sequence is not long enough.", "Abort at depth:", depth,
+                            "Error: Remaining input sequence is not long enough.", "Current depth:", depth,
                             "Remaining sequence: ", seq, "Current length:", len(seq), "Expected lenght:", node_counter
                         )
                     if not autorepair_errors:
                         raise ValueError
                     else:
                         # perform simple sequence repair by appending missing tokens
-                        seq = np.append(seq, [1 for _ in range(node_counter - len(seq))])
+                        seq = np.append(seq, [0 for _ in range(node_counter - len(seq))])
                         if not silent:
                             print(f"Resolved error - Modified input sequence: {seq}, Current length: {len(seq)}")
+
                 if len(seq) == node_counter:
-                    final_node = True
+                    final_layer = True
 
         return self
 
-    def get_sequence(self, depth=float('Inf'), as_string=False):
+    def get_sequence(self, depth=float('Inf'), return_depth=False, return_pos=False):
+        """ Returns a linearised sequence representation of the quadtree. """
+        seq_value = []
+        seq_depth = []
+        seq_pos_x = []
+        seq_pos_y = []
 
-        seq = "" if as_string else []
-        open_set = []
-        open_set.append(self)  # push root node to open set
+        # start with root node
+        open_set = [self]
 
         while len(open_set) > 0:
-            node = open_set.pop(0)  # get first node in open set
+            node = open_set.pop(0)
 
+            # reached sufficient depth - return sequence so far
             if node.depth > depth:
-                return seq  # reached sufficient deapth - return sequence so far
+                break
 
-            val = int(np.any(node.value > 0))  # `1` if the value is positive, otherwise `0`
-            seq += str(val) if as_string else [val]
+            seq_value += [node.value]
+            seq_depth += [node.depth]
+            seq_pos_x += [node.pos[0]]
+            seq_pos_y += [node.pos[1]]
 
-            # append children if value was positive and not the last node
-            if np.any(node.value > 0) and not node.final:
-                open_set.append(node.north_west)
-                open_set.append(node.north_east)
-                open_set.append(node.south_west)
-                open_set.append(node.south_east)
+            if not node.final:
+                open_set += [node.north_west]
+                open_set += [node.north_east]
+                open_set += [node.south_west]
+                open_set += [node.south_east]
 
-        return seq
+        seq_value = np.asarray(seq_value)
+        seq_depth = np.asarray(seq_depth)
+        seq_pos_x = np.asarray(seq_pos_x)
+        seq_pos_y = np.asarray(seq_pos_y)
+
+        # output format depends in flags 'return_depth' and 'return_pos'
+        if return_depth and return_pos:
+            return seq_value, seq_depth, seq_pos_x, seq_pos_y
+        elif return_depth and not return_pos:
+            return seq_value, seq_depth
+        elif not return_depth and return_pos:
+            return seq_value, seq_pos_x, seq_pos_y
+        else:
+            return seq_value
 
     def __repr__(self):
         return f"QuadTree() = {self.get_sequence()}, len = {len(self.get_sequence())}"
