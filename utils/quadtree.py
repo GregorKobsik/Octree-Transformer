@@ -11,7 +11,7 @@ _cmap = {
 }
 
 
-class QuadTree():
+class Quadtree():
     def _split4(self, image):
         half_split = np.array_split(image, 2)
         res = map(lambda x: np.array_split(x, 2, axis=1), half_split)
@@ -46,10 +46,10 @@ class QuadTree():
             new_pos = [self.pos + img.shape * delta for img, delta in zip(split_img, delta_pos)]
 
             self.final = False
-            self.north_west = QuadTree().insert_image(split_img[0], max_depth, depth + 1, new_pos[0])
-            self.north_east = QuadTree().insert_image(split_img[1], max_depth, depth + 1, new_pos[1])
-            self.south_west = QuadTree().insert_image(split_img[2], max_depth, depth + 1, new_pos[2])
-            self.south_east = QuadTree().insert_image(split_img[3], max_depth, depth + 1, new_pos[3])
+            self.north_west = Quadtree().insert_image(split_img[0], max_depth, depth + 1, new_pos[0])
+            self.north_east = Quadtree().insert_image(split_img[1], max_depth, depth + 1, new_pos[1])
+            self.south_west = Quadtree().insert_image(split_img[2], max_depth, depth + 1, new_pos[2])
+            self.south_east = Quadtree().insert_image(split_img[3], max_depth, depth + 1, new_pos[3])
 
         return self
 
@@ -110,10 +110,10 @@ class QuadTree():
             # - we are in the last depth layer, thus all nodes are final
             node.final = head in (1, 3) or np.array_equal(resolution, [1, 1]) or final_layer
             if not node.final:
-                node.north_west = QuadTree()
-                node.north_east = QuadTree()
-                node.south_west = QuadTree()
-                node.south_east = QuadTree()
+                node.north_west = Quadtree()
+                node.north_east = Quadtree()
+                node.south_west = Quadtree()
+                node.south_east = Quadtree()
                 open_set.extend([node.north_west, node.north_east, node.south_west, node.south_east])
 
                 # compute new positions for future nodes - center of all pixels
@@ -191,4 +191,4 @@ class QuadTree():
             return seq_value
 
     def __repr__(self):
-        return f"QuadTree() = {self.get_sequence()}, len = {len(self.get_sequence())}"
+        return f"Quadtree() = {self.get_sequence()}, len = {len(self.get_sequence())}"

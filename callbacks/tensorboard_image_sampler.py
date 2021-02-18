@@ -2,7 +2,7 @@ import torch
 import torchvision
 
 from pytorch_lightning import Callback
-from utils.quadtree import QuadTree
+from utils.quadtree import Quadtree
 from utils.sample import sample_sequence
 
 
@@ -35,7 +35,7 @@ class TensorboardImageSampler(Callback):
 
         for i, seq in enumerate(self.input_sequences):
             # discard some depth layers (down-scaling)
-            qtree = QuadTree().insert_sequence(seq, self.resolution)
+            qtree = Quadtree().insert_sequence(seq, self.resolution)
             seq, depth, pos_x, pos_y = qtree.get_sequence(depth=self.input_depth, return_depth=True, return_pos=True)
 
             # transform sequences to tensors and push to correct device
@@ -59,7 +59,7 @@ class TensorboardImageSampler(Callback):
                 ).cpu().numpy()
 
                 # reconstuct images from sequence
-                qtree_pred = QuadTree().insert_sequence(
+                qtree_pred = Quadtree().insert_sequence(
                     predicted_seq,
                     self.resolution,
                     autorepair_errors=True,

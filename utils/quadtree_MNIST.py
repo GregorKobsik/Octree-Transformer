@@ -7,7 +7,7 @@ from tqdm.contrib.concurrent import process_map
 import torch
 from torchvision import datasets
 
-from utils.quadtree import QuadTree
+from utils.quadtree import Quadtree
 
 
 class QuadtreeMNIST(datasets.MNIST):
@@ -36,7 +36,8 @@ class QuadtreeMNIST(datasets.MNIST):
             index (int): Index
 
         Returns:
-            tuple: (sequence, depth, position x-axis, position y-axis, target) where target is index of the target class.
+            tuple: (sequence, depth, position x-axis, position y-axis, target)
+                    where target is index of the target class.
         """
         return (
             torch.tensor(self.seq[index]),
@@ -64,7 +65,7 @@ class QuadtreeMNIST(datasets.MNIST):
 
     def _transform_img(self, img):
         img = np.pad(img, (2, 2)) > 0.1
-        qtree = QuadTree().insert_image(img)
+        qtree = Quadtree().insert_image(img)
         return qtree.get_sequence(return_depth=True, return_pos=True)
 
     def quadtree_transform(self) -> None:

@@ -8,7 +8,7 @@ from PIL import Image
 
 from models import ShapeTransformer
 from utils.data import datasets
-from utils.quadtree import QuadTree
+from utils.quadtree import Quadtree
 from utils.sample import sample_sequence
 
 
@@ -65,7 +65,7 @@ def sample(args):
     resolution = (pos_x[0], pos_y[0])
 
     # show sourca data
-    qtree = QuadTree().insert_sequence(seq.numpy(), resolution)
+    qtree = Quadtree().insert_sequence(seq.numpy(), resolution)
     # show([qtree.get_image(d, mode='color') for d in range(args.input_depth, max_depth + 1)])
 
     # discard some depth layers (down-scaling)
@@ -83,7 +83,7 @@ def sample(args):
 
     print(predicted_seq)
     # show images of predicted sample at different depth layers
-    qtree_pred = QuadTree().insert_sequence(predicted_seq, resolution, autorepair_errors=True, silent=True)
+    qtree_pred = Quadtree().insert_sequence(predicted_seq, resolution, autorepair_errors=True, silent=True)
     show([qtree_pred.get_image(d, mode='color') for d in range(args.input_depth, max_depth + 1)])
     # save images of predicted sample at different depth layers
     # save([qtree_pred.get_image(d) for d in range(args.input_depth, max_depth + 1)], args.datadir)
