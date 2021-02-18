@@ -86,15 +86,15 @@ class ShapeTransformer(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self.step(batch, batch_idx)
-        self.log('loss', loss)
+        self.log('loss', loss, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self.step(batch, batch_idx)
-        self.log('val_loss', loss, prog_bar=True)
+        self.log('val_loss', loss, prog_bar=True, sync_dist=True)
         return loss
 
     def test_step(self, batch, batch_idx):
         loss = self.step(batch, batch_idx)
-        self.log('test_loss', loss)
+        self.log('test_loss', loss, sync_dist=True)
         return loss

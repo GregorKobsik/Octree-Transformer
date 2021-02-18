@@ -2,17 +2,21 @@ import yaml
 
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 
 from models import ShapeTransformer
 from utils.data import dataloaders
-from callbacks import TensorboardImageSampler, WeightsAndBiasesLogger, TrackedGradientOutput
 
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,
     LearningRateMonitor,
     GPUStatsMonitor,
 )
+from callbacks import (
+    # TensorboardImageSampler,
+    # WeightsAndBiasesLogger,
+    TrackedGradientOutput,
+)
+
 
 def compute_train_steps(train_dl, epochs, accumulate_grad_batches=1, n_gpus=1, n_nodes=1):
     total_devices = n_gpus * n_nodes
@@ -29,6 +33,14 @@ def train(args):
     train_dl, valid_dl, _ = dataloaders(config['dataset'], config['batch_size'])
     logger = pl_loggers.TensorBoardLogger("logs", name=name)
 
+    gradient_output = TrackedGradientOutput(global_only=True)
+    # weights_and_biases = WeightsAndBiasesLogger(log_every_n_epoch=1)
+    # image_sampler = TensorboardImageSampler(
+    #     dataset=valid_dl.dataset,
+    #     num_examples=3,
+    #     num_samples=3,
+    #     log_every_n_epoch=1,
+    # )
     gpu_monitor = GPUStatsMonitor(intra_step_time=True, inter_step_time=True)
     lr_monitor = LearningRateMonitor(logging_interval='step')
     checkpoint = ModelCheckpoint(
@@ -39,6 +51,7 @@ def train(args):
         save_top_k=1,
     )
 
+    pl.seed_everything(seed=None)
     trainer = pl.Trainer(
         max_epochs=config['epochs'],
         gpus=config['gpus'],
@@ -48,10 +61,13 @@ def train(args):
             checkpoint,
             gradient_output,
             lr_monitor,
+            # weights_and_biases,
+            # image_sampler,
             gpu_monitor,
         ],
         logger=logger,
         track_grad_norm=2,
+        accelerator='ddp' if config['gpus'] > 1 else None,
     )
 
     train_steps = compute_train_steps(
