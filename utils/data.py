@@ -5,10 +5,12 @@ from torch.nn.utils.rnn import pad_sequence
 import multiprocessing as mp
 
 from utils.quadtree_MNIST import QuadtreeMNIST
+from utils.octree_ShapeNet import OctreeShapeNet
 
 # Defines a dictionary of available datasets, which can be selected.
 DATASETS = {
     "mnist": QuadtreeMNIST,
+    "shapenet": OctreeShapeNet,
 }
 
 
@@ -45,22 +47,39 @@ def datasets(dataset, datapath="data"):
     return train_ds, valid_ds, test_ds
 
 
-def pad_collate(batch):
-    """ Pads input sequence in each batch individually.
+def pad_collate(dataset):
+    """ Returns a padding function based on given dataset with the following properties:
+
+    Pads input sequence in each batch individually.
 
     Returns:
         seq_pad: padded input sequences
         depth_pad: padded depth layer sequences
         pos_pad: padded and stacked spatial position sequences
-        target: targets
     """
-    (seq, depth, pos_x, pos_y, target) = zip(*batch)
-    seq_pad = pad_sequence(seq, batch_first=False, padding_value=0)
-    depth_pad = pad_sequence(depth, batch_first=False, padding_value=0)
-    pos_x_pad = pad_sequence(pos_x, batch_first=False, padding_value=0)
-    pos_y_pad = pad_sequence(pos_y, batch_first=False, padding_value=0)
-    pos_pad = torch.stack([pos_x_pad, pos_y_pad])
-    return seq_pad, depth_pad, pos_pad, target
+    def pad_mnist(batch):
+        seq, depth, pos_x, pos_y, _ = zip(*batch)
+        seq_pad = pad_sequence(seq, batch_first=False, padding_value=0)
+        depth_pad = pad_sequence(depth, batch_first=False, padding_value=0)
+        pos_x_pad = pad_sequence(pos_x, batch_first=False, padding_value=0)
+        pos_y_pad = pad_sequence(pos_y, batch_first=False, padding_value=0)
+        pos_pad = torch.stack([pos_x_pad, pos_y_pad])
+        return seq_pad, depth_pad, pos_pad
+
+    def pad_shapenet(batch):
+        seq, depth, pos_x, pos_y, pos_z = zip(*batch)
+        seq_pad = pad_sequence(seq, batch_first=False, padding_value=0)
+        depth_pad = pad_sequence(depth, batch_first=False, padding_value=0)
+        pos_x_pad = pad_sequence(pos_x, batch_first=False, padding_value=0)
+        pos_y_pad = pad_sequence(pos_y, batch_first=False, padding_value=0)
+        pos_z_pad = pad_sequence(pos_z, batch_first=False, padding_value=0)
+        pos_pad = torch.stack([pos_x_pad, pos_y_pad, pos_z_pad])
+        return seq_pad, depth_pad, pos_pad
+
+    if str(dataset) in ('mnist'):
+        return pad_mnist
+    elif str(dataset) in ('shapenet'):
+        return pad_shapenet
 
 
 def dataloaders(dataset, batch_size, datapath="data"):
@@ -80,8 +99,24 @@ def dataloaders(dataset, batch_size, datapath="data"):
     """
     train_ds, valid_ds, test_ds = datasets(dataset, datapath)
 
-    train_dl = DataLoader(train_ds, shuffle=True, batch_size=batch_size, pin_memory=True, collate_fn=pad_collate)
-    valid_dl = DataLoader(valid_ds, batch_size=batch_size, pin_memory=True, collate_fn=pad_collate)
-    test_dl = DataLoader(test_ds, batch_size=batch_size, pin_memory=True, collate_fn=pad_collate)
+    train_dl = DataLoader(
+        train_ds,
+        shuffle=True,
+        batch_size=batch_size,
+        pin_memory=True,
+        collate_fn=pad_collate(dataset),
+    )
+    valid_dl = DataLoader(
+        valid_ds,
+        batch_size=batch_size,
+        pin_memory=True,
+        collate_fn=pad_collate(dataset),
+    )
+    test_dl = DataLoader(
+        test_ds,
+        batch_size=batch_size,
+        pin_memory=True,
+        collate_fn=pad_collate(dataset),
+    )
 
     return train_dl, valid_dl, test_dl

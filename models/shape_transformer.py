@@ -75,7 +75,7 @@ class ShapeTransformer(pl.LightningModule):
         return self.model(seq, depth, pos)
 
     def step(self, batch, batch_idx):
-        seq, depth, pos, _ = batch
+        seq, depth, pos = batch
         seq = seq[:self.hparams.num_positions].long()
         depth = depth[:self.hparams.num_positions].long()
         pos = pos[:, :self.hparams.num_positions].long()
