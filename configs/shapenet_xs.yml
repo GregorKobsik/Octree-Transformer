@@ -1,0 +1,22 @@
+name: shapenet_xs
+dataset: shapenet
+
+# training
+epochs: 100
+warmup_steps: 0.1
+batch_size: 1
+accumulate_grad_batches: 1
+
+learning_rate: 0.0003
+
+# architecture 
+embed_dim: 64
+num_heads: 4
+num_layers: 16
+num_positions: 4096
+num_vocab: 3
+tree_depth: 6
+spatial_dim: 3
+
+gpus: 8
+precision: 16
