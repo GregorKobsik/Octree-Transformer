@@ -48,10 +48,10 @@ class FastShapeTransformerModel(nn.Module):
         # final linear layer
         self.head = nn.Linear(embed_dim, num_vocab + 1, bias=False)
 
-    def forward(self, seq, depth, pos):
+    def forward(self, value, depth, pos):
         """
         Expect input as shape:
-            seq: (N, S)
+            value: (N, S)
             depth: (N, S)
             pos: (A, N, S)
 
@@ -61,20 +61,20 @@ class FastShapeTransformerModel(nn.Module):
             E: embedding dimension
             A: spatial dimension
         """
-        batch, seq_len = seq.shape  # [N, S]
+        batch, seq_len = value.shape  # [N, S]
 
         # triangular causal and padding masks
-        causal_mask = TriangularCausalMask(seq_len, device=seq.device)  # [S, S]
-        padding_mask = FullMask(mask=seq != 0, device=seq.device)  # [N, S]
+        causal_mask = TriangularCausalMask(seq_len, device=value.device)  # [S, S]
+        padding_mask = FullMask(mask=value != 0, device=value.device)  # [N, S]
 
         # embeddings
-        x = self.token_embedding(seq)  # [N, S, E]
+        x = self.token_embedding(value)  # [N, S, E]
         x = x + self.depth_embedding(depth)  # [N, S, E]
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
             x = x + spatial_embedding(pos[axis])  # [N, S, E]
 
         # prepend start of sequence token
-        sos = torch.ones(batch, 1, self.embed_dim, device=seq.device) * self.sos  # [N, 1, E]
+        sos = torch.ones(batch, 1, self.embed_dim, device=value.device) * self.sos  # [N, 1, E]
         x = torch.cat([sos, x[:, :-1, :]], axis=1)  # [N, S, E]
 
         # transformer encoder

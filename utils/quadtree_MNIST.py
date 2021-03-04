@@ -11,7 +11,7 @@ from utils.quadtree import Quadtree
 
 
 class QuadtreeMNIST(datasets.MNIST):
-    subfolders = ["seq", "depth", "pos_x", "pos_y", "target"]
+    subfolders = ["value", "depth", "pos_x", "pos_y", "target"]
 
     def __init__(self, root: str, train: bool = True, download: bool = False, num_workers: int = None) -> None:
         super(QuadtreeMNIST, self).__init__(root, train=train, download=download)
@@ -24,7 +24,7 @@ class QuadtreeMNIST(datasets.MNIST):
         else:
             data_file = self.test_file
 
-        self.seq = torch.load(os.path.join(self.quadtree_folder, self.subfolders[0], data_file))
+        self.value = torch.load(os.path.join(self.quadtree_folder, self.subfolders[0], data_file))
         self.depth = torch.load(os.path.join(self.quadtree_folder, self.subfolders[1], data_file))
         self.pos_x = torch.load(os.path.join(self.quadtree_folder, self.subfolders[2], data_file))
         self.pos_y = torch.load(os.path.join(self.quadtree_folder, self.subfolders[3], data_file))
@@ -36,11 +36,11 @@ class QuadtreeMNIST(datasets.MNIST):
             index (int): Index
 
         Returns:
-            tuple: (sequence, depth, position x-axis, position y-axis, target)
+            tuple: (value, depth, position x-axis, position y-axis, target)
                     where target is index of the target class.
         """
         return (
-            torch.tensor(self.seq[index]),
+            torch.tensor(self.value[index]),
             torch.tensor(self.depth[index]),
             torch.tensor(self.pos_x[index]),
             torch.tensor(self.pos_y[index]),
@@ -48,7 +48,7 @@ class QuadtreeMNIST(datasets.MNIST):
         )
 
     def __len__(self) -> int:
-        return len(self.seq)
+        return len(self.value)
 
     @property
     def quadtree_folder(self) -> str:

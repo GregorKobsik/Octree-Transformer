@@ -67,10 +67,10 @@ class ShapeTransformerModel(nn.Module):
         mask = torch.zeros_like(x, device=x.device).masked_fill(x == 0, 1).bool()  # [S, N]
         return mask.transpose(0, 1)  # [N, S]
 
-    def forward(self, seq, depth, pos):
+    def forward(self, value, depth, pos):
         """
         Expect input as shape:
-            seq: (S, N)
+            value: (S, N)
             depth: (S, N)
             pos: (A, S, N)
 
@@ -81,18 +81,18 @@ class ShapeTransformerModel(nn.Module):
             A: spatial dimension
         """
         # look-ahead and padding masks
-        look_ahead_mask = self._create_look_ahead_mask(seq)  # [S, S]
-        padding_mask = self._create_padding_mask(seq)  # [N, S]
+        look_ahead_mask = self._create_look_ahead_mask(value)  # [S, S]
+        padding_mask = self._create_padding_mask(value)  # [N, S]
 
         # embeddings
-        h = self.token_embedding(seq)  # [S, N, E]
+        h = self.token_embedding(value)  # [S, N, E]
         h = h + self.depth_embedding(depth)  # [S, N, E]
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
             h = h + spatial_embedding(pos[axis])  # [S, N, E]
 
         # prepend start of sequence token
-        _, batch = seq.shape  # [S, N]
-        sos = torch.ones(1, batch, self.embed_dim, device=seq.device) * self.sos  # [1, N, E]
+        _, batch = value.shape  # [S, N]
+        sos = torch.ones(1, batch, self.embed_dim, device=value.device) * self.sos  # [1, N, E]
         h = torch.cat([sos, h[:-1, :, :]], axis=0)  # [S, N, E]
 
         # transformer encoder

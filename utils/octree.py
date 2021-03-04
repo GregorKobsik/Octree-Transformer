@@ -89,14 +89,14 @@ class Octree():
 
         return self._concat(np.array([node.get_voxels(depth, mode) for node in self.child_nodes]))
 
-    def insert_sequence(self, seq, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
+    def insert_sequence(self, value, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
         # fail-fast: malformed input sequence
-        all_tokens_valid = all(str(c) in '123' for c in seq)
+        all_tokens_valid = all(str(c) in '123' for c in value)
         if not all_tokens_valid:
             if not silent:
                 print(
                     "Error: Input sequence consists of invalid tokens. " +
-                    "Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). " + f"Sequence: {seq}"
+                    f"Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). Sequence: {value}."
                 )
             raise ValueError
 
@@ -107,10 +107,10 @@ class Octree():
         node_counter = 1
         final_layer = False
 
-        while len(seq) > 0 and depth <= max_depth and len(open_set) > 0:
+        while len(value) > 0 and depth <= max_depth and len(open_set) > 0:
             # consume first token of sequence
-            head = int(seq[0])
-            seq = seq[1:] if len(seq) > 0 else seq
+            head = int(value[0])
+            value = value[1:] if len(value) > 0 else value
             node_counter -= 1
 
             # get next node that should be populated
@@ -144,21 +144,22 @@ class Octree():
 
                 node_counter = len(open_set)
                 # fail-fast: malformed input sequence
-                if len(seq) < node_counter:
+                if len(value) < node_counter:
                     if not silent:
                         print(
                             "Error: Remaining input sequence is not long enough.", "Current depth:", depth,
-                            "Remaining sequence: ", seq, "Current length:", len(seq), "Expected lenght:", node_counter
+                            "Remaining sequence: ", value, "Current length:", len(value), "Expected lenght:",
+                            node_counter
                         )
                     if not autorepair_errors:
                         raise ValueError
                     else:
                         # perform simple sequence repair by appending missing tokens
-                        seq = np.append(seq, [0 for _ in range(node_counter - len(seq))])
+                        value = np.append(value, [0 for _ in range(node_counter - len(value))])
                         if not silent:
-                            print(f"Resolved error - Modified input sequence: {seq}, Current length: {len(seq)}")
+                            print(f"Resolved error - Modified input sequence: {value}, Current length: {len(value)}")
 
-                if len(seq) == node_counter:
+                if len(value) == node_counter:
                     final_layer = True
 
         return self

@@ -17,10 +17,10 @@ class TensorboardImageSampler(Callback):
         log_every_n_epoch=5,
     ):
         super().__init__()
-        self.input_sequences = []
+        self.input_values = []
         for i in range(num_examples):
-            seq, _, pos_x, pos_y, _ = dataset[i]
-            self.input_sequences += [seq.numpy()]
+            value, _, pos_x, pos_y, _ = dataset[i]
+            self.input_values += [value.numpy()]
         self.resolution = (pos_x[0].numpy(), pos_y[0].numpy())
 
         self.num_samples = num_samples
@@ -33,13 +33,13 @@ class TensorboardImageSampler(Callback):
     def sample(self, trainer, pl_module):
         hparams = pl_module.hparams
 
-        for i, seq in enumerate(self.input_sequences):
+        for i, val in enumerate(self.input_values):
             # discard some depth layers (down-scaling)
-            qtree = Quadtree().insert_sequence(seq, self.resolution)
-            seq, depth, pos_x, pos_y = qtree.get_sequence(depth=self.input_depth, return_depth=True, return_pos=True)
+            qtree = Quadtree().insert_sequence(val, self.resolution)
+            value, depth, pos_x, pos_y = qtree.get_sequence(depth=self.input_depth, return_depth=True, return_pos=True)
 
             # transform sequences to tensors and push to correct device
-            seq = torch.tensor(seq).long().to(device=pl_module.device)
+            value = torch.tensor(value).long().to(device=pl_module.device)
             depth = torch.tensor(depth).long().to(device=pl_module.device)
             pos = torch.tensor([pos_x, pos_y]).long().to(device=pl_module.device)
 
@@ -47,9 +47,9 @@ class TensorboardImageSampler(Callback):
 
             for _ in range(self.num_samples):
                 # sample sequence / predict shape based on input (super-resolution)
-                predicted_seq = sample_sequence(
+                predicted_value = sample_sequence(
                     pl_module,
-                    seq,
+                    value,
                     depth,
                     pos,
                     2,
@@ -59,7 +59,7 @@ class TensorboardImageSampler(Callback):
 
                 # reconstuct images from sequence
                 qtree_pred = Quadtree().insert_sequence(
-                    predicted_seq,
+                    predicted_value,
                     self.resolution,
                     autorepair_errors=True,
                     silent=True,

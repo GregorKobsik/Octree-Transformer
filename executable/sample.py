@@ -61,29 +61,29 @@ def sample(args):
     _, _, test_ds = datasets(hparams.dataset)
 
     # get a random image from the dataset
-    seq, _, pos_x, pos_y, _ = test_ds[0]
+    value, _, pos_x, pos_y, _ = test_ds[0]
     resolution = (pos_x[0], pos_y[0])
 
     # show sourca data
-    qtree = Quadtree().insert_sequence(seq.numpy(), resolution)
+    qtree = Quadtree().insert_sequence(value.numpy(), resolution)
     # show([qtree.get_image(d, mode='color') for d in range(args.input_depth, max_depth + 1)])
 
     # discard some depth layers (down-scaling)
-    seq, depth, pos_x, pos_y = qtree.get_sequence(args.input_depth, return_depth=True, return_pos=True)
+    value, depth, pos_x, pos_y = qtree.get_sequence(args.input_depth, return_depth=True, return_pos=True)
 
     # transform sequences to tensors and push to correct device
-    seq = torch.tensor(seq).long().to(device)
+    value = torch.tensor(value).long().to(device)
     depth = torch.tensor(depth).long().to(device)
     pos_x = torch.tensor(pos_x).long().to(device)
     pos_y = torch.tensor(pos_y).long().to(device)
 
     # predict shape (super-resolution)
     print("Sample one example:")
-    predicted_seq = sample_sequence(model, seq, depth, pos_x, pos_y, max_seq_len, max_depth).cpu().numpy()
+    predicted_value = sample_sequence(model, value, depth, pos_x, pos_y, max_seq_len, max_depth).cpu().numpy()
 
-    print(predicted_seq)
+    print(predicted_value)
     # show images of predicted sample at different depth layers
-    qtree_pred = Quadtree().insert_sequence(predicted_seq, resolution, autorepair_errors=True, silent=True)
+    qtree_pred = Quadtree().insert_sequence(predicted_value, resolution, autorepair_errors=True, silent=True)
     show([qtree_pred.get_image(d, mode='color') for d in range(args.input_depth, max_depth + 1)])
     # save images of predicted sample at different depth layers
     # save([qtree_pred.get_image(d) for d in range(args.input_depth, max_depth + 1)], args.datadir)

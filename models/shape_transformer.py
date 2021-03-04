@@ -72,17 +72,17 @@ class ShapeTransformer(pl.LightningModule):
         }
         return [optimizer], [scheduler]
 
-    def forward(self, seq, depth, pos):
-        return self.model(seq, depth, pos)
+    def forward(self, value, depth, pos):
+        return self.model(value, depth, pos)
 
     def step(self, batch, batch_idx):
-        seq, depth, pos = batch
-        seq = seq[:self.hparams.num_positions].long()
+        value, depth, pos = batch
+        value = value[:self.hparams.num_positions].long()
         depth = depth[:self.hparams.num_positions].long()
         pos = pos[:, :self.hparams.num_positions].long()
 
-        logits = self.model(seq, depth, pos)
-        loss = self.loss_criterion(logits.view(-1, logits.size(-1)), seq.view(-1))
+        logits = self.model(value, depth, pos)
+        loss = self.loss_criterion(logits.view(-1, logits.size(-1)), value.view(-1))
         return loss
 
     def training_step(self, batch, batch_idx):

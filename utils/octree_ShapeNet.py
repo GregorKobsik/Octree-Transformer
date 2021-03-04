@@ -79,7 +79,7 @@ class OctreeShapeNet(Dataset):
 
     training_file = 'training.pt'
     test_file = 'test.pt'
-    subfolders = ["seq", "depth", "pos_x", "pos_y", "pos_z"]
+    subfolders = ["value", "depth", "pos_x", "pos_y", "pos_z"]
 
     def __init__(self, root: str, train: bool = True, download: bool = False, num_workers: int = None) -> None:
         """ Initializes the voxelized ShapeNet dataset and performs a Octree transformation afterwards. """
@@ -94,7 +94,7 @@ class OctreeShapeNet(Dataset):
         else:
             data_file = self.training_file  # TODO: add train-test splitt
 
-        self.seq = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[0], data_file))
+        self.value = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[0], data_file))
         self.depth = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[1], data_file))
         self.pos_x = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[2], data_file))
         self.pos_y = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[3], data_file))
@@ -106,10 +106,10 @@ class OctreeShapeNet(Dataset):
             index (int): Index
 
         Returns:
-            tuple: (sequence, depth, position x-axis, position y-axis, position z-axis)
+            tuple: (value, depth, position x-axis, position y-axis, position z-axis)
         """
         return (
-            torch.tensor(self.seq[index]),
+            torch.tensor(self.value[index]),
             torch.tensor(self.depth[index]),
             torch.tensor(self.pos_x[index]),
             torch.tensor(self.pos_y[index]),
@@ -117,7 +117,7 @@ class OctreeShapeNet(Dataset):
         )
 
     def __len__(self) -> int:
-        return len(self.seq)
+        return len(self.value)
 
     @property
     def dataset_folder(self) -> str:

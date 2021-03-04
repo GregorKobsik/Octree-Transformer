@@ -71,14 +71,14 @@ class Quadtree():
             self.south_east.get_image(depth, mode),
         )
 
-    def insert_sequence(self, seq, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
+    def insert_sequence(self, seq_value, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
         # fail-fast: malformed input sequence
-        all_tokens_valid = all(str(c) in '123' for c in seq)
+        all_tokens_valid = all(str(c) in '123' for c in seq_value)
         if not all_tokens_valid:
             if not silent:
                 print(
                     "Error: Input sequence consists of invalid tokens. " +
-                    "Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). " + f"Sequence: {seq}"
+                    "Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). " + f"Sequence: {seq_value}"
                 )
             raise ValueError
 
@@ -89,10 +89,10 @@ class Quadtree():
         node_counter = 1
         final_layer = False
 
-        while len(seq) > 0 and depth <= max_depth and len(open_set) > 0:
+        while len(seq_value) > 0 and depth <= max_depth and len(open_set) > 0:
             # consume first token of sequence
-            head = int(seq[0])
-            seq = seq[1:] if len(seq) > 0 else seq
+            head = int(seq_value[0])
+            seq_value = seq_value[1:] if len(seq_value) > 0 else seq_value
             node_counter -= 1
 
             # get next node that should be populated
@@ -128,21 +128,25 @@ class Quadtree():
                 node_counter = len(open_set)
 
                 # fail-fast: malformed input sequence
-                if len(seq) < node_counter:
+                if len(seq_value) < node_counter:
                     if not silent:
                         print(
-                            "Error: Remaining input sequence is not long enough.", "Current depth:", depth,
-                            "Remaining sequence: ", seq, "Current length:", len(seq), "Expected lenght:", node_counter
+                            f"Error: Remaining input sequence is not long enough. Current depth: {depth}, ",
+                            f"Remaining sequence: {seq_value}, Current length: {len(seq_value)}, ",
+                            f"Expected lenght: {node_counter}."
                         )
                     if not autorepair_errors:
                         raise ValueError
                     else:
                         # perform simple sequence repair by appending missing tokens
-                        seq = np.append(seq, [0 for _ in range(node_counter - len(seq))])
+                        seq_value = np.append(seq_value, [0 for _ in range(node_counter - len(seq_value))])
                         if not silent:
-                            print(f"Resolved error - Modified input sequence: {seq}, Current length: {len(seq)}")
+                            print(
+                                f"Resolved error - Modified input sequence: {seq_value}, ",
+                                f"Current length: {len(seq_value)}"
+                            )
 
-                if len(seq) == node_counter:
+                if len(seq_value) == node_counter:
                     final_layer = True
 
         return self
