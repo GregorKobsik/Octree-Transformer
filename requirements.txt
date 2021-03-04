@@ -1,6 +1,7 @@
 torch
 torchvision
 pytorch_lightning
+pytorch-fast-transformers
 numpy
 tqdm
 Pillow
