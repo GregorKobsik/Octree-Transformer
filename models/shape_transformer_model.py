@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from layers import TransformerEncoderLayer, TransformerEncoder
+
 
 class ShapeTransformerModel(nn.Module):
     def __init__(
@@ -31,14 +33,14 @@ class ShapeTransformerModel(nn.Module):
         )
 
         # transformer encoder
-        encoder_layer = nn.TransformerEncoderLayer(
+        encoder_layer = TransformerEncoderLayer(
             d_model=embed_dim,
             nhead=num_heads,
             dim_feedforward=4 * embed_dim,
             dropout=0.0,
             activation='gelu',
         )
-        self.transformer_encoder = nn.TransformerEncoder(
+        self.transformer_encoder = TransformerEncoder(
             encoder_layer=encoder_layer,
             num_layers=num_layers,
             norm=nn.LayerNorm(embed_dim),
@@ -102,3 +104,9 @@ class ShapeTransformerModel(nn.Module):
 
         # return logits
         return self.head(h)
+
+    def get_attn_weights(self):
+        return self.transformer_encoder._attention_weights
+
+    def get_attn_activations(self):
+        return self.transformer_encoder._attention_activations

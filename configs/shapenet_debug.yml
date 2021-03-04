@@ -1,13 +1,13 @@
-name: shapenet_xxs
+name: shapenet_debug
 dataset: shapenet
 
 # training
-epochs: 30
-warmup_steps: 0.1
-batch_size: 128
+epochs: 5
+warmup_steps: 0.2
+batch_size: 64
 accumulate_grad_batches: 1
 
-learning_rate: 0.001
+learning_rate: 0.003
 
 # architecture 
 embed_dim: 16

@@ -9,7 +9,11 @@ from utils.data import dataloaders
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,
     LearningRateMonitor,
+<<<<<<< HEAD
     GPUStatsMonitor,
+=======
+    # GPUStatsMonitor,
+>>>>>>> remote dir init
 )
 from callbacks import (
     # TensorboardImageSampler,
@@ -36,12 +40,21 @@ def train(args):
     gradient_output = TrackedGradientOutput(global_only=True)
     # weights_and_biases = WeightsAndBiasesLogger(log_every_n_epoch=1)
     # image_sampler = TensorboardImageSampler(
+<<<<<<< HEAD
     #     dataset=valid_dl.dataset,
     #     num_examples=3,
     #     num_samples=3,
     #     log_every_n_epoch=1,
     # )
     gpu_monitor = GPUStatsMonitor(intra_step_time=True, inter_step_time=True)
+=======
+    #    dataset=valid_dl.dataset,
+    #    num_examples=3,
+    #    num_samples=3,
+    #    log_every_n_epoch=1,
+    # )
+    # gpu_monitor = GPUStatsMonitor(intra_step_time=True, inter_step_time=True)
+>>>>>>> remote dir init
     lr_monitor = LearningRateMonitor(logging_interval='step')
     checkpoint = ModelCheckpoint(
         filename="best",
@@ -63,11 +76,20 @@ def train(args):
             lr_monitor,
             # weights_and_biases,
             # image_sampler,
+<<<<<<< HEAD
             gpu_monitor,
+=======
+            # gpu_monitor,
+>>>>>>> remote dir init
         ],
         logger=logger,
         track_grad_norm=2,
         accelerator='ddp' if config['gpus'] > 1 else None,
+<<<<<<< HEAD
+=======
+        gradient_clip_val=1.0,
+        log_gpu_memory='min_max'
+>>>>>>> remote dir init
     )
 
     train_steps = compute_train_steps(

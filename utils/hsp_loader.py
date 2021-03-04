@@ -37,3 +37,11 @@ def load_hsp(file_path, resolution=None):
         grid = np.empty(1)
 
     return grid
+
+
+def load_chair(file_path, resolution):
+    return load_hsp(file_path + "/03001627/1a8bbf2994788e2743e99e0cae970928.mat", resolution)
+
+
+def load_airplane(file_path, resolution):
+    return load_hsp(file_path + "/02691156/2b2cf12a1fde287077c5f5c64222d77e.mat", resolution)

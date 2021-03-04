@@ -41,8 +41,7 @@ class TensorboardImageSampler(Callback):
             # transform sequences to tensors and push to correct device
             seq = torch.tensor(seq).long().to(device=pl_module.device)
             depth = torch.tensor(depth).long().to(device=pl_module.device)
-            pos_x = torch.tensor(pos_x).long().to(device=pl_module.device)
-            pos_y = torch.tensor(pos_y).long().to(device=pl_module.device)
+            pos = torch.tensor([pos_x, pos_y]).long().to(device=pl_module.device)
 
             images = torch.tensor([], device=pl_module.device)
 
@@ -52,8 +51,8 @@ class TensorboardImageSampler(Callback):
                     pl_module,
                     seq,
                     depth,
-                    pos_x,
-                    pos_y,
+                    pos,
+                    2,
                     hparams.num_positions,
                     hparams.tree_depth,
                 ).cpu().numpy()

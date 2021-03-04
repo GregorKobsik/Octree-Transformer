@@ -4,7 +4,8 @@ import torch.nn as nn
 from torch.optim import Adam
 import pytorch_lightning as pl
 
-from models import ShapeTransformerModel
+# from models import FastShapeTransformerModel
+from models.fast_shape_transformer_model import FastShapeTransformerModel
 from lr_scheduler import ConstantWithWarmup
 
 
@@ -25,7 +26,7 @@ class ShapeTransformer(pl.LightningModule):
     ):
         super(ShapeTransformer, self).__init__()
         self.save_hyperparameters()
-        self.model = ShapeTransformerModel(
+        self.model = FastShapeTransformerModel(
             embed_dim=embed_dim,
             num_heads=num_heads,
             num_layers=num_layers,

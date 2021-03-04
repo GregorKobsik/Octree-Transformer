@@ -2,13 +2,13 @@ data/
 logs/
 samples/
 out/
-scripts/
 
 # compiled / optimized files
 __pycache__/
+*.pyc
 
-# debug code/configurations
-*debug*.*
+# VS Code settings
+.vscode/
 
 # Jupyter Notebook
 ipynb/
@@ -23,3 +23,6 @@ ipynb/
 env/
 venv/
 ENV/
+
+# slurm shell scripts
+*.sh

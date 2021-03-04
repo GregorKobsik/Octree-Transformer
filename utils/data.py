@@ -59,20 +59,20 @@ def pad_collate(dataset):
     """
     def pad_mnist(batch):
         seq, depth, pos_x, pos_y, _ = zip(*batch)
-        seq_pad = pad_sequence(seq, batch_first=False, padding_value=0)
-        depth_pad = pad_sequence(depth, batch_first=False, padding_value=0)
-        pos_x_pad = pad_sequence(pos_x, batch_first=False, padding_value=0)
-        pos_y_pad = pad_sequence(pos_y, batch_first=False, padding_value=0)
+        seq_pad = pad_sequence(seq, batch_first=True, padding_value=0)
+        depth_pad = pad_sequence(depth, batch_first=True, padding_value=0)
+        pos_x_pad = pad_sequence(pos_x, batch_first=True, padding_value=0)
+        pos_y_pad = pad_sequence(pos_y, batch_first=True, padding_value=0)
         pos_pad = torch.stack([pos_x_pad, pos_y_pad])
         return seq_pad, depth_pad, pos_pad
 
     def pad_shapenet(batch):
         seq, depth, pos_x, pos_y, pos_z = zip(*batch)
-        seq_pad = pad_sequence(seq, batch_first=False, padding_value=0)
-        depth_pad = pad_sequence(depth, batch_first=False, padding_value=0)
-        pos_x_pad = pad_sequence(pos_x, batch_first=False, padding_value=0)
-        pos_y_pad = pad_sequence(pos_y, batch_first=False, padding_value=0)
-        pos_z_pad = pad_sequence(pos_z, batch_first=False, padding_value=0)
+        seq_pad = pad_sequence(seq, batch_first=True, padding_value=0)
+        depth_pad = pad_sequence(depth, batch_first=True, padding_value=0)
+        pos_x_pad = pad_sequence(pos_x, batch_first=True, padding_value=0)
+        pos_y_pad = pad_sequence(pos_y, batch_first=True, padding_value=0)
+        pos_z_pad = pad_sequence(pos_z, batch_first=True, padding_value=0)
         pos_pad = torch.stack([pos_x_pad, pos_y_pad, pos_z_pad])
         return seq_pad, depth_pad, pos_pad
 
