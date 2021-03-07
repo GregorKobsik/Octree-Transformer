@@ -4,7 +4,7 @@ import torch.nn as nn
 from layers import TransformerEncoderLayer, TransformerEncoder
 
 
-class ShapeTransformerModel(nn.Module):
+class BasicShapeTransformerModel(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -14,8 +14,9 @@ class ShapeTransformerModel(nn.Module):
         num_vocab,
         spatial_dim,
         tree_depth,
+        attention,
     ):
-        super(ShapeTransformerModel, self).__init__()
+        super(BasicShapeTransformerModel, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_vocab = num_vocab
