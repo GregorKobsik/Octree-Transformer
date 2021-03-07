@@ -1,22 +1,35 @@
 name: shapenet_debug
+
+# data
 dataset: shapenet
-
-# training
-epochs: 5
-warmup_steps: 0.2
-batch_size: 64
-accumulate_grad_batches: 1
-
-learning_rate: 0.003
-
-# architecture 
-embed_dim: 16
-num_heads: 2
-num_layers: 4
+subclass: chair
 num_positions: 4096
 num_vocab: 3
 tree_depth: 6
 spatial_dim: 3
 
+# architecture
+attention: basic
+num_layers: 8
+embed_dim: 64
+num_heads: 4
+
+
+# training
+loss_function: cross_entropy
+epochs: 2
+warmup_steps: 0.1
+batch_size: 1
+accumulate_grad_batches: 1
+learning_rate: 0.003
+
+# hardware
 gpus: 1
 precision: 32
+
+# logging
+log_gpu: 'min_max'
+log_learning_rate: True
+log_gradient: True
+log_weights_and_biases: False
+sample_images: False

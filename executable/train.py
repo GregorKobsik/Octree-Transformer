@@ -1,5 +1,6 @@
 import yaml
 
+import torch
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 
@@ -9,11 +10,11 @@ from utils.data import dataloaders
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,
     LearningRateMonitor,
-    # GPUStatsMonitor,
+    GPUStatsMonitor,
 )
 from callbacks import (
-    # TensorboardImageSampler,
-    # WeightsAndBiasesLogger,
+    TensorboardImageSampler,
+    WeightsAndBiasesLogger,
     TrackedGradientOutput,
 )
 
@@ -28,28 +29,35 @@ def train(args):
     with open(args.config, "rb") as f:
         config = yaml.safe_load(f)
 
-    name = f"{config['name']}"
+    # load data
+    train_dl, valid_dl, _ = dataloaders(config['dataset'], config['subclass'], config['batch_size'])
 
-    train_dl, valid_dl, _ = dataloaders(config['dataset'], config['batch_size'])
-    logger = pl_loggers.TensorBoardLogger("logs", name=name)
-
-    gradient_output = TrackedGradientOutput(global_only=True)
-    # weights_and_biases = WeightsAndBiasesLogger(log_every_n_epoch=1)
-    # image_sampler = TensorboardImageSampler(
-    #    dataset=valid_dl.dataset,
-    #    num_examples=3,
-    #    num_samples=3,
-    #    log_every_n_epoch=1,
-    # )
-    # gpu_monitor = GPUStatsMonitor(intra_step_time=True, inter_step_time=True)
-    lr_monitor = LearningRateMonitor(logging_interval='step')
-    checkpoint = ModelCheckpoint(
+    # setup tensorboard logging
+    logger = pl_loggers.TensorBoardLogger("logs", name=config['name'])
+    callbacks = [ModelCheckpoint(
         filename="best",
         monitor="val_loss",
         mode="min",
         save_last=True,
         save_top_k=1,
-    )
+    )]
+    if config['log_gradient']:
+        callbacks.append(TrackedGradientOutput(global_only=True))
+    if config['log_weights_and_biases']:
+        callbacks.append(WeightsAndBiasesLogger(log_every_n_epoch=1))
+    if config['log_gpu'] == 'full':
+        callbacks.append(GPUStatsMonitor(intra_step_time=True, inter_step_time=True))
+    if config['log_learning_rate']:
+        callbacks.append(LearningRateMonitor(logging_interval='step'))
+    if config['sample_images']:
+        callbacks.append(
+            TensorboardImageSampler(
+                dataset=valid_dl.dataset,
+                num_examples=3,
+                num_samples=3,
+                log_every_n_epoch=1,
+            )
+        )
 
     pl.seed_everything(seed=None)
     trainer = pl.Trainer(
@@ -57,19 +65,12 @@ def train(args):
         gpus=config['gpus'],
         precision=config['precision'],
         accumulate_grad_batches=config['accumulate_grad_batches'],
-        callbacks=[
-            checkpoint,
-            gradient_output,
-            lr_monitor,
-            # weights_and_biases,
-            # image_sampler,
-            # gpu_monitor,
-        ],
+        callbacks=callbacks,
         logger=logger,
-        track_grad_norm=2,
+        track_grad_norm=2 if config['log_gradient'] else -1,
         accelerator='ddp' if config['gpus'] > 1 else None,
         gradient_clip_val=1.0,
-        log_gpu_memory='min_max',
+        log_gpu_memory='min_max' if config['log_gpu'] else None,
         weights_summary='full',
     )
 
@@ -84,5 +85,8 @@ def train(args):
         model = ShapeTransformer.load_from_checkpoint(args.pretrained)
     else:
         model = ShapeTransformer(train_steps=train_steps, **config)
+
+    torch.backends.cudnn.enabled = False
+    torch.cuda.empty_cache()
 
     trainer.fit(model, train_dl, valid_dl)
