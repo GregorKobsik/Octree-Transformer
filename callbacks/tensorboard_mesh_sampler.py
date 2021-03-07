@@ -38,9 +38,9 @@ class TensorboardImageSampler(Callback):
             )
 
             # transform sequences to tensors and push to correct device
-            seq = torch.tensor(seq).long().to(device=pl_module.device)
-            depth = torch.tensor(depth).long().to(device=pl_module.device)
-            pos = torch.tensor([pos_x, pos_y, pos_z]).long().to(device=pl_module.device)
+            seq = torch.tensor(seq, device=pl_module.device).long()
+            depth = torch.tensor(depth, device=pl_module.device).long()
+            pos = torch.tensor([pos_x, pos_y, pos_z], device=pl_module.device).long()
 
             voxels = torch.tensor([], device=pl_module.device)
 

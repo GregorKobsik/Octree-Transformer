@@ -39,9 +39,9 @@ class TensorboardImageSampler(Callback):
             value, depth, pos_x, pos_y = qtree.get_sequence(depth=self.input_depth, return_depth=True, return_pos=True)
 
             # transform sequences to tensors and push to correct device
-            value = torch.tensor(value).long().to(device=pl_module.device)
-            depth = torch.tensor(depth).long().to(device=pl_module.device)
-            pos = torch.tensor([pos_x, pos_y]).long().to(device=pl_module.device)
+            value = torch.tensor(value, device=pl_module.device).long()
+            depth = torch.tensor(depth, device=pl_module.device).long()
+            pos = torch.tensor([pos_x, pos_y], device=pl_module.device).long()
 
             images = torch.tensor([], device=pl_module.device)
 
