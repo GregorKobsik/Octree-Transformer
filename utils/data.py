@@ -14,7 +14,7 @@ DATASETS = {
 }
 
 
-def datasets(dataset, datapath="data"):
+def datasets(dataset, subclass="all", datapath="data"):
     """ Loads datasets for training, validation and testing.
 
     Args:
@@ -31,8 +31,8 @@ def datasets(dataset, datapath="data"):
     """
     num_cpus = mp.cpu_count()
 
-    train_ds = DATASETS[dataset](datapath, train=True, download=True, num_workers=num_cpus)
-    test_ds = DATASETS[dataset](datapath, train=False, download=True, num_workers=num_cpus)
+    train_ds = DATASETS[dataset](datapath, train=True, download=True, num_workers=num_cpus, subclass=subclass)
+    test_ds = DATASETS[dataset](datapath, train=False, download=True, num_workers=num_cpus, subclass=subclass)
 
     # 90/10 splitt for training and validation data
     train_size = int(0.95 * len(train_ds))
@@ -57,32 +57,32 @@ def pad_collate(dataset):
         depth_pad: padded depth layer sequence
         pos_pad: padded and stacked spatial position sequences
     """
-    def pad_mnist(batch):
+    def pad_spatial_dim_2(batch):
         value, depth, pos_x, pos_y, _ = zip(*batch)
-        value_pad = pad_sequence(value, batch_first=True, padding_value=0)
-        depth_pad = pad_sequence(depth, batch_first=True, padding_value=0)
-        pos_x_pad = pad_sequence(pos_x, batch_first=True, padding_value=0)
-        pos_y_pad = pad_sequence(pos_y, batch_first=True, padding_value=0)
+        value_pad = pad_sequence(value)
+        depth_pad = pad_sequence(depth)
+        pos_x_pad = pad_sequence(pos_x)
+        pos_y_pad = pad_sequence(pos_y)
         pos_pad = torch.stack([pos_x_pad, pos_y_pad])
         return value_pad, depth_pad, pos_pad
 
-    def pad_shapenet(batch):
+    def pad_spatial_dim_3(batch):
         value, depth, pos_x, pos_y, pos_z = zip(*batch)
-        value_pad = pad_sequence(value, batch_first=True, padding_value=0)
-        depth_pad = pad_sequence(depth, batch_first=True, padding_value=0)
-        pos_x_pad = pad_sequence(pos_x, batch_first=True, padding_value=0)
-        pos_y_pad = pad_sequence(pos_y, batch_first=True, padding_value=0)
-        pos_z_pad = pad_sequence(pos_z, batch_first=True, padding_value=0)
+        value_pad = pad_sequence(value)
+        depth_pad = pad_sequence(depth)
+        pos_x_pad = pad_sequence(pos_x)
+        pos_y_pad = pad_sequence(pos_y)
+        pos_z_pad = pad_sequence(pos_z)
         pos_pad = torch.stack([pos_x_pad, pos_y_pad, pos_z_pad])
         return value_pad, depth_pad, pos_pad
 
     if str(dataset) in ('mnist'):
-        return pad_mnist
+        return pad_spatial_dim_2
     elif str(dataset) in ('shapenet'):
-        return pad_shapenet
+        return pad_spatial_dim_3
 
 
-def dataloaders(dataset, batch_size, datapath="data"):
+def dataloaders(dataset, subclass, batch_size, datapath="data"):
     """ Creates dataloaders for training, validation and testing.
 
     Args:
@@ -97,7 +97,9 @@ def dataloaders(dataset, batch_size, datapath="data"):
         test_dl: Dataloader with test data.
 
     """
-    train_ds, valid_ds, test_ds = datasets(dataset, datapath)
+    num_cpus = mp.cpu_count()
+
+    train_ds, valid_ds, test_ds = datasets(dataset, subclass, datapath)
 
     train_dl = DataLoader(
         train_ds,
@@ -105,18 +107,21 @@ def dataloaders(dataset, batch_size, datapath="data"):
         batch_size=batch_size,
         pin_memory=True,
         collate_fn=pad_collate(dataset),
+        num_workers=num_cpus,
     )
     valid_dl = DataLoader(
         valid_ds,
         batch_size=batch_size,
         pin_memory=True,
         collate_fn=pad_collate(dataset),
+        num_workers=num_cpus,
     )
     test_dl = DataLoader(
         test_ds,
         batch_size=batch_size,
         pin_memory=True,
         collate_fn=pad_collate(dataset),
+        num_workers=num_cpus,
     )
 
     return train_dl, valid_dl, test_dl

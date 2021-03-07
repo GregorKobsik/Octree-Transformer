@@ -13,7 +13,14 @@ from utils.quadtree import Quadtree
 class QuadtreeMNIST(datasets.MNIST):
     subfolders = ["value", "depth", "pos_x", "pos_y", "target"]
 
-    def __init__(self, root: str, train: bool = True, download: bool = False, num_workers: int = None) -> None:
+    def __init__(
+        self,
+        root: str,
+        train: bool = True,
+        download: bool = False,
+        num_workers: int = None,
+        **kwargs,
+    ) -> None:
         super(QuadtreeMNIST, self).__init__(root, train=train, download=download)
         """ Initializes the basic MNIST dataset and performs a Quadtree transformation afterwards. """
         self.num_workers = num_workers

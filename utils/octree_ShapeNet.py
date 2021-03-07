@@ -81,12 +81,20 @@ class OctreeShapeNet(Dataset):
     test_file = 'test.pt'
     subfolders = ["value", "depth", "pos_x", "pos_y", "pos_z"]
 
-    def __init__(self, root: str, train: bool = True, download: bool = False, num_workers: int = None) -> None:
+    def __init__(
+        self,
+        root: str,
+        train: bool = True,
+        download: bool = False,
+        num_workers: int = None,
+        subclass="all",
+        **kwargs,
+    ) -> None:
         """ Initializes the voxelized ShapeNet dataset and performs a Octree transformation afterwards. """
         self.root = root
         self.train = train  # training set or test set
         self.num_workers = num_workers
-        self.class_folder = _class_folder_map["chair"]
+        self.class_folder = _class_folder_map[subclass]
         self.octree_transform()
 
         if self.train:
