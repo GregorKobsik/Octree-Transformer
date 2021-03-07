@@ -1,10 +1,11 @@
 from argparse import ArgumentParser
 
+import torch
 import torch.nn as nn
 from torch.optim import Adam
 import pytorch_lightning as pl
 
-# from models import FastShapeTransformerModel
+from models.basic_shape_transformer_model import BasicShapeTransformerModel
 from models.fast_shape_transformer_model import FastShapeTransformerModel
 from lr_scheduler import ConstantWithWarmup
 
@@ -22,23 +23,39 @@ class ShapeTransformer(pl.LightningModule):
         learning_rate=3e-3,
         warmup_steps=500,
         train_steps=10_000,
+        attention='basic_full',
+        loss_function='cross_entropy',
         **kwargs,
     ):
         super(ShapeTransformer, self).__init__()
         self.save_hyperparameters()
-        self.model = FastShapeTransformerModel(
-            embed_dim=embed_dim,
-            num_heads=num_heads,
-            num_layers=num_layers,
-            num_positions=num_positions,
-            num_vocab=num_vocab,
-            spatial_dim=spatial_dim,
-            tree_depth=tree_depth
-        )
+        kwargs = {
+            'attention': attention,
+            'embed_dim': embed_dim,
+            'num_heads': num_heads,
+            'num_layers': num_layers,
+            'num_positions': num_positions,
+            'num_vocab': num_vocab,
+            'spatial_dim': spatial_dim,
+            'tree_depth': tree_depth,
+        }
 
+        if attention.startswith('basic'):
+            self.model = BasicShapeTransformerModel(**kwargs)
+            self.batch_first = False
+        elif attention.startswith('fast'):
+            self.model = FastShapeTransformerModel(**kwargs)
+            self.batch_first = True
+        else:
+            print(f"ERROR: No configuration available for attention: {attention}.")
+            raise ValueError
         print(f"\nShape Transformer parameters:\n{self.hparams}\n")
 
-        self.loss_criterion = nn.CrossEntropyLoss()
+        if loss_function == 'cross_entropy':
+            self.loss_function = nn.CrossEntropyLoss()
+        else:
+            print(f"ERROR: No configuration available for loss_function: {loss_function}.")
+            raise ValueError
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -77,12 +94,20 @@ class ShapeTransformer(pl.LightningModule):
 
     def step(self, batch, batch_idx):
         value, depth, pos = batch
+
+        # input lenght delimited to 'num_positions'
         value = value[:self.hparams.num_positions].long()
         depth = depth[:self.hparams.num_positions].long()
         pos = pos[:, :self.hparams.num_positions].long()
 
+        # 'fast-transformers' expects, unlike 'torch', batch size first and the sequence second.
+        if self.batch_first:
+            value = torch.transpose(value, 0, 1).contiguous()
+            depth = torch.transpose(depth, 0, 1).contiguous()
+            pos = torch.transpose(pos, 1, 2).contiguous()
+
         logits = self.model(value, depth, pos)
-        loss = self.loss_criterion(logits.view(-1, logits.size(-1)), value.view(-1))
+        loss = self.loss_function(logits.view(-1, logits.size(-1)), value.view(-1))
         return loss
 
     def training_step(self, batch, batch_idx):
