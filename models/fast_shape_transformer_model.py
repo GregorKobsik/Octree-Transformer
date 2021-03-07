@@ -4,6 +4,13 @@ import torch.nn as nn
 from fast_transformers.builders import TransformerEncoderBuilder
 from fast_transformers.masking import TriangularCausalMask, FullMask
 
+_attention_map = {
+    'fast_full': 'full',
+    'fast_linear': 'causal-linear',
+    'fast_local': 'local',
+    'fast_reformer': 'reformer',
+}
+
 
 class FastShapeTransformerModel(nn.Module):
     def __init__(
@@ -15,6 +22,7 @@ class FastShapeTransformerModel(nn.Module):
         num_vocab,
         spatial_dim,
         tree_depth,
+        attention,
     ):
         super(FastShapeTransformerModel, self).__init__()
 
@@ -34,16 +42,18 @@ class FastShapeTransformerModel(nn.Module):
         )
 
         # transformer encoder
-        self.transformer_encoder = TransformerEncoderBuilder.from_kwargs(
-            attention_type="causal-linear",
-            n_layers=num_layers,
-            n_heads=num_heads,
-            feed_forward_dimensions=embed_dim * 4,
-            query_dimensions=embed_dim // num_heads,
-            value_dimensions=embed_dim // num_heads,
-            dropout=0.0,
-            activation="gelu",
-        ).get()
+        kwargs = {
+            'attention_type': _attention_map[attention],
+            'local_context': 16,
+            'n_layers': num_layers,
+            'n_heads': num_heads,
+            'feed_forward_dimensions': embed_dim * 4,
+            'query_dimensions': embed_dim // num_heads,
+            'value_dimensions': embed_dim // num_heads,
+            'dropout': 0.0,
+            'activation': "gelu",
+        }
+        self.transformer_encoder = TransformerEncoderBuilder.from_kwargs(**kwargs).get()
 
         # final linear layer
         self.head = nn.Linear(embed_dim, num_vocab + 1, bias=False)
