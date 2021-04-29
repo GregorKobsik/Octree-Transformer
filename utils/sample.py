@@ -56,7 +56,7 @@ def append_next_layer_tokens(value, depth, pos, spatial_dim=3):
     return value, depth, pos, num_future_tokens
 
 
-def sample_sequence(model, value, depth, pos, spatial_dim, max_len, max_depth, temperature=1.0):
+def sample_sequence(model, value, depth, pos, spatial_dim, max_len, max_depth, batch_first=False, temperature=1.0):
     remaining_tokens = 0
 
     with torch.no_grad():
@@ -74,17 +74,21 @@ def sample_sequence(model, value, depth, pos, spatial_dim, max_len, max_depth, t
 
             # compute logits of next token
             logits = model(
-                value[:i + 1].unsqueeze(0),  # [N, S]
-                depth[:i + 1].unsqueeze(0),  # [N, S]
-                pos[:, :i + 1].unsqueeze(1),  # [A, N, S]
+                value[:i + 1].unsqueeze(1 - batch_first),  # [N, S] or [S, N]
+                depth[:i + 1].unsqueeze(1 - batch_first),  # [N, S] or [S, N]
+                pos[:, :i + 1].unsqueeze(2 - batch_first),  # [A, N, S] or [A, S, N]
             )
 
             # sample next sequence token
-            # print(logits)
-            logits = logits[:, -1, :] / temperature
+            logits = logits[:, -1, :] if batch_first else logits[-1, :, :]
+            logits /= temperature
             probs = torch.nn.functional.softmax(logits, dim=-1)
             probs[0][0] = 0  # do not sample 'padding' tokens.
             pred = torch.multinomial(probs, num_samples=1)
+
+            # debugging
+            if pred[0] not in [1, 2, 3]:
+                print("probs:", probs)
 
             # update sequence
             if (len(value) == i):
