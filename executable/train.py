@@ -4,7 +4,7 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 
-from models import ShapeTransformer
+from modules import ShapeTransformer
 from utils.data import dataloaders
 
 from pytorch_lightning.callbacks import (

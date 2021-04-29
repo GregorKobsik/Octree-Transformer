@@ -2,7 +2,7 @@ import os
 import pytorch_lightning as pl
 
 from utils.data import dataloaders
-from models import ShapeTransformer
+from modules import ShapeTransformer
 
 
 def test(args):

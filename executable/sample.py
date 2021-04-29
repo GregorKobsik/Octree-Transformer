@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from PIL import Image
 
-from models import ShapeTransformer
+from modules import ShapeTransformer
 from utils.data import datasets
 from utils.quadtree import Quadtree
 from utils.sample import sample_sequence

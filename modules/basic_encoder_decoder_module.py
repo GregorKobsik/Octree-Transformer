@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 
-from layers import TransformerEncoderLayer, TransformerEncoder
 
-
-class BasicShapeTransformerModel(nn.Module):
+class BasicEncoderDecoderModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -16,11 +14,12 @@ class BasicShapeTransformerModel(nn.Module):
         tree_depth,
         attention,
     ):
-        super(BasicShapeTransformerModel, self).__init__()
+        super(BasicEncoderDecoderModule, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_vocab = num_vocab
         self.spatial_dim = spatial_dim
+        self.max_seq_len = num_positions // 2
 
         # start of sequence token
         self.sos = torch.nn.Parameter(torch.zeros(embed_dim))
@@ -33,18 +32,15 @@ class BasicShapeTransformerModel(nn.Module):
             [nn.Embedding(2**tree_depth + 1, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )
 
-        # transformer encoder
-        encoder_layer = TransformerEncoderLayer(
+        # transformer encoder decoder
+        self.transformer = nn.Transformer(
             d_model=embed_dim,
             nhead=num_heads,
+            num_encoder_layers=num_layers // 2,
+            num_decoder_layers=num_layers // 2,
             dim_feedforward=4 * embed_dim,
             dropout=0.0,
             activation='gelu',
-        )
-        self.transformer_encoder = TransformerEncoder(
-            encoder_layer=encoder_layer,
-            num_layers=num_layers,
-            norm=nn.LayerNorm(embed_dim),
         )
 
         # final linear layer
@@ -68,46 +64,44 @@ class BasicShapeTransformerModel(nn.Module):
         mask = torch.zeros_like(x, device=x.device).masked_fill(x == 0, 1).bool()  # [S, N]
         return mask.transpose(0, 1)  # [N, S]
 
-    def forward(self, value, depth, pos):
+    def _embed(self, value, depth, pos):
+        x = self.token_embedding(value)
+        x = x + self.depth_embedding(depth)
+        for axis, spatial_embedding in enumerate(self.spatial_embeddings):
+            x = x + spatial_embedding(pos[axis])
+
+    def forward(self, src_value, tgt_value, src_depth, tgt_depth, src_pos, tgt_pos):
         """
         Expect input as shape:
-            value: (S, N)
-            depth: (S, N)
-            pos: (A, S, N)
+            (src/tgt)_value: (S/T, N)
+            (src/tgt)_depth: (S/T, N)
+            (src/tgt)_pos: (A, S/T, N)
 
         shapes:
-            S: sequence length
+            S: source length
+            T: target length
             N: batch size
             E: embedding dimension
             A: spatial dimension
         """
-        # look-ahead and padding masks
-        look_ahead_mask = self._create_look_ahead_mask(value)  # [S, S]
-        padding_mask = self._create_padding_mask(value)  # [N, S]
 
-        # embeddings
-        h = self.token_embedding(value)  # [S, N, E]
-        h = h + self.depth_embedding(depth)  # [S, N, E]
-        for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            h = h + spatial_embedding(pos[axis])  # [S, N, E]
+        # embeddings -> [S/T, N, E]
+        src = self._embed(src_value, src_depth, src_pos)
+        tgt = self._embed(tgt_value, tgt_depth, tgt_pos)
 
-        # prepend start of sequence token
-        _, batch = value.shape  # [S, N]
-        sos = torch.ones(1, batch, self.embed_dim, device=value.device) * self.sos  # [1, N, E]
-        h = torch.cat([sos, h[:-1, :, :]], axis=0)  # [S, N, E]
+        # prepend start of sequence token -> [T, N, E]
+        _, batch = tgt_value.shape  # [T, N]
+        sos = torch.ones(1, batch, self.embed_dim, device=tgt_value.device) * self.sos  # [1, N, E]
+        tgt = torch.cat([sos, tgt[:-1, :, :]], axis=0)
 
         # transformer encoder
-        h = self.transformer_encoder(
-            src=h,
-            mask=look_ahead_mask,
-            src_key_padding_mask=padding_mask,
-        )  # [S, N, E]
+        h = self.transformer(
+            src=src,
+            tgt=tgt,
+            tgt_mask=self._create_look_ahead_mask(tgt),
+            src_key_padding_mask=self._create_padding_mask(src),
+            tgt_key_padding_mask=self._create_padding_mask(tgt),
+        )  # [T, N, E]
 
         # return logits
         return self.head(h)
-
-    def get_attn_weights(self):
-        return self.transformer_encoder._attention_weights
-
-    def get_attn_activations(self):
-        return self.transformer_encoder._attention_activations

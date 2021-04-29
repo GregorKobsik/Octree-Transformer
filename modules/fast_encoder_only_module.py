@@ -1,18 +1,31 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from fast_transformers.builders import TransformerEncoderBuilder
 from fast_transformers.masking import TriangularCausalMask, FullMask
+from fast_transformers.feature_maps import Favor
 
 _attention_map = {
     'fast_full': 'full',
     'fast_linear': 'causal-linear',
     'fast_local': 'local',
     'fast_reformer': 'reformer',
+    'fast_favor': 'causal-linear',
+    'fast_performer': 'causal-linear',  # legacy
+}
+
+_feature_map = {
+    'fast_full': None,
+    'fast_linear': None,
+    'fast_local': None,
+    'fast_reformer': None,
+    'fast_favor': Favor.factory(),
+    'fast_performer': Favor.factory(),  # legacy
 }
 
 
-class FastShapeTransformerModel(nn.Module):
+class FastEncoderOnlyModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -24,7 +37,8 @@ class FastShapeTransformerModel(nn.Module):
         tree_depth,
         attention,
     ):
-        super(FastShapeTransformerModel, self).__init__()
+        super(FastEncoderOnlyModule, self).__init__()
+        self.attention_type = _attention_map[attention]
 
         self.embed_dim = embed_dim
         self.num_vocab = num_vocab
@@ -44,7 +58,7 @@ class FastShapeTransformerModel(nn.Module):
         # transformer encoder
         kwargs = {
             'attention_type': _attention_map[attention],
-            'local_context': 16,
+            'local_context': 512,
             'n_layers': num_layers,
             'n_heads': num_heads,
             'feed_forward_dimensions': embed_dim * 4,
@@ -52,6 +66,7 @@ class FastShapeTransformerModel(nn.Module):
             'value_dimensions': embed_dim // num_heads,
             'dropout': 0.0,
             'activation': "gelu",
+            'feature_map': _feature_map[attention],
         }
         self.transformer_encoder = TransformerEncoderBuilder.from_kwargs(**kwargs).get()
 
@@ -73,8 +88,14 @@ class FastShapeTransformerModel(nn.Module):
         """
         batch, seq_len = value.shape  # [N, S]
 
+        if self.attention_type == "reformer":
+            pad_len = 128 - (seq_len % 128)
+            value = F.pad(input=value, pad=(0, pad_len))
+            depth = F.pad(input=depth, pad=(0, pad_len))
+            pos = F.pad(input=pos, pad=(0, pad_len))
+
         # triangular causal and padding masks
-        causal_mask = TriangularCausalMask(seq_len, device=value.device)  # [S, S]
+        causal_mask = TriangularCausalMask(value.shape[1], device=value.device)  # [S, S]
         padding_mask = FullMask(mask=value != 0, device=value.device)  # [N, S]
 
         # embeddings
@@ -95,10 +116,4 @@ class FastShapeTransformerModel(nn.Module):
         )  # [N, S, E]
 
         # return logits
-        return self.head(x)
-
-    def get_attn_weights(self):
-        return self.transformer_encoder._attention_weights
-
-    def get_attn_activations(self):
-        return self.transformer_encoder._attention_activations
+        return self.head(x)[:, :seq_len]
