@@ -26,8 +26,14 @@ def compute_train_steps(train_dl, epochs, accumulate_grad_batches=1, n_gpus=1, n
 
 
 def train(args):
+    # load argument configuration
     with open(args.config, "rb") as f:
         config = yaml.safe_load(f)
+    # override default config with args
+    for arg in vars(args):
+        attr = getattr(args, arg)
+        if attr is not None:
+            config[arg] = attr
 
     # load data
     train_dl, valid_dl, _ = dataloaders(config['dataset'], config['subclass'], config['batch_size'])
