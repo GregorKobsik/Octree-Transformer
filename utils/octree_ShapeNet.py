@@ -11,9 +11,9 @@ from utils.octree import Octree
 from utils.hsp_loader import load_hsp
 
 _class_folder_map = {
-    "": "",
-    "full": "",
-    "all": "",
+    "": "all",
+    "full": "all",
+    "all": "all",
     "airplane": "02691156",
     "bin": "02747177",
     "bag": "02773838",
@@ -135,7 +135,7 @@ class OctreeShapeNet(Dataset):
     def octree_folder(self) -> str:
         return os.path.join(self.root, self.__class__.__name__)
 
-    def _check_exists_octree(self, category="") -> bool:
+    def _check_exists_octree(self, category) -> bool:
         return np.all(
             [
                 # TODO: add train-test splitt
@@ -157,7 +157,7 @@ class OctreeShapeNet(Dataset):
 
         print('Transforming... this might take some minutes.')
 
-        subdir = "*" if self.class_folder == "" else self.class_folder
+        subdir = "*" if self.class_folder == "all" else self.class_folder
         data_paths = glob(self.dataset_folder + '/' + subdir + '/*.mat')
 
         training_transformed = np.asarray(
