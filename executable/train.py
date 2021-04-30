@@ -18,6 +18,8 @@ from callbacks import (
     TrackedGradientOutput,
 )
 
+from ray.tune.integration.pytorch_lightning import TuneReportCallback
+
 
 def compute_train_steps(train_dl, epochs, accumulate_grad_batches=1, n_gpus=1, n_nodes=1):
     total_devices = n_gpus * n_nodes
@@ -63,6 +65,8 @@ def train(config):
                 log_every_n_epoch=1,
             )
         )
+    if config['parameter_search']:
+        callbacks.append(TuneReportCallback({"loss": "val_loss"}, on="validation_end"))
 
     pl.seed_everything(seed=None)
     trainer = pl.Trainer(
