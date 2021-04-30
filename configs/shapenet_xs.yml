@@ -9,7 +9,7 @@ tree_depth: 6
 spatial_dim: 3
 
 # architecture
-attention: basic
+attention: basic_ancestor
 embed_dim: 64
 num_layers: 16
 num_heads: 4
@@ -24,7 +24,7 @@ learning_rate: 0.0003
 
 # hardware
 gpus: 8
-precision: 16
+precision: 32
 
 # logging
 log_gpu: 'min_max'
@@ -32,3 +32,4 @@ log_gradient: True
 log_weights_and_biases: False
 log_learning_rate: True
 sample_images: False
+parameter_search: False

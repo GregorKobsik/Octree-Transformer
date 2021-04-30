@@ -33,3 +33,4 @@ log_learning_rate: True
 log_gradient: True
 log_weights_and_biases: False
 sample_images: False
+parameter_search: False
