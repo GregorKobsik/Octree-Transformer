@@ -10,9 +10,14 @@ config = {
     "parameter_search": True,
     "config": "/clusterstorage/gkobsik/shape-transformer/configs/shapenet_debug.yml",
     "pretrained": None,
-    "num_layers": tune.choice([2, 3, 4]),
-    "embed_dim": tune.choice([4, 8, 16]),
-    "num_heads": 2,
+    "num_layers": tune.grid_search([2, 4, 8]),
+    "embed_dim": tune.grid_search([32, 64, 128]),
+    "num_heads": tune.grid_search([4, 8, 16]),
+    "num_positions": tune.grid_search([1024, 2048, 4096, 8192, 16384, 32768]),
+    "attention": tune.grid_search(["basic", "performer", "fast_linear", "fast_local", "fast_reformer", "fast_favor"]),
+    "epochs": 2,
+    "gpus": 1,
+    "precision": 32,
 }
 
 # Execute the hyperparameter search
@@ -23,7 +28,6 @@ analysis = tune.run(
         "gpu": 1
     },
     config=config,
-    num_samples=10,
 )
 
 print("DONE.")
