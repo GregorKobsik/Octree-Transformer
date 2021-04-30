@@ -7,6 +7,8 @@ ray_results/
 # compiled / optimized files
 __pycache__/
 *.pyc
+.cache
+.nv
 
 # VS Code settings
 .vscode/
