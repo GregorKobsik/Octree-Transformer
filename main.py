@@ -62,4 +62,4 @@ if __name__ == "__main__":
     parser_sample.add_argument("--input_depth", default=3, type=int)
 
     args = parser.parse_args()
-    args.func(args)
+    args.func(vars(args))

@@ -45,11 +45,11 @@ def show(img_arr):
     plt.show()
 
 
-def sample(args):
+def sample(config):
     device = torch.device('cuda')  # 'cuda' or 'cpu'
 
     # restore model from checkpoint
-    model = ShapeTransformer.load_from_checkpoint(args.checkpoint)
+    model = ShapeTransformer.load_from_checkpoint(config["checkpoint"])
     hparams = model.hparams
     model.freeze()
     model = model.model.eval().to(device)
@@ -66,10 +66,10 @@ def sample(args):
 
     # show sourca data
     qtree = Quadtree().insert_sequence(value.numpy(), resolution)
-    # show([qtree.get_image(d, mode='color') for d in range(args.input_depth, max_depth + 1)])
+    # show([qtree.get_image(d, mode='color') for d in range(config["input_depth"], max_depth + 1)])
 
     # discard some depth layers (down-scaling)
-    value, depth, pos_x, pos_y = qtree.get_sequence(args.input_depth, return_depth=True, return_pos=True)
+    value, depth, pos_x, pos_y = qtree.get_sequence(config["input_depth"], return_depth=True, return_pos=True)
 
     # transform sequences to tensors and push to correct device
     value = torch.tensor(value).long().to(device)
@@ -84,6 +84,6 @@ def sample(args):
     print(predicted_value)
     # show images of predicted sample at different depth layers
     qtree_pred = Quadtree().insert_sequence(predicted_value, resolution, autorepair_errors=True, silent=True)
-    show([qtree_pred.get_image(d, mode='color') for d in range(args.input_depth, max_depth + 1)])
+    show([qtree_pred.get_image(d, mode='color') for d in range(config["input_depth"], max_depth + 1)])
     # save images of predicted sample at different depth layers
-    # save([qtree_pred.get_image(d) for d in range(args.input_depth, max_depth + 1)], args.datadir)
+    # save([qtree_pred.get_image(d) for d in range(config["input_depth"], max_depth + 1)], config["datadir"])

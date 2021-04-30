@@ -25,15 +25,14 @@ def compute_train_steps(train_dl, epochs, accumulate_grad_batches=1, n_gpus=1, n
     return (epochs * train_batches) // accumulate_grad_batches
 
 
-def train(args):
-    # load argument configuration
-    with open(args.config, "rb") as f:
-        config = yaml.safe_load(f)
-    # override default config with args
-    for arg in vars(args):
-        attr = getattr(args, arg)
-        if attr is not None:
-            config[arg] = attr
+def train(config):
+    # load pre-configuration file
+    with open(config["config"], "rb") as f:
+        pre_config = yaml.safe_load(f)
+    # supplement missing keys from pre-configuration
+    for c in pre_config:
+        if not config.get(c):
+            config[c] = pre_config[c]
 
     # load data
     train_dl, valid_dl, _ = dataloaders(config['dataset'], config['subclass'], config['batch_size'])
@@ -87,8 +86,8 @@ def train(args):
         config['gpus'],
     )
 
-    if args.pretrained is not None:
-        model = ShapeTransformer.load_from_checkpoint(args.pretrained)
+    if config["pretrained"] is not None:
+        model = ShapeTransformer.load_from_checkpoint(config["pretrained"])
     else:
         model = ShapeTransformer(train_steps=train_steps, **config)
 

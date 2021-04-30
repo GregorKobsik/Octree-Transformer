@@ -5,8 +5,8 @@ from utils.data import dataloaders
 from modules import ShapeTransformer
 
 
-def test(args):
-    model = ShapeTransformer.load_from_checkpoint(os.path.join(args.datadir, args.checkpoint))
+def test(config):
+    model = ShapeTransformer.load_from_checkpoint(os.path.join(config["datadir"], config["checkpoint"]))
     hparams = model.hparams
 
     trainer = pl.Trainer(gpus=hparams.gpus)
