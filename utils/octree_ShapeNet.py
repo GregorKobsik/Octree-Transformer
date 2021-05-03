@@ -161,7 +161,7 @@ class OctreeShapeNet(Dataset):
         data_paths = glob(self.dataset_folder + '/' + subdir + '/*.mat')
 
         training_transformed = np.asarray(
-            process_map(self._transform_voxels, data_paths, max_workers=self.num_workers, chunksize=1)
+            process_map(self._transform_voxels, data_paths, max_workers=self.num_workers, chunksize=1), dtype=object
         )
 
         for i, subfolder in enumerate(self.subfolders):
