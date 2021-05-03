@@ -10,13 +10,14 @@ config = {
     "parameter_search": True,
     "config": "/clusterstorage/gkobsik/shape-transformer/configs/shapenet_debug.yml",
     "datapath": "/clusterstorage/gkobsik/shape-transformer/data",
+    "tree_depth": 7,  # allow for longer sequences up to 33k tokens
     "pretrained": None,
     "num_layers": tune.grid_search([2, 4, 8]),
     "embed_dim": tune.grid_search([32, 64, 128]),
     "num_heads": tune.grid_search([4, 8, 16]),
     "num_positions": tune.grid_search([1024, 2048, 4096, 8192, 16384, 32768]),
     "attention": tune.grid_search(["basic", "performer", "fast_linear", "fast_local", "fast_reformer", "fast_favor"]),
-    "epochs": 2,
+    "epochs": 5,
     "gpus": 1,
     "precision": 32,
 }
@@ -25,8 +26,8 @@ config = {
 analysis = tune.run(
     tune.with_parameters(train),
     resources_per_trial={
-        "cpu": 6,
-        "gpu": 1
+        "cpu": config['gpus'] * 6,
+        "gpu": config['gpus']
     },
     config=config,
 )
