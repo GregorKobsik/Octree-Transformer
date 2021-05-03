@@ -65,6 +65,7 @@ class FastEncoderOnlyModule(nn.Module):
             'query_dimensions': embed_dim // num_heads,
             'value_dimensions': embed_dim // num_heads,
             'dropout': 0.0,
+            'attention_dropout': 0.0,
             'activation': "gelu",
             'feature_map': _feature_map[attention],
         }
