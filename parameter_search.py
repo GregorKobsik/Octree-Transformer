@@ -9,6 +9,7 @@ os.environ["SLURM_JOB_NAME"] = "bash"
 config = {
     "parameter_search": True,
     "config": "/clusterstorage/gkobsik/shape-transformer/configs/shapenet_debug.yml",
+    "datapath": "/clusterstorage/gkobsik/shape-transformer/data",
     "pretrained": None,
     "num_layers": tune.grid_search([2, 4, 8]),
     "embed_dim": tune.grid_search([32, 64, 128]),

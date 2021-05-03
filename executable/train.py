@@ -37,7 +37,7 @@ def train(config):
             config[c] = pre_config[c]
 
     # load data
-    train_dl, valid_dl, _ = dataloaders(config['dataset'], config['subclass'], config['batch_size'])
+    train_dl, valid_dl, _ = dataloaders(config['dataset'], config['subclass'], config['batch_size'], config['datapath'])
 
     # setup tensorboard logging
     logger = pl_loggers.TensorBoardLogger("logs", name=config['name'])

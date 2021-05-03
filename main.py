@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser_train.add_argument("config", type=str)
     parser_train.add_argument("--name", type=str, default=None)
     # data
+    parser_train.add_argument("--datapath", type=str, default='data')
     parser_train.add_argument("--dataset", type=str, default=None)
     parser_train.add_argument("--subclass", type=str, default=None)
     parser_train.add_argument("--num_positions", type=int, default=None)
