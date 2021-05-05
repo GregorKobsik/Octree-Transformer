@@ -4,7 +4,7 @@ import torch.nn as nn
 from linear_attention_transformer import LinearAttentionTransformer
 
 
-class LinearEncoderOnlyModule(nn.Module):
+class LinearTransformerModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -16,7 +16,7 @@ class LinearEncoderOnlyModule(nn.Module):
         tree_depth,
         attention,
     ):
-        super(LinearEncoderOnlyModule, self).__init__()
+        super(LinearTransformerModule, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads

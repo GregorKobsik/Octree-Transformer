@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-from reformer_pytorch import Reformer
+from performer_pytorch import Performer
 
 
-class ReformerEncoderOnlyModule(nn.Module):
+class PerformerModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -17,7 +16,7 @@ class ReformerEncoderOnlyModule(nn.Module):
         tree_depth,
         attention,
     ):
-        super(ReformerEncoderOnlyModule, self).__init__()
+        super(PerformerModule, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads
@@ -36,17 +35,11 @@ class ReformerEncoderOnlyModule(nn.Module):
             [nn.Embedding(2**tree_depth + 1, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )
 
-        # reformer encoder
-        self.transformer_encoder = Reformer(
+        # performer encoder
+        self.transformer_encoder = Performer(
             dim=embed_dim,
             depth=num_layers,
-            max_seq_len=num_positions,
             heads=num_heads,
-            dim_head=None,
-            bucket_size=64,
-            n_hashes=8,
-            ff_chunks=100,
-            attn_chunks=None,
             causal=True,
         )
 
@@ -68,12 +61,6 @@ class ReformerEncoderOnlyModule(nn.Module):
         """
         batch, seq_len = value.shape  # [N, S]
 
-        # pad input - Sequence length needs to be divisible by target bucket size x 2
-        pad_len = 128 - (seq_len % 128)
-        value = F.pad(input=value, pad=(0, pad_len))
-        depth = F.pad(input=depth, pad=(0, pad_len))
-        pos = F.pad(input=pos, pad=(0, pad_len))
-
         # embeddings
         x = self.token_embedding(value)  # [N, S, E]
         x = x + self.depth_embedding(depth)  # [N, S, E]
@@ -88,4 +75,4 @@ class ReformerEncoderOnlyModule(nn.Module):
         x = self.transformer_encoder(x)  # [N, S, E]
 
         # return logits
-        return self.head(x)[:, :seq_len]
+        return self.head(x)

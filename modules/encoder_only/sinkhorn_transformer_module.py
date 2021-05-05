@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-from performer_pytorch import Performer
+from sinkhorn_transformer import SinkhornTransformer
 
 
-class PerformerEncoderOnlyModule(nn.Module):
+class SinkhornTransformerModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -16,7 +17,7 @@ class PerformerEncoderOnlyModule(nn.Module):
         tree_depth,
         attention,
     ):
-        super(PerformerEncoderOnlyModule, self).__init__()
+        super(SinkhornTransformerModule, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads
@@ -36,10 +37,13 @@ class PerformerEncoderOnlyModule(nn.Module):
         )
 
         # performer encoder
-        self.transformer_encoder = Performer(
+        self.transformer_encoder = SinkhornTransformer(
             dim=embed_dim,
             depth=num_layers,
+            max_seq_len=num_positions,
             heads=num_heads,
+            dim_head=None,
+            bucket_size=64,
             causal=True,
         )
 
@@ -61,6 +65,12 @@ class PerformerEncoderOnlyModule(nn.Module):
         """
         batch, seq_len = value.shape  # [N, S]
 
+        # pad input - Sequence length needs to be divisible by bucket size
+        pad_len = 64 - (seq_len % 64)
+        value = F.pad(input=value, pad=(0, pad_len))
+        depth = F.pad(input=depth, pad=(0, pad_len))
+        pos = F.pad(input=pos, pad=(0, pad_len))
+
         # embeddings
         x = self.token_embedding(value)  # [N, S, E]
         x = x + self.depth_embedding(depth)  # [N, S, E]
@@ -75,4 +85,4 @@ class PerformerEncoderOnlyModule(nn.Module):
         x = self.transformer_encoder(x)  # [N, S, E]
 
         # return logits
-        return self.head(x)
+        return self.head(x)[:, :seq_len]

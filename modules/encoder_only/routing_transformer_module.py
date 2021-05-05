@@ -4,7 +4,7 @@ import torch.nn as nn
 from routing_transformer import RoutingTransformer
 
 
-class RoutingEncoderOnlyModule(nn.Module):
+class RoutingTransformerModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -16,7 +16,7 @@ class RoutingEncoderOnlyModule(nn.Module):
         tree_depth,
         attention,
     ):
-        super(RoutingEncoderOnlyModule, self).__init__()
+        super(RoutingTransformerModule, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads

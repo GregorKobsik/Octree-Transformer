@@ -4,7 +4,7 @@ import torch.nn as nn
 from masks import look_ahead_mask, padding_mask, ancestor_mask
 
 
-class BasicEncoderOnlyModule(nn.Module):
+class BasicTransformerModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -16,7 +16,7 @@ class BasicEncoderOnlyModule(nn.Module):
         tree_depth,
         attention,
     ):
-        super(BasicEncoderOnlyModule, self).__init__()
+        super(BasicTransformerModule, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads

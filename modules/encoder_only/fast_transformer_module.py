@@ -25,7 +25,7 @@ _feature_map = {
 }
 
 
-class FastEncoderOnlyModule(nn.Module):
+class FastTransformerModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -37,7 +37,7 @@ class FastEncoderOnlyModule(nn.Module):
         tree_depth,
         attention,
     ):
-        super(FastEncoderOnlyModule, self).__init__()
+        super(FastTransformerModule, self).__init__()
         self.attention_type = _attention_map[attention]
 
         self.embed_dim = embed_dim

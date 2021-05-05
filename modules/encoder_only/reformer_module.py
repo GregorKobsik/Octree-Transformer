@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from sinkhorn_transformer import SinkhornTransformer
+from reformer_pytorch import Reformer
 
 
-class SinkhornEncoderOnlyModule(nn.Module):
+class ReformerModule(nn.Module):
     def __init__(
         self,
         embed_dim,
@@ -17,7 +17,7 @@ class SinkhornEncoderOnlyModule(nn.Module):
         tree_depth,
         attention,
     ):
-        super(SinkhornEncoderOnlyModule, self).__init__()
+        super(ReformerModule, self).__init__()
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads
@@ -36,14 +36,17 @@ class SinkhornEncoderOnlyModule(nn.Module):
             [nn.Embedding(2**tree_depth + 1, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )
 
-        # performer encoder
-        self.transformer_encoder = SinkhornTransformer(
+        # reformer encoder
+        self.transformer_encoder = Reformer(
             dim=embed_dim,
             depth=num_layers,
             max_seq_len=num_positions,
             heads=num_heads,
             dim_head=None,
             bucket_size=64,
+            n_hashes=8,
+            ff_chunks=100,
+            attn_chunks=None,
             causal=True,
         )
 
@@ -65,8 +68,8 @@ class SinkhornEncoderOnlyModule(nn.Module):
         """
         batch, seq_len = value.shape  # [N, S]
 
-        # pad input - Sequence length needs to be divisible by bucket size
-        pad_len = 64 - (seq_len % 64)
+        # pad input - Sequence length needs to be divisible by target bucket size x 2
+        pad_len = 128 - (seq_len % 128)
         value = F.pad(input=value, pad=(0, pad_len))
         depth = F.pad(input=depth, pad=(0, pad_len))
         pos = F.pad(input=pos, pad=(0, pad_len))

@@ -4,14 +4,14 @@ import torch
 from torch.optim import Adam
 import pytorch_lightning as pl
 
-from modules import (
-    BasicEncoderOnlyModule,
-    FastEncoderOnlyModule,
-    PerformerEncoderOnlyModule,
-    ReformerEncoderOnlyModule,
-    RoutingEncoderOnlyModule,
-    SinkhornEncoderOnlyModule,
-    LinearEncoderOnlyModule,
+from modules.encoder_only import (
+    BasicTransformerModule,
+    FastTransformerModule,
+    PerformerModule,
+    ReformerModule,
+    RoutingTransformerModule,
+    SinkhornTransformerModule,
+    LinearTransformerModule,
 )
 from lr_scheduler import ConstantWithWarmup
 from loss import CrossEntropyLoss, DescendantWeightedCrossEntropyLoss
@@ -56,20 +56,20 @@ class ShapeTransformer(pl.LightningModule):
             self.is_encoder_decoder = False
             self.batch_first = True
             if attention.startswith('basic'):
-                self.model = BasicEncoderOnlyModule(**kwargs)
+                self.model = BasicTransformerModule(**kwargs)
                 self.batch_first = False
             elif attention.startswith('fast'):
-                self.model = FastEncoderOnlyModule(**kwargs)
+                self.model = FastTransformerModule(**kwargs)
             elif attention.startswith('performer'):
-                self.model = PerformerEncoderOnlyModule(**kwargs)
+                self.model = PerformerModule(**kwargs)
             elif attention.startswith('reformer'):
-                self.model = ReformerEncoderOnlyModule(**kwargs)
+                self.model = ReformerModule(**kwargs)
             elif attention.startswith('routing'):
-                self.model = RoutingEncoderOnlyModule(**kwargs)
+                self.model = RoutingTransformerModule(**kwargs)
             elif attention.startswith('sinkhorn'):
-                self.model = SinkhornEncoderOnlyModule(**kwargs)
+                self.model = SinkhornTransformerModule(**kwargs)
             elif attention.startswith('linear'):
-                self.model = LinearEncoderOnlyModule(**kwargs)
+                self.model = LinearTransformerModule(**kwargs)
 
         # encoder decoder architectures
         elif architecture == "encoder_decoder":
