@@ -4,7 +4,15 @@ import torch
 from torch.optim import Adam
 import pytorch_lightning as pl
 
-from modules import BasicEncoderOnlyModule, FastEncoderOnlyModule, PerformerEncoderOnlyModule
+from modules import (
+    BasicEncoderOnlyModule,
+    FastEncoderOnlyModule,
+    PerformerEncoderOnlyModule,
+    ReformerEncoderOnlyModule,
+    RoutingEncoderOnlyModule,
+    SinkhornEncoderOnlyModule,
+    LinearEncoderOnlyModule,
+)
 from lr_scheduler import ConstantWithWarmup
 from loss import CrossEntropyLoss, DescendantWeightedCrossEntropyLoss
 
@@ -54,7 +62,14 @@ class ShapeTransformer(pl.LightningModule):
                 self.model = FastEncoderOnlyModule(**kwargs)
             elif attention.startswith('performer'):
                 self.model = PerformerEncoderOnlyModule(**kwargs)
-                self.batch_first = True
+            elif attention.startswith('reformer'):
+                self.model = ReformerEncoderOnlyModule(**kwargs)
+            elif attention.startswith('routing'):
+                self.model = RoutingEncoderOnlyModule(**kwargs)
+            elif attention.startswith('sinkhorn'):
+                self.model = SinkhornEncoderOnlyModule(**kwargs)
+            elif attention.startswith('linear'):
+                self.model = LinearEncoderOnlyModule(**kwargs)
 
         # encoder decoder architectures
         elif architecture == "encoder_decoder":
