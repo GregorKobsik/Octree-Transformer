@@ -46,12 +46,12 @@ class ShapeTransformer(pl.LightningModule):
         if architecture == 'encoder_only':
             self.max_seq_len = num_positions
             self.is_encoder_decoder = False
+            self.batch_first = True
             if attention.startswith('basic'):
                 self.model = BasicEncoderOnlyModule(**kwargs)
                 self.batch_first = False
             elif attention.startswith('fast'):
                 self.model = FastEncoderOnlyModule(**kwargs)
-                self.batch_first = True
             elif attention.startswith('performer'):
                 self.model = PerformerEncoderOnlyModule(**kwargs)
                 self.batch_first = True

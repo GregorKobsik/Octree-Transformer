@@ -41,24 +41,6 @@ class PerformerEncoderOnlyModule(nn.Module):
             depth=num_layers,
             heads=num_heads,
             causal=True,
-            local_attn_heads=num_heads // 2,
-            local_window_size=num_positions // 8,
-            ff_mult=4,
-            nb_features=None,
-            feature_redraw_interval=1000,
-            reversible=True,
-            ff_chunks=10,
-            generalized_attention=False,
-            kernel_fn=nn.ReLU(),
-            qr_uniform_q=False,
-            use_scalenorm=False,
-            use_rezero=False,
-            ff_glu=True,
-            ff_dropout=0.,
-            attn_dropout=0.,
-            cross_attend=False,
-            no_projection=False,
-            auto_check_redraw=True,
         )
 
         # final linear layer
@@ -67,9 +49,9 @@ class PerformerEncoderOnlyModule(nn.Module):
     def forward(self, value, depth, pos):
         """
         Expect input as shape:
-            value: (S, N)
-            depth: (S, N)
-            pos: (A, S, N)
+            value: (N, S)
+            depth: (N, S)
+            pos: (A, N, S)
 
         shapes:
             S: sequence length
@@ -77,19 +59,20 @@ class PerformerEncoderOnlyModule(nn.Module):
             E: embedding dimension
             A: spatial dimension
         """
+        batch, seq_len = value.shape  # [N, S]
+
         # embeddings
-        h = self.token_embedding(value)  # [S, N, E]
-        h = h + self.depth_embedding(depth)  # [S, N, E]
+        x = self.token_embedding(value)  # [N, S, E]
+        x = x + self.depth_embedding(depth)  # [N, S, E]
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            h = h + spatial_embedding(pos[axis])  # [S, N, E]
+            x = x + spatial_embedding(pos[axis])  # [N, S, E]
 
         # prepend start of sequence token
-        seq_len, batch = value.shape  # [S, N]
-        sos = torch.ones(1, batch, self.embed_dim, device=value.device) * self.sos  # [1, N, E]
-        h = torch.cat([sos, h[:-1, :, :]], axis=0)  # [S, N, E]
+        sos = torch.ones(batch, 1, self.embed_dim, device=value.device) * self.sos  # [N, 1, E]
+        x = torch.cat([sos, x[:, :-1, :]], axis=1)  # [N, S, E]
 
         # transformer encoder TODO: pass mask, to mask out padding in batched inputs (n > 1)
-        h = self.transformer_encoder(h)  # [S, N, E]
+        x = self.transformer_encoder(x)  # [N, S, E]
 
         # return logits
-        return self.head(h)
+        return self.head(x)
