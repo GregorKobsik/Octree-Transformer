@@ -66,7 +66,7 @@ def train(config):
             )
         )
     if config['parameter_search']:
-        callbacks.append(TuneReportCallback({"loss": "val_loss"}, on="validation_end"))
+        callbacks.append(TuneReportCallback({"loss": "val_loss", "max_gpu_mem": "mem_alloc"}, on="validation_end"))
 
     pl.seed_everything(seed=None)
     trainer = pl.Trainer(
@@ -97,5 +97,6 @@ def train(config):
 
     torch.backends.cudnn.enabled = False
     torch.cuda.empty_cache()
+    torch.cuda.reset_max_memory_allocated()
 
     trainer.fit(model, train_dl, valid_dl)

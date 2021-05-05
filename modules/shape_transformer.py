@@ -181,7 +181,7 @@ class ShapeTransformer(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         loss = self.step(batch, batch_idx)
         self.log('val_loss', loss, prog_bar=True, sync_dist=True)
-        self.log('mem_alloc', torch.cuda.max_memory_allocated() / 1024**3, prog_bar=True, sync_dist=True)
+        self.log('mem_alloc', torch.cuda.max_memory_allocated() / 1024**2, prog_bar=True, sync_dist=True)
         return loss
 
     def test_step(self, batch, batch_idx):

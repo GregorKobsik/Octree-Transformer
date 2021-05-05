@@ -10,9 +10,11 @@ config = {
     "parameter_search": True,
     "config": "/clusterstorage/gkobsik/shape-transformer/configs/shapenet_debug.yml",
     "datapath": "/clusterstorage/gkobsik/shape-transformer/data",
-    "tree_depth": 7,  # allow for longer sequences up to 33k tokens
     "pretrained": None,
-    "num_layers": tune.grid_search([2, 4, 8]),
+    "dataset": "shapenet",
+    "subclass": "basket",
+    "tree_depth": 7,  # allow for longer sequences up to 33k tokens
+    "num_layers": tune.grid_search([4, 8, 16]),
     "embed_dim": tune.grid_search([32, 64, 128]),
     "num_heads": tune.grid_search([4, 8, 16]),
     "num_positions": tune.grid_search([1024, 2048, 4096, 8192, 16384, 32768]),
