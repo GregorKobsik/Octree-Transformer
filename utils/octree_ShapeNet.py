@@ -87,7 +87,8 @@ class OctreeShapeNet(Dataset):
         train: bool = True,
         download: bool = False,
         num_workers: int = None,
-        subclass="all",
+        subclass: str = "all",
+        resolution: int = 32,
         **kwargs,
     ) -> None:
         """ Initializes the voxelized ShapeNet dataset and performs a Octree transformation afterwards. """
@@ -95,6 +96,7 @@ class OctreeShapeNet(Dataset):
         self.train = train  # training set or test set
         self.num_workers = num_workers
         self.class_folder = _class_folder_map[subclass]
+        self.resolution = resolution
         self.octree_transform()
 
         if self.train:
@@ -102,11 +104,12 @@ class OctreeShapeNet(Dataset):
         else:
             data_file = self.training_file  # TODO: add train-test splitt
 
-        self.value = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[0], data_file))
-        self.depth = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[1], data_file))
-        self.pos_x = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[2], data_file))
-        self.pos_y = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[3], data_file))
-        self.pos_z = torch.load(os.path.join(self.octree_folder, self.class_folder, self.subfolders[4], data_file))
+        dir = os.path.join(self.octree_folder, self.class_folder, str(self.resolution))
+        self.value = torch.load(os.path.join(dir, self.subfolders[0], data_file))
+        self.depth = torch.load(os.path.join(dir, self.subfolders[1], data_file))
+        self.pos_x = torch.load(os.path.join(dir, self.subfolders[2], data_file))
+        self.pos_y = torch.load(os.path.join(dir, self.subfolders[3], data_file))
+        self.pos_z = torch.load(os.path.join(dir, self.subfolders[4], data_file))
 
     def __getitem__(self, index: int) -> Tuple[Any, Any, Any, Any, Any]:
         """
@@ -135,24 +138,27 @@ class OctreeShapeNet(Dataset):
     def octree_folder(self) -> str:
         return os.path.join(self.root, self.__class__.__name__)
 
-    def _check_exists_octree(self, category) -> bool:
+    def _check_exists_octree(self, category, resolution) -> bool:
         return np.all(
             [
                 # TODO: add train-test splitt
-                # os.path.exists(os.path.join(self.octree_folder, category, subfolder, self.test_file)) and
-                os.path.exists(os.path.join(self.octree_folder, category, subfolder, self.training_file))
-                for subfolder in self.subfolders
+                # os.path.exists(
+                #   os.path.join(self.octree_folder, category, str(resolution), subfolder, self.test_file)
+                # ) and
+                os.path.exists(
+                    os.path.join(self.octree_folder, category, str(resolution), subfolder, self.training_file)
+                ) for subfolder in self.subfolders
             ]
         )
 
     def _transform_voxels(self, data_path):
-        voxels = load_hsp(data_path, 32)
+        voxels = load_hsp(data_path, self.resolution)
         otree = Octree().insert_voxels(voxels)
         return otree.get_sequence(return_depth=True, return_pos=True)
 
     def octree_transform(self) -> None:
         """Transform the ShapeNet data if it doesn't exist in octree_folder already."""
-        if self._check_exists_octree(self.class_folder):
+        if self._check_exists_octree(self.class_folder, self.resolution):
             return
 
         print('Transforming... this might take some minutes.')
@@ -165,8 +171,9 @@ class OctreeShapeNet(Dataset):
         )
 
         for i, subfolder in enumerate(self.subfolders):
-            os.makedirs(os.path.join(self.octree_folder, self.class_folder, subfolder), exist_ok=True)
-            with open(os.path.join(self.octree_folder, self.class_folder, subfolder, self.training_file), 'wb') as f:
+            dir = os.path.join(self.octree_folder, self.class_folder, str(self.resolution), subfolder)
+            os.makedirs(dir, exist_ok=True)
+            with open(os.path.join(dir, self.training_file), 'wb') as f:
                 torch.save(training_transformed[:, i], f)
 
         print('Done!')

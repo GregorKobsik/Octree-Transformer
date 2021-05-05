@@ -14,7 +14,7 @@ DATASETS = {
 }
 
 
-def datasets(dataset, subclass="all", datapath="data"):
+def datasets(dataset, subclass="all", resolution=32, datapath="data"):
     """ Loads datasets for training, validation and testing.
 
     Args:
@@ -31,8 +31,12 @@ def datasets(dataset, subclass="all", datapath="data"):
     """
     num_cpus = mp.cpu_count()
 
-    train_ds = DATASETS[dataset](datapath, train=True, download=True, num_workers=num_cpus, subclass=subclass)
-    test_ds = DATASETS[dataset](datapath, train=False, download=True, num_workers=num_cpus, subclass=subclass)
+    train_ds = DATASETS[dataset](
+        datapath, train=True, download=True, num_workers=num_cpus, subclass=subclass, resolution=resolution
+    )
+    test_ds = DATASETS[dataset](
+        datapath, train=False, download=True, num_workers=num_cpus, subclass=subclass, resolution=resolution
+    )
 
     # 90/10 splitt for training and validation data
     train_size = int(0.95 * len(train_ds))
@@ -82,7 +86,7 @@ def pad_collate(dataset):
         return pad_spatial_dim_3
 
 
-def dataloaders(dataset, subclass, batch_size, datapath="data"):
+def dataloaders(dataset, subclass, resolution, batch_size, datapath="data"):
     """ Creates dataloaders for training, validation and testing.
 
     Args:
@@ -99,7 +103,7 @@ def dataloaders(dataset, subclass, batch_size, datapath="data"):
     """
     num_cpus = mp.cpu_count()
 
-    train_ds, valid_ds, test_ds = datasets(dataset, subclass, datapath)
+    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, datapath)
 
     train_dl = DataLoader(
         train_ds,

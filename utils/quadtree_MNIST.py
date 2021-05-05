@@ -19,6 +19,8 @@ class QuadtreeMNIST(datasets.MNIST):
         train: bool = True,
         download: bool = False,
         num_workers: int = None,
+        subclass: str = None,
+        resolution: int = 32,
         **kwargs,
     ) -> None:
         super(QuadtreeMNIST, self).__init__(root, train=train, download=download)
