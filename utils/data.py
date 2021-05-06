@@ -14,14 +14,17 @@ DATASETS = {
 }
 
 
-def datasets(dataset, subclass="all", resolution=32, datapath="data"):
+def datasets(dataset, subclass="all", resolution=32, iterative=False, datapath="data"):
     """ Loads datasets for training, validation and testing.
 
     Args:
-        dataset: Selects the dataset. Currently only 'mnist' available.
+        dataset: Select a dataset. Currently only 'mnist' and 'shapenet' available.
+        subclass: Select a subclass of a dataset, if available.
+        resolution: Select the underlying resolution of the selected dataset, if available.
+        iterative: Select whether to prepare the data for an 'iterative' or and 'successive' approach.
         batch_size: Defines the batch size for the data loader
         datapath: Path to the dataset. If the dataset is not found then
-            the data automatically downloaded to the specified location.
+            the data is automatically downloaded to the specified location.
 
     Returns:
         train_ds: Dataset with training data.
@@ -29,14 +32,17 @@ def datasets(dataset, subclass="all", resolution=32, datapath="data"):
         test_ds: Dataset with test data.
 
     """
-    num_cpus = mp.cpu_count()
+    kwargs = {
+        "root": datapath,
+        "download": True,
+        "num_workers": mp.cpu_count(),
+        "subclass": subclass,
+        "resolution": resolution,
+        "iterative": iterative,
+    }
 
-    train_ds = DATASETS[dataset](
-        datapath, train=True, download=True, num_workers=num_cpus, subclass=subclass, resolution=resolution
-    )
-    test_ds = DATASETS[dataset](
-        datapath, train=False, download=True, num_workers=num_cpus, subclass=subclass, resolution=resolution
-    )
+    train_ds = DATASETS[dataset](train=True, **kwargs)
+    test_ds = DATASETS[dataset](train=False, **kwargs)
 
     # 90/10 splitt for training and validation data
     train_size = int(0.95 * len(train_ds))
@@ -60,25 +66,23 @@ def pad_collate(dataset):
         value_pad: padded value sequence
         depth_pad: padded depth layer sequence
         pos_pad: padded and stacked spatial position sequences
+        target_pad: padded target sequence
     """
     def pad_spatial_dim_2(batch):
-        value, depth, pos_x, pos_y, _ = zip(*batch)
+        value, depth, pos, target = zip(*batch)
         value_pad = pad_sequence(value)
         depth_pad = pad_sequence(depth)
-        pos_x_pad = pad_sequence(pos_x)
-        pos_y_pad = pad_sequence(pos_y)
-        pos_pad = torch.stack([pos_x_pad, pos_y_pad])
-        return value_pad, depth_pad, pos_pad
+        pos_pad = pad_sequence(pos, padding_value=(0, 0))
+        target_pad = pad_sequence(target)
+        return value_pad, depth_pad, pos_pad, target_pad
 
     def pad_spatial_dim_3(batch):
-        value, depth, pos_x, pos_y, pos_z = zip(*batch)
+        value, depth, pos, target = zip(*batch)
         value_pad = pad_sequence(value)
         depth_pad = pad_sequence(depth)
-        pos_x_pad = pad_sequence(pos_x)
-        pos_y_pad = pad_sequence(pos_y)
-        pos_z_pad = pad_sequence(pos_z)
-        pos_pad = torch.stack([pos_x_pad, pos_y_pad, pos_z_pad])
-        return value_pad, depth_pad, pos_pad
+        pos_pad = pad_sequence(pos, padding_value=(0, 0, 0))
+        target_pad = pad_sequence(target)
+        return value_pad, depth_pad, pos_pad, target_pad
 
     if str(dataset) in ('mnist'):
         return pad_spatial_dim_2
@@ -86,14 +90,17 @@ def pad_collate(dataset):
         return pad_spatial_dim_3
 
 
-def dataloaders(dataset, subclass, resolution, batch_size, datapath="data"):
+def dataloaders(dataset, subclass, resolution, iterative, batch_size, datapath="data"):
     """ Creates dataloaders for training, validation and testing.
 
     Args:
-        dataset: Selects the dataset. Currently only 'mnist' available.
+        dataset: Select a dataset. Currently only 'mnist' and 'shapenet' available.
+        subclass: Select a subclass of a dataset, if available.
+        resolution: Select the underlying resolution of the selected dataset, if available.
+        iterative: Select whether to prepare the data for an 'iterative' or an 'successive' approach.
         batch_size: Defines the batch size for the data loader
         datapath: Path to the dataset. If the dataset is not found then
-            the data automatically downloaded to the specified location.
+            the data is automatically downloaded to the specified location.
 
     Returns:
         train_dl: Dataloader with training data.
@@ -103,7 +110,7 @@ def dataloaders(dataset, subclass, resolution, batch_size, datapath="data"):
     """
     num_cpus = mp.cpu_count()
 
-    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, datapath)
+    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, iterative, datapath)
 
     train_dl = DataLoader(
         train_ds,

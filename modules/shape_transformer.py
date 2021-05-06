@@ -16,8 +16,6 @@ from modules.encoder_only import (
 from lr_scheduler import ConstantWithWarmup
 from loss import CrossEntropyLoss, DescendantWeightedCrossEntropyLoss
 
-from torch.nn.utils.rnn import pad_sequence
-
 
 class ShapeTransformer(pl.LightningModule):
     def __init__(
@@ -73,12 +71,6 @@ class ShapeTransformer(pl.LightningModule):
 
         # encoder decoder architectures
         elif architecture == "encoder_decoder":
-            # self.max_seq_len = num_positions // 2
-            # self.is_encoder_decoder = True
-            # if attention.startswith('basic'):
-            #     self.model = BasicEncoderDecoderModule(**kwargs)
-            #     self.batch_first = False
-            # elif attention.startswith('fast'):
             print("ERROR: Not implemented, yet.")
             raise ValueError
 
@@ -125,61 +117,33 @@ class ShapeTransformer(pl.LightningModule):
     def forward(self, value, depth, pos):
         return self.model(value, depth, pos)
 
-    def _unpad_sequence(self, x):
-        return x[x != 0]
-
-    def _repad_sequence(self, value, depth, pos):
-        value = pad_sequence(self._unpad_sequence(value[:self.max_seq_len])).long()
-        depth = pad_sequence(self._unpad_sequence(depth[:self.max_seq_len])).long()
-        pos = pad_sequence(self._unpad_sequence(pos[:, :self.max_seq_len])).long()
-        return value, depth, pos
-
-    def _transpose_sequence(self, value, depth, pos):
+    def _transpose_sequence(self, value, depth, pos, target):
         value = torch.transpose(value, 0, 1).contiguous()
         depth = torch.transpose(depth, 0, 1).contiguous()
         pos = torch.transpose(pos, 1, 2).contiguous()
-        return value, depth, pos
+        target = torch.transpose(target, 0, 1).contiguous()
+        return value, depth, pos, target
 
     def step_encoder_decoder(self, batch, batch_idx):
-        # with torch.no_grad():
-        #     src_value, src_depth, src_pos = batch
-
-        #     # splitt the input based on depth, repeat random number of times to train different depths
-        #     for _ in range(torch.randint(1, self.hparams.tree_depth, (1, ))):
-        #         _, max_ids = torch.max(src_depth, 1)
-        #         src_value, tgt_value = torch.tensor_split(src_value, max_ids)
-        #         src_depth, tgt_depth = torch.tensor_split(src_depth, max_ids)
-        #         src_pos, tgt_pos = torch.tensor_split(src_pos, max_ids)
-
-        #     # repad and delimit the sequences based on "new" batches
-        #     src_value, src_depth, src_pos = self._repad_sequence(src_value, src_depth, src_pos)
-        #     tgt_value, tgt_depth, tgt_pos = self._repad_sequence(tgt_value, tgt_depth, tgt_pos)
-
-        #     # 'fast-transformers' expects, unlike 'torch', batch size first and the sequence second.
-        #     if self.batch_first:
-        #         src_value, src_depth, src_pos = self._transpose_sequence(src_value, src_depth, src_pos)
-        #         tgt_value, tgt_depth, tgt_pos = self._transpose_sequence(tgt_value, tgt_depth, tgt_pos)
-
-        # logits = self.model(src_value, tgt_value, src_depth, tgt_depth, src_pos, tgt_pos)
-        # loss = self.loss_function(logits.view(-1, logits.size(-1)), tgt_value.view(-1))
-        # return loss
         return 0
 
     def step_encoder_only(self, batch, batch_idx):
         with torch.no_grad():
-            value, depth, pos = batch
+            value, depth, pos, target = batch
 
             # input lenght delimited to 'num_positions'
             value = value[:self.max_seq_len].long()
             depth = depth[:self.max_seq_len].long()
             pos = pos[:, :self.max_seq_len].long()
+            target = target[:, :self.max_seq_len].long()
 
             # 'fast-transformers' expects, unlike 'torch', batch size first and the sequence second.
+            # TODO: change sequences to batch first as default setting
             if self.batch_first:
                 value, depth, pos = self._transpose_sequence(value, depth, pos)
 
         logits = self.model(value, depth, pos)
-        loss = self.loss_function(logits.view(-1, logits.size(-1)), value.view(-1), depth.view(-1))
+        loss = self.loss_function(logits.view(-1, logits.size(-1)), target.view(-1), depth.view(-1))
         return loss
 
     def step(self, batch, batch_idx):

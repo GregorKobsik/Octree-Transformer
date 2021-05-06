@@ -41,6 +41,7 @@ def train(config):
         dataset=config['dataset'],
         subclass=config['subclass'],
         resolution=2**(config['tree_depth'] - 1),
+        iterative=False if config['architecture'] == "encoder_only" else True,
         batch_size=config['batch_size'],
         datapath=config['datapath'],
     )
