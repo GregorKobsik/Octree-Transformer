@@ -2,22 +2,23 @@ name: shapenet_debug
 
 # data
 dataset: shapenet
-subclass: chair
-num_positions: 4096
+subclass: basket
 num_vocab: 3
 tree_depth: 6
 spatial_dim: 3
 
 # architecture
 attention: basic
-num_layers: 8
+architecture: encoder_only
+iterative: False
+num_positions: 4096
 embed_dim: 64
+num_layers: 8
 num_heads: 4
-
 
 # training
 loss_function: cross_entropy
-epochs: 2
+epochs: 3
 warmup_steps: 0.1
 batch_size: 1
 accumulate_grad_batches: 1
