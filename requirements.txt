@@ -6,4 +6,10 @@ numpy
 tqdm
 Pillow
 matplotlib
+seaborn
 scikit_learn
+performer_pytorch
+reformer_pytorch
+routing_transformer
+sinkhorn_transformer
+linear_attention_transformer
