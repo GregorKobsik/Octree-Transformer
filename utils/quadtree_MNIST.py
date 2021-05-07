@@ -28,7 +28,11 @@ class QuadtreeMNIST(datasets.MNIST):
         super(QuadtreeMNIST, self).__init__(root, train=train, download=download)
         """ Initializes the basic MNIST dataset and performs a Quadtree transformation afterwards. """
         self.num_workers = num_workers
-        self.type_folder = self.type_folders[0] if self.iterative else self.type_folders[1]
+        self.type_folder = self.type_folders[0] if iterative else self.type_folders[1]
+        if resolution != 32:
+            print("WARNING: Currently only a resolution of 32 is available. Continue with resolution of 32.")
+        self.resolution = 32  # TODO: allow custom resolution
+
         self.quadtree_transform()
 
         data_file = self.training_file if self.train else self.test_file
@@ -39,7 +43,7 @@ class QuadtreeMNIST(datasets.MNIST):
         self.pos_y = torch.load(os.path.join(self.resolution_folder, self.subfolders[3], data_file))
         self.target = torch.load(
             os.path.join(self.resolution_folder, self.subfolders[4], data_file)
-        ) if self.iterative else self.value
+        ) if iterative else self.value
 
     def __getitem__(self, index: int) -> Tuple[Any, Any, Tuple, Any]:
         """
@@ -53,7 +57,7 @@ class QuadtreeMNIST(datasets.MNIST):
         return (
             torch.tensor(self.value[index]),
             torch.tensor(self.depth[index]),
-            torch.tensor((self.pos_x[index], self.pos_y[index])),
+            torch.tensor(np.stack([self.pos_x[index], self.pos_y[index]], axis=-1)),
             torch.tensor(self.target[index]),
         )
 
@@ -78,9 +82,10 @@ class QuadtreeMNIST(datasets.MNIST):
         )
 
     def _transform_img(self, img):
-        img = np.pad(img, (2, 2)) > 0.1
+        img = np.pad(img, (2, 2)) > 0.1  # pad image (32,32) and binarize with threshold (0.1)
         qtree = Quadtree().insert_image(img)
-        return qtree.get_sequence(return_depth=True, return_pos=True)
+        sequence = qtree.get_sequence(return_depth=True, return_pos=True)
+        return (*sequence, sequence[0])
 
     def quadtree_transform(self) -> None:
         """Transform the MNIST data if it doesn't exist in quadtree_folder already."""

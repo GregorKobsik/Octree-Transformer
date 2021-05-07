@@ -57,10 +57,8 @@ def datasets(dataset, subclass="all", resolution=32, iterative=False, datapath="
     return train_ds, valid_ds, test_ds
 
 
-def pad_collate(dataset):
-    """ Returns a padding function based on given dataset with the following properties:
-
-    Pads input sequence in each batch individually.
+def pad_collate(batch):
+    """ Pads input sequence in each batch individually.
 
     Returns:
         value_pad: padded value sequence
@@ -68,26 +66,12 @@ def pad_collate(dataset):
         pos_pad: padded and stacked spatial position sequences
         target_pad: padded target sequence
     """
-    def pad_spatial_dim_2(batch):
-        value, depth, pos, target = zip(*batch)
-        value_pad = pad_sequence(value)
-        depth_pad = pad_sequence(depth)
-        pos_pad = pad_sequence(pos, padding_value=(0, 0))
-        target_pad = pad_sequence(target)
-        return value_pad, depth_pad, pos_pad, target_pad
-
-    def pad_spatial_dim_3(batch):
-        value, depth, pos, target = zip(*batch)
-        value_pad = pad_sequence(value)
-        depth_pad = pad_sequence(depth)
-        pos_pad = pad_sequence(pos, padding_value=(0, 0, 0))
-        target_pad = pad_sequence(target)
-        return value_pad, depth_pad, pos_pad, target_pad
-
-    if str(dataset) in ('mnist'):
-        return pad_spatial_dim_2
-    elif str(dataset) in ('shapenet'):
-        return pad_spatial_dim_3
+    value, depth, pos, target = zip(*batch)
+    value_pad = pad_sequence(value, batch_first=True)
+    depth_pad = pad_sequence(depth, batch_first=True)
+    pos_pad = pad_sequence(pos, batch_first=True)
+    target_pad = pad_sequence(target, batch_first=True)
+    return value_pad, depth_pad, pos_pad, target_pad
 
 
 def dataloaders(dataset, subclass, resolution, iterative, batch_size, datapath="data"):
@@ -117,21 +101,21 @@ def dataloaders(dataset, subclass, resolution, iterative, batch_size, datapath="
         shuffle=True,
         batch_size=batch_size,
         pin_memory=True,
-        collate_fn=pad_collate(dataset),
+        collate_fn=pad_collate,
         num_workers=num_cpus,
     )
     valid_dl = DataLoader(
         valid_ds,
         batch_size=batch_size,
         pin_memory=True,
-        collate_fn=pad_collate(dataset),
+        collate_fn=pad_collate,
         num_workers=num_cpus,
     )
     test_dl = DataLoader(
         test_ds,
         batch_size=batch_size,
         pin_memory=True,
-        collate_fn=pad_collate(dataset),
+        collate_fn=pad_collate,
         num_workers=num_cpus,
     )
 

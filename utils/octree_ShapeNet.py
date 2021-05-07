@@ -126,7 +126,7 @@ class OctreeShapeNet(Dataset):
         return (
             torch.tensor(self.value[index]),
             torch.tensor(self.depth[index]),
-            torch.tensor((self.pos_x[index], self.pos_y[index], self.pos_z[index])),
+            torch.tensor(np.stack([self.pos_x[index], self.pos_y[index], self.pos_z[index]], axis=-1)),
             torch.tensor(self.target[index]),
         )
 
