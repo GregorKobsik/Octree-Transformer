@@ -91,6 +91,17 @@ def dataloaders(dataset, subclass, resolution, iterative, batch_size, datapath="
         valid_dl: Dataloader with validation data.
         test_dl: Dataloader with test data.
 
+    The returned data in each dataloader corresponds to: (value, depth, position, target),
+
+    With the following shapes:
+        value: (N, S)
+        depth: (N, S)
+        position: (N, S, A)
+        target: (N, S)
+
+        N: batch size
+        S: sequence length
+        A: spatial dimension
     """
     num_cpus = mp.cpu_count()
 
