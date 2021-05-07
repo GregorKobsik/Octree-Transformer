@@ -56,7 +56,7 @@ class RoutingTransformerModule(nn.Module):
         Expect input as shape:
             value: (N, S)
             depth: (N, S)
-            pos: (A, N, S)
+            pos: (N, S, A)
 
         shapes:
             S: sequence length
@@ -73,7 +73,7 @@ class RoutingTransformerModule(nn.Module):
         x = self.token_embedding(value)  # [N, S, E]
         x = x + self.depth_embedding(depth)  # [N, S, E]
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            x = x + spatial_embedding(pos[axis])  # [N, S, E]
+            x = x + spatial_embedding(pos[:, :, axis])  # [N, S, E]
 
         # prepend start of sequence token
         sos = torch.ones(batch, 1, self.embed_dim, device=value.device) * self.sos  # [N, 1, E]

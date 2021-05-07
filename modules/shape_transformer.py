@@ -71,6 +71,9 @@ class ShapeTransformer(pl.LightningModule):
 
         # encoder decoder architectures
         elif architecture == "encoder_decoder":
+            self.max_seq_len = num_positions
+            self.is_encoder_decoder = True
+            self.batch_first = True
             print("ERROR: Not implemented, yet.")
             raise ValueError
 
@@ -120,8 +123,15 @@ class ShapeTransformer(pl.LightningModule):
     def _transpose_sequence(self, value, depth, pos, target):
         value = torch.transpose(value, 0, 1).contiguous()
         depth = torch.transpose(depth, 0, 1).contiguous()
-        pos = torch.transpose(pos, 1, 2).contiguous()
+        pos = torch.transpose(pos, 0, 1).contiguous()
         target = torch.transpose(target, 0, 1).contiguous()
+        return value, depth, pos, target
+
+    def _limit_sequence_length(self, value, depth, pos, target):
+        value = value[:, :self.max_seq_len].long()
+        depth = depth[:, :self.max_seq_len].long()
+        pos = pos[:, :self.max_seq_len].long()
+        target = target[:, :self.max_seq_len].long()
         return value, depth, pos, target
 
     def step_encoder_decoder(self, batch, batch_idx):
@@ -129,18 +139,11 @@ class ShapeTransformer(pl.LightningModule):
 
     def step_encoder_only(self, batch, batch_idx):
         with torch.no_grad():
-            value, depth, pos, target = batch
-
             # input lenght delimited to 'num_positions'
-            value = value[:self.max_seq_len].long()
-            depth = depth[:self.max_seq_len].long()
-            pos = pos[:, :self.max_seq_len].long()
-            target = target[:, :self.max_seq_len].long()
-
-            # 'fast-transformers' expects, unlike 'torch', batch size first and the sequence second.
-            # TODO: change sequences to batch first as default setting
-            if self.batch_first:
-                value, depth, pos = self._transpose_sequence(value, depth, pos)
+            value, depth, pos, target = self._limit_sequence_length(*batch)
+            # 'pytorch' expects, unlike all other libraries, the batch in the second dimension.
+            if not self.batch_first:
+                value, depth, pos, target = self._transpose_sequence(value, depth, pos, target)
 
         logits = self.model(value, depth, pos)
         loss = self.loss_function(logits.view(-1, logits.size(-1)), target.view(-1), depth.view(-1))

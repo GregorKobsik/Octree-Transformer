@@ -57,7 +57,7 @@ class BasicTransformerModule(nn.Module):
         Expect input as shape:
             value: (S, N)
             depth: (S, N)
-            pos: (A, S, N)
+            pos: (S, N, A)
 
         shapes:
             S: sequence length
@@ -69,7 +69,7 @@ class BasicTransformerModule(nn.Module):
         h = self.token_embedding(value)  # [S, N, E]
         h = h + self.depth_embedding(depth)  # [S, N, E]
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            h = h + spatial_embedding(pos[axis])  # [S, N, E]
+            h = h + spatial_embedding(pos[:, :, axis])  # [S, N, E]
 
         # prepend start of sequence token
         seq_len, batch = value.shape  # [S, N]
