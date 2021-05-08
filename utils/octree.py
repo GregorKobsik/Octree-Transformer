@@ -39,6 +39,22 @@ class Octree():
         voxels = np.concatenate([voxels[:1], voxels[1:]], axis=1)
         return np.squeeze(voxels, axis=0)
 
+    def _dec_to_tri(self, seq):
+        """ Transformes input sequence given as a decimal number to a trinary representation as an array.
+
+        Takes care of 0 as an additional padding value, which is reserved.
+        """
+        repr = np.base_repr(seq - 1, base=3, padding=8)[-8:]
+        return [int(c) + 1 for c in repr]
+
+    def _tri_to_dec(self, seq):
+        """ Transformes input sequence given as an integer array in trianary base to a decimal number.
+
+        Takes care of 0 as an additional padding value, which is reserved.
+        """
+        repr = [c - 1 for c in seq]
+        return int("".join(map(str, repr)), base=3) + 1
+
     def insert_voxels(self, voxels, max_depth=float('Inf'), depth=1, pos=None):
         self.depth = depth
         self.resolution = np.array(voxels.shape[0])
