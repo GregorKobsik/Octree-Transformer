@@ -1,5 +1,7 @@
 import unittest
 import numpy as np
+import numpy.testing as np_test
+
 from utils.kd_tree_utils import ReprestantationTransformator
 
 
@@ -184,3 +186,47 @@ class TestConversionTrinaryDecimal(unittest.TestCase):
         repr = repr_trans.tri_to_dec([3, 3, 3, 3, 3, 3, 3, 3])
         self.assertEqual(repr, 6561)
 
+
+class TestConversionSuccessiveIterative(unittest.TestCase):
+    def test_successive_to_iterative_dim2(self):
+        repr_trans = ReprestantationTransformator(spatial_dim=2)
+
+        in_value = np.array([2] + [3, 2, 2, 1] + [3, 1, 3, 1, 3, 1, 1, 1])
+        in_depth = np.array([1] + [2, 2, 2, 2] + [3, 3, 3, 3, 3, 3, 3, 3])
+        in_pos = np.array(
+            [[4, 4]] + [[2, 2], [6, 2], [2, 6], [6, 6]] +
+            [[5, 1], [7, 1], [5, 3], [7, 3], [1, 5], [3, 5], [1, 7], [3, 7]]
+        )
+
+        tgt_value = np.array([2] + [3, 2, 2, 1])
+        tgt_depth = np.array([1] + [2, 2, 2, 2])
+        tgt_pos = np.array([[4, 4]] + [[2, 2], [6, 2], [2, 6], [6, 6]])
+        tgt_target = np.array([81, 61, 55, 1])
+
+        out_value, out_depth, out_pos, out_target = repr_trans.successive_to_iterative(in_value, in_depth, in_pos)
+
+        np_test.assert_array_equal(out_value, tgt_value)
+        np_test.assert_array_equal(out_depth, tgt_depth)
+        np_test.assert_array_equal(out_pos, tgt_pos)
+        np_test.assert_array_equal(out_target, tgt_target)
+
+    def test_iterative_to_successive_dim2(self):
+        repr_trans = ReprestantationTransformator(spatial_dim=2)
+
+        in_value = np.array([2] + [3, 2, 2, 1])
+        in_depth = np.array([1] + [2, 2, 2, 2])
+        in_pos = np.array([[4, 4]] + [[2, 2], [6, 2], [2, 6], [6, 6]])
+        in_target = np.array([81, 61, 55, 1])
+
+        tgt_value = np.array([2] + [3, 2, 2, 1] + [3, 1, 3, 1, 3, 1, 1, 1])
+        tgt_depth = np.array([1] + [2, 2, 2, 2] + [3, 3, 3, 3, 3, 3, 3, 3])
+        tgt_pos = np.array(
+            [[4, 4]] + [[2, 2], [6, 2], [2, 6], [6, 6]] +
+            [[5, 1], [7, 1], [5, 3], [7, 3], [1, 5], [3, 5], [1, 7], [3, 7]]
+        )
+
+        out_value, out_depth, out_pos = repr_trans.iterative_to_successive(in_value, in_depth, in_pos, in_target)
+
+        np_test.assert_array_equal(out_value, tgt_value)
+        np_test.assert_array_equal(out_depth, tgt_depth)
+        np_test.assert_array_equal(out_pos, tgt_pos)
