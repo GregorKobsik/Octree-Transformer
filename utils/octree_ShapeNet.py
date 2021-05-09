@@ -79,7 +79,7 @@ class OctreeShapeNet(Dataset):
 
     training_file = 'training.pt'
     test_file = 'test.pt'
-    subfolders = ["value", "depth", "pos_x", "pos_y", "pos_z", "target"]
+    subfolders = ["value", "depth", "pos", "target"]
     type_folders = ['iterative', 'successive']
 
     def __init__(
@@ -108,11 +108,9 @@ class OctreeShapeNet(Dataset):
 
         self.value = torch.load(os.path.join(self.resolution_folder, self.subfolders[0], data_file))
         self.depth = torch.load(os.path.join(self.resolution_folder, self.subfolders[1], data_file))
-        self.pos_x = torch.load(os.path.join(self.resolution_folder, self.subfolders[2], data_file))
-        self.pos_y = torch.load(os.path.join(self.resolution_folder, self.subfolders[3], data_file))
-        self.pos_z = torch.load(os.path.join(self.resolution_folder, self.subfolders[4], data_file))
+        self.pos = torch.load(os.path.join(self.resolution_folder, self.subfolders[2], data_file))
         self.target = torch.load(
-            os.path.join(self.resolution_folder, self.subfolders[5], data_file)
+            os.path.join(self.resolution_folder, self.subfolders[3], data_file)
         ) if iterative else self.value
 
     def __getitem__(self, index: int) -> Tuple[Any, Any, Tuple, Any]:

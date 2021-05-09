@@ -184,9 +184,7 @@ class Octree():
         """ Returns a linearised sequence representation of the quadtree. """
         seq_value = []
         seq_depth = []
-        seq_pos_x = []
-        seq_pos_y = []
-        seq_pos_z = []
+        seq_pos = []
 
         # start with root node
         open_set = [self]
@@ -200,28 +198,22 @@ class Octree():
 
             seq_value += [node.value]
             seq_depth += [node.depth]
-            seq_pos_x += [node.pos[0]]
-            seq_pos_y += [node.pos[1]]
-            seq_pos_z += [node.pos[2]]
+            seq_pos += [node.pos]
 
             if not node.final:
                 open_set += node.child_nodes
 
         seq_value = np.asarray(seq_value)
         seq_depth = np.asarray(seq_depth)
-        seq_pos_x = np.asarray(seq_pos_x)
-        seq_pos_y = np.asarray(seq_pos_y)
-        seq_pos_z = np.asarray(seq_pos_z)
+        seq_pos = np.asarray(seq_pos)
 
         # output format depends in flags 'return_depth' and 'return_pos'
-        if return_depth and return_pos:
-            return seq_value, seq_depth, seq_pos_x, seq_pos_y, seq_pos_z
-        elif return_depth and not return_pos:
-            return seq_value, seq_depth
-        elif not return_depth and return_pos:
-            return seq_value, seq_pos_x, seq_pos_y, seq_pos_z
-        else:
-            return seq_value
+        output = seq_value
+        if return_depth:
+            output = output + (seq_depth)
+        if return_pos:
+            output = output + (seq_pos)
+        return output
 
     def __repr__(self):
         return f"Octree() = {self.get_sequence()}, len = {len(self.get_sequence())}"
