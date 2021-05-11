@@ -2,12 +2,12 @@ import unittest
 import numpy as np
 import numpy.testing as np_test
 
-from utils.kd_tree_utils import ReprestantationTransformator
+from utils.kd_tree_utils import RepresentationTransformator
 
 
 class TestConversionTrinaryDecimal(unittest.TestCase):
     def test_dec_to_tri_dim2(self):
-        repr_trans = ReprestantationTransformator(spatial_dim=2)
+        repr_trans = RepresentationTransformator(spatial_dim=2)
 
         repr = repr_trans.dec_to_tri(1)
         self.assertEqual(repr, [1, 1, 1, 1])
@@ -52,7 +52,7 @@ class TestConversionTrinaryDecimal(unittest.TestCase):
         self.assertEqual(repr, [3, 3, 3, 3])
 
     def test_tri_to_dec_dim2(self):
-        repr_trans = ReprestantationTransformator(spatial_dim=3)
+        repr_trans = RepresentationTransformator(spatial_dim=3)
 
         repr = repr_trans.tri_to_dec([1, 1, 1, 1])
         self.assertEqual(repr, 1)
@@ -97,7 +97,7 @@ class TestConversionTrinaryDecimal(unittest.TestCase):
         self.assertEqual(repr, 81)
 
     def test_dec_to_tri_dim3(self):
-        repr_trans = ReprestantationTransformator(spatial_dim=3)
+        repr_trans = RepresentationTransformator(spatial_dim=3)
 
         repr = repr_trans.dec_to_tri(1)
         self.assertEqual(repr, [1, 1, 1, 1, 1, 1, 1, 1])
@@ -142,7 +142,7 @@ class TestConversionTrinaryDecimal(unittest.TestCase):
         self.assertEqual(repr, [3, 3, 3, 3, 3, 3, 3, 3])
 
     def test_tri_to_dec_dim3(self):
-        repr_trans = ReprestantationTransformator(spatial_dim=3)
+        repr_trans = RepresentationTransformator(spatial_dim=3)
 
         repr = repr_trans.tri_to_dec([1, 1, 1, 1, 1, 1, 1, 1])
         self.assertEqual(repr, 1)
@@ -189,7 +189,7 @@ class TestConversionTrinaryDecimal(unittest.TestCase):
 
 class TestConversionSuccessiveIterative(unittest.TestCase):
     def test_successive_to_iterative_dim2(self):
-        repr_trans = ReprestantationTransformator(spatial_dim=2)
+        repr_trans = RepresentationTransformator(spatial_dim=2)
 
         in_value = np.array([2] + [3, 2, 2, 1] + [3, 1, 3, 1, 3, 1, 1, 1])
         in_depth = np.array([1] + [2, 2, 2, 2] + [3, 3, 3, 3, 3, 3, 3, 3])
@@ -211,7 +211,7 @@ class TestConversionSuccessiveIterative(unittest.TestCase):
         np_test.assert_array_equal(out_target, tgt_target)
 
     def test_iterative_to_successive_dim2(self):
-        repr_trans = ReprestantationTransformator(spatial_dim=2)
+        repr_trans = RepresentationTransformator(spatial_dim=2)
 
         in_value = np.array([2] + [3, 2, 2, 1])
         in_depth = np.array([1] + [2, 2, 2, 2])

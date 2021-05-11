@@ -1,38 +1,14 @@
 import numpy as np
+from utils.kd_tree import _directions
 
 
-class ReprestantationTransformator():
-    _dirs = {
-        1:
-            np.array([[-1, +1]]),
-        2:
-            np.array([
-                [-1, -1],
-                [+1, -1],
-                [-1, +1],
-                [+1, +1],
-            ]),
-        3:
-            np.array(
-                [
-                    [-1, -1, -1],
-                    [-1, -1, +1],
-                    [-1, +1, -1],
-                    [-1, +1, +1],
-                    [+1, -1, -1],
-                    [+1, -1, +1],
-                    [+1, +1, -1],
-                    [+1, +1, +1],
-                ]
-            ),
-    }
-
+class RepresentationTransformator():
     def __init__(self, spatial_dim=3):
         super().__init__()
         self.spatial_dim = spatial_dim
         self.num_tokens = 2**spatial_dim
         self.max_int_value_as_tri = 3**self.num_tokens
-        self.dirs = self._dirs[spatial_dim]
+        self.dirs = _directions[spatial_dim]
 
     def dec_to_tri(self, seq):
         """ Transformes input sequence given as a decimal number to a trinary representation as an array.
@@ -73,7 +49,7 @@ class ReprestantationTransformator():
             elif token == 3:  # token for all full: 3^2^spatial_dim
                 target = target + [self.max_int_value_as_tri]
             else:  # encode 8 leading tokens of last layer as one integer in trinary representation
-                target = target + [self.tri_to_dec(last_layer[:self.num_tokens])]
+                target += [self.tri_to_dec(last_layer[:self.num_tokens])]
                 last_layer = last_layer[self.num_tokens:]
 
         # discard the last layer, as we encoded it in 'target'
