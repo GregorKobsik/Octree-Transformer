@@ -195,7 +195,7 @@ class TestConversionSuccessiveIterative(unittest.TestCase):
         in_depth = np.array([1] + [2, 2, 2, 2] + [3, 3, 3, 3, 3, 3, 3, 3])
         in_pos = np.array(
             [[4, 4]] + [[2, 2], [6, 2], [2, 6], [6, 6]] +
-            [[5, 1], [7, 1], [5, 3], [7, 3], [1, 5], [3, 5], [1, 7], [3, 7]]
+            [[5, 1], [5, 3], [7, 1], [7, 3], [1, 5], [1, 7], [3, 5], [3, 7]]
         )
 
         tgt_value = np.array([2] + [3, 2, 2, 1])
@@ -222,7 +222,7 @@ class TestConversionSuccessiveIterative(unittest.TestCase):
         tgt_depth = np.array([1] + [2, 2, 2, 2] + [3, 3, 3, 3, 3, 3, 3, 3])
         tgt_pos = np.array(
             [[4, 4]] + [[2, 2], [6, 2], [2, 6], [6, 6]] +
-            [[5, 1], [7, 1], [5, 3], [7, 3], [1, 5], [3, 5], [1, 7], [3, 7]]
+            [[5, 1], [5, 3], [7, 1], [7, 3], [1, 5], [1, 7], [3, 5], [3, 7]]
         )
 
         out_value, out_depth, out_pos = repr_trans.iterative_to_successive(in_value, in_depth, in_pos, in_target)

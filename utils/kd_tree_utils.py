@@ -8,7 +8,7 @@ class RepresentationTransformator():
         self.spatial_dim = spatial_dim
         self.num_tokens = 2**spatial_dim
         self.max_int_value_as_tri = 3**self.num_tokens
-        self.dirs = _directions[spatial_dim]
+        self.dirs = _directions(spatial_dim)
 
     def dec_to_tri(self, seq):
         """ Transformes input sequence given as a decimal number to a trinary representation as an array.

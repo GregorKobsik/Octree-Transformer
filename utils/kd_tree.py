@@ -26,6 +26,6 @@ class kdTree():
         return elements
 
     def _concat(self, elements):
-        for i in range(self.spatial_dim):
+        for i in range(1, self.spatial_dim + 1):
             elements = np.concatenate(np.split(elements, indices_or_sections=2, axis=0), axis=i)
         return np.squeeze(elements, axis=0)
