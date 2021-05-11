@@ -185,11 +185,11 @@ class kdTree():
         seq_pos = np.asarray(seq_pos)
 
         # output format depends in flags 'return_depth' and 'return_pos'
-        output = seq_value
+        output = [seq_value]
         if return_depth:
-            output = output + (seq_depth)
+            output += [seq_depth]
         if return_pos:
-            output = output + (seq_pos)
+            output += [seq_pos]
         return output
 
     def __repr__(self):
