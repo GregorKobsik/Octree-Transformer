@@ -156,7 +156,8 @@ class OctreeShapeNet(Dataset):
         voxels = load_hsp(data_path, max(self.resolution, 16))
         octree = kdTree(spatial_dim=3).insert_element_array(voxels)
         if not self.iterative:
-            return octree.get_token_sequence(return_depth=True, return_pos=True)
+            sequence = octree.get_token_sequence(return_depth=True, return_pos=True)
+            return (*sequence, sequence[0])
         else:
             repr_trans = RepresentationTransformator(spatial_dim=3)
             output = []
@@ -197,7 +198,4 @@ class OctreeShapeNet(Dataset):
         self.value = torch.load(os.path.join(self.resolution_path, self.subfolders[0], data_file))
         self.depth = torch.load(os.path.join(self.resolution_path, self.subfolders[1], data_file))
         self.pos = torch.load(os.path.join(self.resolution_path, self.subfolders[2], data_file))
-        if not self.iterative:  # in 'successive' case the target is equal to the input
-            self.target = self.value
-        else:
-            self.target = torch.load(os.path.join(self.resolution_path, self.subfolders[3], data_file))
+        self.target = torch.load(os.path.join(self.resolution_path, self.subfolders[3], data_file))
