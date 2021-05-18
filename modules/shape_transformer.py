@@ -13,6 +13,9 @@ from modules.encoder_only import (
     SinkhornTransformerModule,
     LinearTransformerModule,
 )
+from modules.encoder_decoder import (
+    BasicEncoderDecoderModule,
+)
 from lr_scheduler import ConstantWithWarmup
 from loss import CrossEntropyLoss, DescendantWeightedCrossEntropyLoss
 
@@ -68,20 +71,32 @@ class ShapeTransformer(pl.LightningModule):
                 self.model = SinkhornTransformerModule(**kwargs)
             elif attention.startswith('linear'):
                 self.model = LinearTransformerModule(**kwargs)
-
+            else:
+                print(f"ERROR: {attention} for {architecture} not implemented.")
+                raise ValueError
         # encoder decoder architectures
         elif architecture == "encoder_decoder":
             self.max_seq_len = num_positions
             self.is_encoder_decoder = True
             self.batch_first = True
-            print("ERROR: Not implemented, yet.")
+            if attention.startswith('basic'):
+                self.model = BasicEncoderDecoderModule(**kwargs)
+                self.batch_first = False
+            else:
+                print(f"ERROR: {attention} attention for {architecture} not implemented.")
+                raise ValueError
+        else:
+            print(f"ERROR: {architecture} architecture not implemented.")
             raise ValueError
 
         # loss functions
         if loss_function == 'cross_entropy':
             self.loss_function = CrossEntropyLoss()
-        if loss_function == 'descendant_weighted_cross_entropy':
+        elif loss_function == 'descendant_weighted_cross_entropy':
             self.loss_function = DescendantWeightedCrossEntropyLoss(spatial_dim=spatial_dim)
+        else:
+            print(f"ERROR: {loss_function} loss not implemented.")
+            raise ValueError
 
         print(f"\nShape Transformer parameters:\n{self.hparams}\n")
 
@@ -120,40 +135,22 @@ class ShapeTransformer(pl.LightningModule):
     def forward(self, value, depth, pos):
         return self.model(value, depth, pos)
 
-    def _transpose_sequence(self, value, depth, pos, target):
-        value = torch.transpose(value, 0, 1).contiguous()
-        depth = torch.transpose(depth, 0, 1).contiguous()
-        pos = torch.transpose(pos, 0, 1).contiguous()
-        target = torch.transpose(target, 0, 1).contiguous()
-        return value, depth, pos, target
-
-    def _limit_sequence_length(self, value, depth, pos, target):
-        value = value[:, :self.max_seq_len].long()
-        depth = depth[:, :self.max_seq_len].long()
-        pos = pos[:, :self.max_seq_len].long()
-        target = target[:, :self.max_seq_len].long()
-        return value, depth, pos, target
-
-    def step_encoder_decoder(self, batch, batch_idx):
-        return 0
-
-    def step_encoder_only(self, batch, batch_idx):
+    def step(self, batch, batch_idx):
         with torch.no_grad():
             # input lenght delimited to 'num_positions'
-            value, depth, pos, target = self._limit_sequence_length(*batch)
+            batch = self._limit_sequence_length(batch)
             # 'pytorch' expects, unlike all other libraries, the batch in the second dimension.
             if not self.batch_first:
-                value, depth, pos, target = self._transpose_sequence(value, depth, pos, target)
+                batch = self._transpose_sequence(batch)
+            value, depth, pos, target = batch
 
-        logits = self.model(value, depth, pos)
+        if self.is_encoder_decoder:
+            logits = self.model(value, depth, pos, target)
+        else:
+            logits = self.model(value, depth, pos)
+
         loss = self.loss_function(logits.view(-1, logits.size(-1)), target.view(-1), depth.view(-1))
         return loss
-
-    def step(self, batch, batch_idx):
-        if self.is_encoder_decoder:
-            return self.step_encoder_decoder(batch, batch_idx)
-        else:
-            return self.step_encoder_only(batch, batch_idx)
 
     def training_step(self, batch, batch_idx):
         loss = self.step(batch, batch_idx)
@@ -170,3 +167,9 @@ class ShapeTransformer(pl.LightningModule):
         loss = self.step(batch, batch_idx)
         self.log('test_loss', loss, sync_dist=True)
         return loss
+
+    def _transpose_sequence(self, batch):
+        return [torch.transpose(x, 0, 1).contiguous() for x in batch]
+
+    def _limit_sequence_length(self, batch):
+        return [x[:, :self.max_seq_len].long() for x in batch]
