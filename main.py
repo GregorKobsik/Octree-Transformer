@@ -7,9 +7,12 @@ if __name__ == "__main__":
     Func:
         train: Creates a new model with random or pretrained weights and trains it according to the config file.
             Allows to override the default config file arguments with command line arguments.
-        test: Tests the loss of the given checkpoint on the test data set.
-        sample: Samples a number of sequences on the given checkpoint and creates an image with the results.
-     """
+        test: not supported, yet.
+        sample: not supported, yet.
+
+    TODO: test - Tests the loss of the given checkpoint on the test data set.
+    TODO: sample - Samples a number of sequences on the given checkpoint and creates an image with the results.
+    """
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
 
@@ -54,15 +57,10 @@ if __name__ == "__main__":
     # TESTING
     parser_test = subparsers.add_parser("test")
     parser_test.set_defaults(func=test)
-    parser_test.add_argument("datadir", type=str)
-    parser_test.add_argument("--checkpoint", type=str, default="checkpoints/best.ckpt")
 
     # SAMPLING
     parser_sample = subparsers.add_parser("sample")
     parser_sample.set_defaults(func=sample)
-    parser_sample.add_argument("datadir", type=str)
-    parser_sample.add_argument("--checkpoint", type=str, default="checkpoints/best.ckpt")
-    parser_sample.add_argument("--input_depth", default=3, type=int)
 
     args = parser.parse_args()
     args.func(vars(args))
