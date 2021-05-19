@@ -3,13 +3,14 @@ name: shapenet_xxs
 # data
 dataset: shapenet
 subclass: chair
-num_positions: 4096
 num_vocab: 3
 tree_depth: 6
 spatial_dim: 3
 
 # architecture
 attention: basic_full
+architecture: encoder_only
+num_positions: 4096
 embed_dim: 16
 num_layers: 4
 num_heads: 2
@@ -31,5 +32,4 @@ log_gpu: 'min_max'
 log_gradient: True
 log_weights_and_biases: False
 log_learning_rate: True
-sample_images: False
 parameter_search: False

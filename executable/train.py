@@ -13,7 +13,6 @@ from pytorch_lightning.callbacks import (
     GPUStatsMonitor,
 )
 from callbacks import (
-    TensorboardImageSampler,
     WeightsAndBiasesLogger,
     TrackedGradientOutput,
 )
@@ -63,15 +62,6 @@ def train(config):
         callbacks.append(GPUStatsMonitor(intra_step_time=True, inter_step_time=True))
     if config['log_learning_rate']:
         callbacks.append(LearningRateMonitor(logging_interval='step'))
-    if config['sample_images']:
-        callbacks.append(
-            TensorboardImageSampler(
-                dataset=valid_dl.dataset,
-                num_examples=3,
-                num_samples=3,
-                log_every_n_epoch=1,
-            )
-        )
     if config['parameter_search']:
         callbacks.append(TuneReportCallback({"loss": "val_loss", "max_gpu_mem": "mem_alloc"}, on="validation_end"))
 

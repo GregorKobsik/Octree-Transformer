@@ -10,7 +10,6 @@ spatial_dim: 3
 # architecture
 attention: basic
 architecture: encoder_only
-iterative: False
 num_positions: 4096
 embed_dim: 64
 num_layers: 8
@@ -33,5 +32,4 @@ log_gpu: 'min_max'
 log_learning_rate: True
 log_gradient: True
 log_weights_and_biases: False
-sample_images: False
 parameter_search: False

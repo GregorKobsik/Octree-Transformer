@@ -3,13 +3,14 @@ name: shapenet_lra
 # data
 dataset: shapenet
 subclass: chair
-num_positions: 4096
 num_vocab: 3
 tree_depth: 6
 spatial_dim: 3
 
 # architecture
 attention: fast_linear
+architecture: encoder_only
+num_positions: 4096
 embed_dim: 512
 num_heads: 8
 num_layers: 6
@@ -31,5 +32,4 @@ log_gpu: 'min_max'
 log_learning_rate: True
 log_gradient: True
 log_weights_and_biases: False
-sample_images: False
 parameter_search: False
