@@ -132,8 +132,11 @@ class ShapeTransformer(pl.LightningModule):
         }
         return [optimizer], [scheduler]
 
-    def forward(self, value, depth, pos):
-        return self.model(value, depth, pos)
+    def forward(self, value, depth, pos, target):
+        if self.is_encoder_decoder:
+            return self.model(value, depth, pos, target)
+        else:
+            return self.model(value, depth, pos)
 
     def step(self, batch, batch_idx):
         with torch.no_grad():
@@ -144,11 +147,7 @@ class ShapeTransformer(pl.LightningModule):
                 batch = self._transpose_sequence(batch)
             value, depth, pos, target = batch
 
-        if self.is_encoder_decoder:
-            logits = self.model(value, depth, pos, target)
-        else:
-            logits = self.model(value, depth, pos)
-
+        logits = self.forward(value, depth, pos, target)
         loss = self.loss_function(logits.view(-1, logits.size(-1)), target.view(-1), depth.view(-1))
         return loss
 
