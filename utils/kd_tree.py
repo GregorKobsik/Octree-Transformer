@@ -2,10 +2,10 @@ import numpy as np
 import itertools
 
 _cmap = {
-    0: 0,  # - padding value
-    1: 0,  # - all pixels are empty
-    2: 1,  # - pixels are empty and occupied
-    3: 2,  # - all pixels are occupied
+    0: 0,  # - padding value, show as empty
+    1: 0,  # - all elements are empty
+    2: 1,  # - elements are undefined, empty and occupied
+    3: 2,  # - all elements are occupied
 }
 
 
@@ -14,23 +14,66 @@ def _directions(spatial_dim):
 
 
 class kdTree():
+    """ Implements a kd-tree data structure for volumetric/spatial objects. Works with arrays of spatial data as well
+    as linearised token sequence representations.
+
+    This class allows to transform array with spatial elements into kd-trees, where k can by any natural number. Each
+    node represents mixed elements, which can be split in its branches. Each leaf represents a final element which is
+    either completly empty or completly occupied. These structure can be than linearized as a sequence of tokens, which
+    is equivalent to the kd-tree. In the same way, as arrays with spatial elements can be transformed into kd-trees,
+    token sequences can be transformed into kd-trees. This allows to seamlessly transform arrays of spatial data into
+    token sequences and vice versa.
+    """
     def __init__(self, spatial_dim: int):
+        """ Initializes the kd-tree for the right spatial dimensionality.
+
+        Args:
+            spatial_dim: Defines the spatial dimensionality of the kd-tree,
+                e.g. '2' for images/pixels and '3' for volumes/voxels.
+        """
         super().__init__()
         self.spatial_dim = spatial_dim
         self.dirs = _directions(spatial_dim)
 
     def _split(self, elements):
+        """ Splits the given element array along each axis in half.
+
+        Args:
+            elements: A numpy array with dimensionality of the kd-tree. Each dimension should be divisible by 2.
+
+        Return:
+            An array of elements with an additional dimension along the first axis, which holds the splitted subarrays.
+        """
         elements = np.expand_dims(elements, axis=0)
         for i in range(self.spatial_dim, 0, -1):
             elements = np.concatenate(np.split(elements, indices_or_sections=2, axis=i), axis=0)
         return elements
 
     def _concat(self, elements):
+        """ Concats the element array along each dimension, where each subarray is contained in the first axis.
+
+        Args:
+            elements: A numpy array, where the first axis consists of subarrays with the dimensionality of the kd-tree.
+
+        Return:
+            An array of elements with concatinated subarrays along each axis.
+        """
         for i in range(1, self.spatial_dim + 1):
             elements = np.concatenate(np.split(elements, indices_or_sections=2, axis=0), axis=i)
         return np.squeeze(elements, axis=0)
 
     def insert_element_array(self, elements, max_depth=float('Inf'), depth=1, pos=None):
+        """ Inserts an array of element values which is converted into a kd-tree.
+
+        Args:
+            elements: A numpy array of element values, with the dimensionality of the kd-tree.
+            max_depth: The maximum depth of the resulting kd-tree. All nodes at `max_depth` are marked as final.
+            depth: The current depth of the kd-tree. Used to recursively define the tree depth.
+            pos: Defines the mean position of all elements at the current node.
+
+        Return:
+            The current node containing inserted values. The returned node should be the root node of the kd-tree.
+        """
         self.depth = depth
         self.resolution = np.array(elements.shape[0])
         self.final = True
@@ -63,6 +106,21 @@ class kdTree():
         return self
 
     def get_element_array(self, depth=float('Inf'), mode='occupancy'):
+        """ Converts the kd-tree into an array of elements.
+
+        Args:
+            depth: Defines the maximum depth of the children nodes, of which the value will be returned in the array.
+            mode: Defines how the value of each node should be represented in the returned array. `occupancy` - returns
+                all padding and empty values as '0' and all mixed and occupied values as '1'. `value` - return the
+                exact value stored in the node. `color` - returns the values based on a colormap defined in `_cmap`,
+                where the stored value is subtracted by 1 and the padding value is returned as '0'. `depth` - returns
+                the current depth of the node as value in the array. `random` - returns a random number in the range of
+                [0, 19] for each node.
+
+        Return:
+            A numpy array with the dimensionality of the kd-tree, which hold values defined by `mode`.
+
+        """
         res = self.spatial_dim * [self.resolution]
         if self.final or self.depth == depth:
             # return empty array if all elements are empty
@@ -83,12 +141,27 @@ class kdTree():
         return self._concat(np.array([node.get_element_array(depth, mode) for node in self.child_nodes]))
 
     def insert_token_sequence(self, value, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
+        """ Inserts a token sequence which is parsed into a kd-tree.
+
+        Args:
+            value: A token sequence representing a spatial object. The values should consist only of '1', '2' and '3'.
+                The sequence can be eiter a string or an array of strings or integers.
+            resolution: The resolution of the token sequence. This value should be a power of 2.
+            max_depth: The maximum depth up to which the token sequence will be parsed.
+            autorepair_errors: Select if the parser should try to automatically repair malformed input sequenced by
+                adding padding tokens up to a required length. Each node with a value of '2' should have
+                2**`spatial_dim` children nodes.
+            silent: Select if errors and warnings should be printed into the output console.
+
+        Return:
+            A node which represents the given token sequence. The returned node should be the root node of the kd-tree.
+        """
         # fail-fast: malformed input sequence
         all_tokens_valid = all(str(c) in '123' for c in value)
         if not all_tokens_valid:
             if not silent:
                 print(
-                    "Error: Input sequence consists of invalid tokens. " +
+                    "ERROR: Input sequence consists of invalid tokens. Check token values and array type." +
                     f"Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). Sequence: {value}."
                 )
             raise ValueError
@@ -140,17 +213,21 @@ class kdTree():
                 if len(value) < node_counter:
                     if not silent:
                         print(
-                            "Error: Remaining input sequence is not long enough.", "Current depth:", depth,
+                            "WARNING: Remaining input sequence is not long enough.", "Current depth:", depth,
                             "Remaining sequence: ", value, "Current length:", len(value), "Expected lenght:",
                             node_counter
                         )
                     if not autorepair_errors:
+                        print("ERROR: Malformed input sequence not resolved.")
                         raise ValueError
                     else:
                         # perform simple sequence repair by appending missing tokens
                         value = np.append(value, [0 for _ in range(node_counter - len(value))])
                         if not silent:
-                            print(f"Resolved error - Modified input sequence: {value}, Current length: {len(value)}")
+                            print(
+                                f"WARNING: Resolved error - Modified input sequence: {value}, " +
+                                f"Current length: {len(value)}"
+                            )
 
                 if len(value) == node_counter:
                     final_layer = True
@@ -158,7 +235,18 @@ class kdTree():
         return self
 
     def get_token_sequence(self, depth=float('Inf'), return_depth=False, return_pos=False):
-        """ Returns a linearised sequence representation of the quadtree. """
+        """ Returns a linearised sequence representation of the kd-tree.
+
+        Args:
+            depth: Defines the maximum depth of the nodes, up to which the tree is parsed.
+            return_depth: Selects if the corresponding depth sequence should be returned.
+            return_pos: Selects if the corresponding position sequence should be returned.
+
+        Return
+            A numpy array consisting of integer values representing the linearised kd-tree. Returns additionally the
+            corresponding depth and position sequence if specified in `return_depth` or `return_pos`. The values are
+            returned in the following order: (value, depth, position).
+        """
         seq_value = []
         seq_depth = []
         seq_pos = []
@@ -193,6 +281,7 @@ class kdTree():
         return output
 
     def __repr__(self):
+        """ Returns of human readable string representation of the kd-tree. """
         return (
             f"kdTree() = {self.get_token_sequence()}, " + f"len = {len(self.get_token_sequence())}, " +
             f"dim = {self.spatial_dim}"
