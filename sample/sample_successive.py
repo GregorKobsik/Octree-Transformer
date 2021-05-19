@@ -142,7 +142,7 @@ def append_next_layer_tokens(value, depth, pos, spatial_dim, max_resolution):
     if len(value) == 0:
         value = torch.tensor([0], device=cur_device, dtype=torch.long)
         depth = torch.tensor([1], device=cur_device, dtype=torch.long)
-        pos = torch.ones(spatial_dim, 1, device=cur_device, dtype=torch.long) * max_resolution
+        pos = torch.ones(1, spatial_dim, device=cur_device, dtype=torch.long) * max_resolution
         num_future_tokens = torch.ones(1, device=cur_device, dtype=torch.long)
         return value, depth, pos, num_future_tokens
 
