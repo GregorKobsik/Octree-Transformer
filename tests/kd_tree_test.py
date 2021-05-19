@@ -3,7 +3,7 @@ import numpy as np
 import numpy.testing as np_test
 import matplotlib.image as mpimg
 
-from utils.kd_tree import kdTree
+from utils import kdTree
 
 
 class TestWhiteboxSplit(unittest.TestCase):
@@ -372,7 +372,7 @@ class TestQuadtree(unittest.TestCase):
         input = self.mnist_32x32_binarized()
 
         qtree = kdTree(spatial_dim=2).insert_element_array(input)
-        token_sequence = qtree.get_token_sequence()
+        token_sequence = qtree.get_token_sequence()[0]
 
         qtree2 = kdTree(spatial_dim=2).insert_token_sequence(token_sequence, resolution=input.shape[0])
         output = qtree2.get_element_array()
@@ -385,7 +385,7 @@ class TestQuadtree(unittest.TestCase):
         target = "2" + "2222" + "1112112112122121"
 
         qtree = kdTree(spatial_dim=2).insert_element_array(input)
-        output = qtree.get_token_sequence(depth=3)
+        output = qtree.get_token_sequence(depth=3)[0]
 
         self.assertSequenceEqual(target, ''.join(str(x) for x in output))
 
@@ -397,7 +397,7 @@ class TestQuadtree(unittest.TestCase):
         )
 
         qtree = kdTree(spatial_dim=2).insert_token_sequence(input, resolution=32)
-        output = qtree.get_token_sequence()
+        output = qtree.get_token_sequence()[0]
 
         self.assertEqual(len(input), len(output))
         self.assertSequenceEqual(input, ''.join(str(x) for x in output))

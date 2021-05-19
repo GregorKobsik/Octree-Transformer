@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import numpy.testing as np_test
 
-from utils.kd_tree_utils import RepresentationTransformator
+from utils import RepresentationTransformator
 
 
 class TestConversionTrinaryDecimal(unittest.TestCase):
