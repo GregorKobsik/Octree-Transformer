@@ -3,7 +3,6 @@ import torchvision
 
 from pytorch_lightning import Callback
 from utils.quadtree import Quadtree
-from utils.sample import sample_sequence
 
 
 class TensorboardImageSampler(Callback):
@@ -47,15 +46,17 @@ class TensorboardImageSampler(Callback):
 
             for _ in range(self.num_samples):
                 # sample sequence / predict shape based on input (super-resolution)
-                predicted_value = sample_sequence(
-                    pl_module,
-                    value,
-                    depth,
-                    pos,
-                    2,
-                    hparams.num_positions,
-                    hparams.tree_depth,
-                ).cpu().numpy()
+                # predicted_value = sample_sequence(
+                #     pl_module,
+                #     value,
+                #     depth,
+                #     pos,
+                #     2,
+                #     hparams.num_positions,
+                #     hparams.tree_depth,
+                # ).cpu().numpy()
+
+                predicted_value = []
 
                 # reconstuct images from sequence
                 qtree_pred = Quadtree().insert_sequence(

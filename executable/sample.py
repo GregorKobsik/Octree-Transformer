@@ -9,7 +9,7 @@ from PIL import Image
 from modules import ShapeTransformer
 from utils.data import datasets
 from utils.quadtree import Quadtree
-from utils.sample import sample_sequence
+#from utils.sample import sample_sequence
 
 
 def save(img_arr, dir):
@@ -79,7 +79,7 @@ def sample(config):
 
     # predict shape (super-resolution)
     print("Sample one example:")
-    predicted_value = sample_sequence(model, value, depth, pos_x, pos_y, max_seq_len, max_depth).cpu().numpy()
+    predicted_value = []  # sample_sequence(model, value, depth, pos_x, pos_y, max_seq_len, max_depth).cpu().numpy()
 
     print(predicted_value)
     # show images of predicted sample at different depth layers
