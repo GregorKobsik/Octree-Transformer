@@ -8,8 +8,7 @@ from tqdm.contrib.concurrent import process_map
 
 from torchvision import datasets
 
-from utils.kd_tree import kdTree
-from utils.kd_tree_utils import RepresentationTransformator
+from utils import kdTree, RepresentationTransformator
 
 
 class QuadtreeMNIST(datasets.MNIST):

@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 
 from modules import ShapeTransformer
-from utils.data import dataloaders
+from data import dataloaders
 
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,

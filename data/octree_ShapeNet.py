@@ -8,9 +8,7 @@ from torch.utils.data import Dataset
 from typing import Tuple, Any
 from tqdm.contrib.concurrent import process_map
 
-from utils.hsp_loader import load_hsp
-from utils.kd_tree import kdTree
-from utils.kd_tree_utils import RepresentationTransformator
+from utils import load_hsp, kdTree, RepresentationTransformator
 
 _class_folder_map = {
     "": "all",

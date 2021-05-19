@@ -1,4 +1,4 @@
-data/
+datasets/
 logs/
 samples/
 out/
@@ -12,6 +12,7 @@ __pycache__/
 
 # additional plugins
 .keras
+.config
 
 # VS Code settings
 .vscode/

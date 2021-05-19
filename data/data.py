@@ -4,8 +4,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 import multiprocessing as mp
 
-from utils.quadtree_MNIST import QuadtreeMNIST
-from utils.octree_ShapeNet import OctreeShapeNet
+from data import QuadtreeMNIST, OctreeShapeNet
 
 # Defines a dictionary of available datasets, which can be selected.
 DATASETS = {
@@ -14,7 +13,7 @@ DATASETS = {
 }
 
 
-def datasets(dataset, subclass="all", resolution=32, iterative=False, datapath="data"):
+def datasets(dataset, subclass="all", resolution=32, iterative=False, datapath="datasets"):
     """ Loads datasets for training, validation and testing.
 
     Args:
@@ -74,7 +73,7 @@ def pad_collate(batch):
     return value_pad, depth_pad, pos_pad, target_pad
 
 
-def dataloaders(dataset, subclass, resolution, iterative, batch_size, datapath="data"):
+def dataloaders(dataset, subclass, resolution, iterative, batch_size, datapath="datasets"):
     """ Creates dataloaders for training, validation and testing.
 
     Args:
