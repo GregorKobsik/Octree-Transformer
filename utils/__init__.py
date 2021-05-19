@@ -1,11 +1,12 @@
 from utils.hsp_loader import load_hsp, load_chair, load_airplane
-from utils.quadtree_MNIST import QuadtreeMNIST
-from utils.octree_ShapeNet import OctreeShapeNet
+from utils.kd_tree_utils import RepresentationTransformator, _directions
+from utils.kd_tree import kdTree
 
 __all__ = [
     "load_hsp",
     "load_chair",
     "load_airplane",
-    "QuadtreeMNIST",
-    "OctreeShapeNet",
+    "_directions",
+    "RepresentationTransformator",
+    "kdTree",
 ]

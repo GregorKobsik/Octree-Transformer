@@ -1,5 +1,9 @@
 import numpy as np
-from utils.kd_tree import _directions
+import itertools
+
+
+def _directions(spatial_dim):
+    return np.array(list(itertools.product([-1, 1], repeat=spatial_dim)))
 
 
 class RepresentationTransformator():

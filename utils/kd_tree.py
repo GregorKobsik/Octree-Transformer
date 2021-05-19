@@ -1,5 +1,5 @@
 import numpy as np
-import itertools
+from utils import _directions
 
 _cmap = {
     0: 0,  # - padding value, show as empty
@@ -7,10 +7,6 @@ _cmap = {
     2: 1,  # - elements are undefined, empty and occupied
     3: 2,  # - all elements are occupied
 }
-
-
-def _directions(spatial_dim):
-    return np.array(list(itertools.product([-1, 1], repeat=spatial_dim)))
 
 
 class kdTree():
