@@ -97,5 +97,7 @@ class Sampler():
             A sampled array of elements (pixels/voxels) with the size of `target_resolution` as a numpy array.
         """
         # create an initial array, with all elements marked as undefined/mixed.
-        initial_element_array = torch.full(self.spatial_dim * [1], 2, dtype=torch.long).numpy()
-        return self.sample(initial_element_array, 1, target_resolution, temperature)
+        initial_element_array = torch.randint(
+            low=0, high=2, size=self.spatial_dim * [self.max_resolution], dtype=torch.long
+        ).numpy()
+        return self.sample_preconditioned(initial_element_array, 1, target_resolution, temperature)
