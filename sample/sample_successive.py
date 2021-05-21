@@ -49,8 +49,8 @@ def sample_successive(
     batch_first,
     **_,
 ):
-    """ Perform a successive sampling of the given sequence until reaching the end of sequence of maximum sequence
-        length.
+    """ Perform an successive sampling of the given sequence until reaching the end of sequence, the maximum sequence
+        length or the desired resolution.
 
     Args:
         sequences: Token sequences, consisting of values, depth and position sequences.
@@ -70,7 +70,7 @@ def sample_successive(
     remaining_tokens = 0
 
     with torch.no_grad():
-        for i in tqdm(range(input_len, max_tokens), leave=False, desc="Sampling"):
+        for i in tqdm(range(input_len, max_tokens), initial=input_len, total=max_tokens, leave=False, desc="Sampling"):
 
             # append padding tokens for each new layer
             if remaining_tokens == 0:
@@ -140,7 +140,7 @@ def append_next_layer_tokens(value, depth, pos, spatial_dim, max_resolution):
 
     # got an empty input - initialize with default values and return
     if len(value) == 0:
-        value = torch.tensor([0], device=cur_device, dtype=torch.long)
+        value = torch.tensor([1], device=cur_device, dtype=torch.long)
         depth = torch.tensor([1], device=cur_device, dtype=torch.long)
         pos = torch.ones(1, spatial_dim, device=cur_device, dtype=torch.long) * max_resolution
         num_future_tokens = torch.ones(1, device=cur_device, dtype=torch.long)
@@ -150,8 +150,8 @@ def append_next_layer_tokens(value, depth, pos, spatial_dim, max_resolution):
     next_depth = torch.max(depth)
     num_future_tokens = num_children * torch.sum(value[depth == next_depth] == 2)
 
-    # compute future sequence (as padding) and future depth sequence
-    nl_value = torch.tensor([0], device=cur_device, dtype=torch.long).repeat(num_future_tokens)
+    # compute future sequence (non padding token) and future depth sequence
+    nl_value = torch.tensor([1], device=cur_device, dtype=torch.long).repeat(num_future_tokens)
     nl_depth = torch.tensor([next_depth + 1], device=cur_device, dtype=torch.long).repeat(num_future_tokens)
 
     # retrive and copy mixed tokens positions
