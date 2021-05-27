@@ -52,7 +52,6 @@ if __name__ == "__main__":
     parser_train.add_argument("--log_gradient", type=str, default=None)
     parser_train.add_argument("--log_weights_and_biases", type=str, default=None)
     parser_train.add_argument("--log_learning_rate", type=str, default=None)
-    parser_train.add_argument("--sample_images", type=str, default=None)
 
     # TESTING
     parser_test = subparsers.add_parser("test")
