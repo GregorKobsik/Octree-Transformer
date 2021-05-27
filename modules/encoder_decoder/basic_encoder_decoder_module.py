@@ -37,17 +37,6 @@ class BasicEncoderDecoderModule(nn.Module):
             [nn.Embedding(2**tree_depth + 1, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )  # TODO: + 1 unneccessary
 
-        # transformer encoder decoder
-        self.transformer = nn.Transformer(
-            d_model=embed_dim,
-            nhead=num_heads,
-            num_encoder_layers=num_layers,
-            num_decoder_layers=num_layers,
-            dim_feedforward=4 * embed_dim,
-            dropout=0.0,
-            activation='gelu',
-        )
-
         # transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=embed_dim,
