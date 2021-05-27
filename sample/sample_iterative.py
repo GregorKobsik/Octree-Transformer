@@ -71,7 +71,6 @@ def sample_iterative(
     input_len = len(value)
     remaining_tokens = 0
     rep_trans = RepresentationTransformator(spatial_dim)
-    pad = torch.tensor([1], dtype=torch.long, device=target.device)
 
     with torch.no_grad():
         for i in tqdm(range(input_len, max_tokens), initial=input_len, total=max_tokens, leave=False, desc="Sampling"):
@@ -84,15 +83,30 @@ def sample_iterative(
                     break  # reached desired maximum depth/resolution - early out
                 if len(depth[torch.logical_and(depth == max(depth), value == 2)]) == 0:
                     break  # all tokens are final - early out
-                target = torch.tensor([], dtype=torch.long, device=target.device)
+
+                # reset target sequence
                 remaining_tokens = len(depth[depth == max(depth)])
+                target = torch.tensor(remaining_tokens * [1], dtype=torch.long, device=target.device)
+                cur_token = 0
+
+                # precompute encoder memory / process input values sequence
+                memory = model.encode(
+                    value.unsqueeze(1 - batch_first),  # [N, S] or [S, N]
+                    depth.unsqueeze(1 - batch_first),  # [N, S] or [S, N]
+                    pos.unsqueeze(1 - batch_first),  # [N, S, A] or [S, N, A]
+                )  # [N, S, V] or [S, N, V]
+
+                # prefetch depth and position sequences for the decoder
+                tgt_idx = torch.argmax(depth)
+                tgt_depth = depth[tgt_idx:] + 1  # [T]
+                tgt_pos = pos[tgt_idx:]  # [T, A]
 
             # compute logits of next token
-            logits = model(
-                value.unsqueeze(1 - batch_first),  # [N, S] or [S, N]
-                depth.unsqueeze(1 - batch_first),  # [N, S] or [S, N]
-                pos.unsqueeze(1 - batch_first),  # [N, S, A] or [S, N, A]
-                torch.cat([target, pad]).unsqueeze(1 - batch_first),  # [N, S] or [S, N]
+            logits = model.decode(
+                target[:cur_token + 1].unsqueeze(1 - batch_first),  # [N, S] or [S, N]
+                tgt_depth[:cur_token + 1].unsqueeze(1 - batch_first),  # [N, S] or [S, N]
+                tgt_pos[:cur_token + 1].unsqueeze(1 - batch_first),  # [N, S, A] or [S, N, A]
+                memory
             )  # [N, S, V] or [S, N, V]
             last_logit = logits[0, -1, :] if batch_first else logits[-1, 0, :]  # [V]
 
@@ -101,13 +115,13 @@ def sample_iterative(
 
             # zero probability for special tokens -> invalid with parent token
             probs[0] = 0  # 'padding' token
-            probs[1] = 0  # 'all empty' token
-            probs[-1] = 0  # 'all full' token
 
             # sample next sequence token
-            target = torch.cat([target, torch.multinomial(probs, num_samples=1)])  # TODO: check input_len == i case.
+            target[cur_token] = torch.multinomial(probs, num_samples=1)[0]  # TODO: check input_len == i case.
 
+            # update counter
             remaining_tokens -= 1
+            cur_token += 1
 
     return value
 
