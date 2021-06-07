@@ -2,7 +2,7 @@ import unittest
 import torch
 import numpy.testing as np_test
 
-from sample.sample_successive import append_next_layer_tokens
+from sample.sample_utils import next_layer_tokens
 
 
 class TestPrepareInputForNextLayer_Spatial2(unittest.TestCase):
@@ -18,22 +18,19 @@ class TestPrepareInputForNextLayer_Spatial2(unittest.TestCase):
         target_seq = [1, 1, 1, 1]
         target_depth = [1, 1, 1, 1]
         target_pos = [[16, 16], [16, 48], [48, 16], [48, 48]]
-        target_future_tokens = 4
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 2, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 2, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             np_test.assert_array_equal(output_seq, target_seq)
             np_test.assert_array_equal(output_depth, target_depth)
             np_test.assert_array_equal(output_pos, target_pos)
-            self.assertEqual(future_tokens, target_future_tokens)
         elif device == "cuda":
             np_test.assert_array_equal(output_seq.cpu(), target_seq)
             np_test.assert_array_equal(output_depth.cpu(), target_depth)
             np_test.assert_array_equal(output_pos.cpu(), target_pos)
-            self.assertEqual(future_tokens.cpu(), target_future_tokens)
         else:
             self.assertTrue(False)
 
@@ -53,28 +50,25 @@ class TestPrepareInputForNextLayer_Spatial2(unittest.TestCase):
         pos = torch.tensor([[16, 16], [16, 48], [48, 16], [48, 48]], dtype=torch.long, device=device)
 
         # define expected output sequences
-        target_seq = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        target_depth = [1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+        target_seq = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        target_depth = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         target_pos = [
-            [16, 16], [16, 48], [48, 16], [48, 48], [8, 8], [8, 24], [24, 8], [24, 24], [8, 40], [8, 56], [24, 40],
-            [24, 56], [40, 8], [40, 24], [56, 8], [56, 24], [40, 40], [40, 56], [56, 40], [56, 56]
+            [8, 8], [8, 24], [24, 8], [24, 24], [8, 40], [8, 56], [24, 40], [24, 56], [40, 8], [40, 24], [56, 8],
+            [56, 24], [40, 40], [40, 56], [56, 40], [56, 56]
         ]
-        target_future_tokens = 16
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 2, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 2, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             np_test.assert_array_equal(output_seq, target_seq)
             np_test.assert_array_equal(output_depth, target_depth)
             np_test.assert_array_equal(output_pos, target_pos)
-            self.assertEqual(future_tokens, target_future_tokens)
         elif device == "cuda":
             np_test.assert_array_equal(output_seq.cpu(), target_seq)
             np_test.assert_array_equal(output_depth.cpu(), target_depth)
             np_test.assert_array_equal(output_pos.cpu(), target_pos)
-            self.assertEqual(future_tokens.cpu(), target_future_tokens)
         else:
             self.assertTrue(False)
 
@@ -98,28 +92,22 @@ class TestPrepareInputForNextLayer_Spatial2(unittest.TestCase):
         )
 
         # define expected output sequences
-        target_seq = [2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1]
-        target_depth = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3]
-        target_pos = [
-            [16, 16], [16, 48], [48, 16], [48, 48], [8, 8], [8, 24], [24, 8], [24, 24], [4, 4], [4, 12], [12, 4],
-            [12, 12]
-        ]
-        target_future_tokens = 4
+        target_seq = [1, 1, 1, 1]
+        target_depth = [3, 3, 3, 3]
+        target_pos = [[4, 4], [4, 12], [12, 4], [12, 12]]
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 2, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 2, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             np_test.assert_array_equal(output_seq, target_seq)
             np_test.assert_array_equal(output_depth, target_depth)
             np_test.assert_array_equal(output_pos, target_pos)
-            self.assertEqual(future_tokens, target_future_tokens)
         elif device == "cuda":
             np_test.assert_array_equal(output_seq.cpu(), target_seq)
             np_test.assert_array_equal(output_depth.cpu(), target_depth)
             np_test.assert_array_equal(output_pos.cpu(), target_pos)
-            self.assertEqual(future_tokens.cpu(), target_future_tokens)
         else:
             self.assertTrue(False)
 
@@ -142,19 +130,17 @@ class TestPrepareInputForNextLayer_Spatial2(unittest.TestCase):
         pos = torch.tensor([[16, 16], [16, 48], [48, 16], [48, 48]], dtype=torch.long, device=device)
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 2, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 2, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             self.assertEqual(output_seq.type(), "torch.LongTensor")
             self.assertEqual(output_depth.type(), "torch.LongTensor")
             self.assertEqual(output_pos.type(), "torch.LongTensor")
-            self.assertEqual(future_tokens.type(), "torch.LongTensor")
         elif device == "cuda":
             self.assertEqual(output_seq.type(), "torch.cuda.LongTensor")
             self.assertEqual(output_depth.type(), "torch.cuda.LongTensor")
             self.assertEqual(output_pos.type(), "torch.cuda.LongTensor")
-            self.assertEqual(future_tokens.type(), "torch.cuda.LongTensor")
         else:
             self.assertTrue(False)
 
@@ -189,22 +175,19 @@ class TestPrepareInputForNextLayer_Spatial3(unittest.TestCase):
             [48, 48, 16],
             [48, 48, 48],
         ]
-        target_future_tokens = 8
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 3, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 3, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             np_test.assert_array_equal(output_seq, target_seq)
             np_test.assert_array_equal(output_depth, target_depth)
             np_test.assert_array_equal(output_pos, target_pos)
-            self.assertEqual(future_tokens, target_future_tokens)
         elif device == "cuda":
             np_test.assert_array_equal(output_seq.cpu(), target_seq)
             np_test.assert_array_equal(output_depth.cpu(), target_depth)
             np_test.assert_array_equal(output_pos.cpu(), target_pos)
-            self.assertEqual(future_tokens.cpu(), target_future_tokens)
         else:
             self.assertTrue(False)
 
@@ -237,41 +220,37 @@ class TestPrepareInputForNextLayer_Spatial3(unittest.TestCase):
         )
         # define expected output sequences
         target_seq = [
-            2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         ]
         target_depth = [
-            1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
         ]
         target_pos = [
-            [16, 16, 16], [16, 16, 48], [16, 48, 16], [16, 48, 48], [48, 16, 16], [48, 16, 48], [48, 48, 16],
-            [48, 48, 48], [8, 8, 8], [8, 8, 24], [8, 24, 8], [8, 24, 24], [24, 8, 8], [24, 8, 24], [24, 24, 8],
-            [24, 24, 24], [8, 8, 40], [8, 8, 56], [8, 24, 40], [8, 24, 56], [24, 8, 40], [24, 8, 56], [24, 24, 40],
-            [24, 24, 56], [8, 40, 8], [8, 40, 24], [8, 56, 8], [8, 56, 24], [24, 40, 8], [24, 40, 24], [24, 56, 8],
-            [24, 56, 24], [8, 40, 40], [8, 40, 56], [8, 56, 40], [8, 56, 56], [24, 40, 40], [24, 40, 56], [24, 56, 40],
-            [24, 56, 56], [40, 8, 8], [40, 8, 24], [40, 24, 8], [40, 24, 24], [56, 8, 8], [56, 8, 24], [56, 24, 8],
-            [56, 24, 24], [40, 8, 40], [40, 8, 56], [40, 24, 40], [40, 24, 56], [56, 8, 40], [56, 8, 56], [56, 24, 40],
-            [56, 24, 56], [40, 40, 8], [40, 40, 24], [40, 56, 8], [40, 56, 24], [56, 40, 8], [56, 40, 24], [56, 56, 8],
-            [56, 56, 24], [40, 40, 40], [40, 40, 56], [40, 56, 40], [40, 56, 56], [56, 40, 40], [56, 40, 56],
-            [56, 56, 40], [56, 56, 56]
+            [8, 8, 8], [8, 8, 24], [8, 24, 8], [8, 24, 24], [24, 8, 8], [24, 8, 24], [24, 24, 8], [24, 24, 24],
+            [8, 8, 40], [8, 8, 56], [8, 24, 40], [8, 24, 56], [24, 8, 40], [24, 8, 56], [24, 24, 40], [24, 24, 56],
+            [8, 40, 8], [8, 40, 24], [8, 56, 8], [8, 56, 24], [24, 40, 8], [24, 40, 24], [24, 56, 8], [24, 56, 24],
+            [8, 40, 40], [8, 40, 56], [8, 56, 40], [8, 56, 56], [24, 40, 40], [24, 40, 56], [24, 56, 40], [24, 56, 56],
+            [40, 8, 8], [40, 8, 24], [40, 24, 8], [40, 24, 24], [56, 8, 8], [56, 8, 24], [56, 24, 8], [56, 24, 24],
+            [40, 8, 40], [40, 8, 56], [40, 24, 40], [40, 24, 56], [56, 8, 40], [56, 8, 56], [56, 24, 40], [56, 24, 56],
+            [40, 40, 8], [40, 40, 24], [40, 56, 8], [40, 56, 24], [56, 40, 8], [56, 40, 24], [56, 56, 8], [56, 56, 24],
+            [40, 40, 40], [40, 40, 56], [40, 56, 40], [40, 56, 56], [56, 40, 40], [56, 40, 56], [56, 56, 40],
+            [56, 56, 56]
         ]
-        target_future_tokens = 64
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 3, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 3, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             np_test.assert_array_equal(output_seq, target_seq)
             np_test.assert_array_equal(output_depth, target_depth)
             np_test.assert_array_equal(output_pos, target_pos)
-            self.assertEqual(future_tokens, target_future_tokens)
         elif device == "cuda":
             np_test.assert_array_equal(output_seq.cpu(), target_seq)
             np_test.assert_array_equal(output_depth.cpu(), target_depth)
             np_test.assert_array_equal(output_pos.cpu(), target_pos)
-            self.assertEqual(future_tokens.cpu(), target_future_tokens)
         else:
             self.assertTrue(False)
 
@@ -298,30 +277,24 @@ class TestPrepareInputForNextLayer_Spatial3(unittest.TestCase):
             device=device
         )
         # define expected output sequences
-        target_seq = [2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        target_depth = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3]
+        target_seq = [1, 1, 1, 1, 1, 1, 1, 1]
+        target_depth = [3, 3, 3, 3, 3, 3, 3, 3]
         target_pos = [
-            [16, 16, 16], [16, 16, 48], [16, 48, 16], [16, 48, 48], [48, 16, 16], [48, 16, 48], [48, 48, 16],
-            [48, 48, 48], [8, 8, 8], [8, 8, 24], [8, 24, 8], [8, 24, 24], [24, 8, 8], [24, 8, 24], [24, 24, 8],
-            [24, 24, 24], [4, 4, 4], [4, 4, 12], [4, 12, 4], [4, 12, 12], [12, 4, 4], [12, 4, 12], [12, 12, 4],
-            [12, 12, 12]
+            [4, 4, 4], [4, 4, 12], [4, 12, 4], [4, 12, 12], [12, 4, 4], [12, 4, 12], [12, 12, 4], [12, 12, 12]
         ]
-        target_future_tokens = 8
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 3, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 3, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             np_test.assert_array_equal(output_seq, target_seq)
             np_test.assert_array_equal(output_depth, target_depth)
             np_test.assert_array_equal(output_pos, target_pos)
-            self.assertEqual(future_tokens, target_future_tokens)
         elif device == "cuda":
             np_test.assert_array_equal(output_seq.cpu(), target_seq)
             np_test.assert_array_equal(output_depth.cpu(), target_depth)
             np_test.assert_array_equal(output_pos.cpu(), target_pos)
-            self.assertEqual(future_tokens.cpu(), target_future_tokens)
         else:
             self.assertTrue(False)
 
@@ -351,19 +324,17 @@ class TestPrepareInputForNextLayer_Spatial3(unittest.TestCase):
         )
 
         # call the tested function
-        output_seq, output_depth, output_pos, future_tokens = append_next_layer_tokens(seq, depth, pos, 3, 32)
+        output_seq, output_depth, output_pos = next_layer_tokens(seq, depth, pos, 3, 32)
 
         # compare output of the function with expected output
         if device == "cpu":
             self.assertEqual(output_seq.type(), "torch.LongTensor")
             self.assertEqual(output_depth.type(), "torch.LongTensor")
             self.assertEqual(output_pos.type(), "torch.LongTensor")
-            self.assertEqual(future_tokens.type(), "torch.LongTensor")
         elif device == "cuda":
             self.assertEqual(output_seq.type(), "torch.cuda.LongTensor")
             self.assertEqual(output_depth.type(), "torch.cuda.LongTensor")
             self.assertEqual(output_pos.type(), "torch.cuda.LongTensor")
-            self.assertEqual(future_tokens.type(), "torch.cuda.LongTensor")
         else:
             self.assertTrue(False)
 
