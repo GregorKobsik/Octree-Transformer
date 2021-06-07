@@ -3,25 +3,27 @@ name: shapenet_debug
 # data
 dataset: shapenet
 subclass: basket
-num_vocab: 3
-tree_depth: 6
+resolution: 32
 spatial_dim: 3
+num_vocab: 3
 
 # architecture
+embedding: basic
+head: generative_basic
+architecture: encoder_decoder
 attention: basic
-architecture: encoder_only
-num_positions: 4096
+num_positions: 2048
 embed_dim: 64
 num_layers: 8
 num_heads: 4
 
 # training
 loss_function: cross_entropy
-epochs: 3
+epochs: 100
 warmup_steps: 0.1
 batch_size: 1
 accumulate_grad_batches: 1
-learning_rate: 0.003
+learning_rate: 0.001
 
 # hardware
 gpus: 1

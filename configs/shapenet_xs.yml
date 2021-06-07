@@ -3,23 +3,25 @@ name: shapenet_xs
 # data
 dataset: shapenet
 subclass: chair
-num_vocab: 3
-tree_depth: 6
+resolution: 32
 spatial_dim: 3
+num_vocab: 3
 
 # architecture
+embedding: basic
+head: generative_basic
+architecture: encoder_decoder
 attention: basic
-architecture: encoder_only
-num_positions: 4096
+num_positions: 2048
 embed_dim: 64
-num_layers: 16
+num_layers: 8
 num_heads: 4
 
 # training
 loss_function: cross_entropy
-epochs: 1000
+epochs: 100
 warmup_steps: 0.02
-batch_size: 1
+batch_size: 2
 accumulate_grad_batches: 1
 learning_rate: 0.0003
 
