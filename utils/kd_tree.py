@@ -58,7 +58,7 @@ class kdTree():
             elements = np.concatenate(np.split(elements, indices_or_sections=2, axis=0), axis=i)
         return np.squeeze(elements, axis=0)
 
-    def insert_element_array(self, elements, max_depth=float('Inf'), depth=1, pos=None):
+    def insert_element_array(self, elements, max_depth=float('Inf'), depth=0, pos=None):
         """ Inserts an array of element values which is converted into a kd-tree.
 
         Args:
@@ -162,12 +162,26 @@ class kdTree():
                 )
             raise ValueError
 
+        # initialize self
+        self.value = 0
+        self.depth = 0
+        self.pos = np.array(self.spatial_dim * [resolution])
+        self.resolution = np.array(resolution)
+        self.final = False
+
         # initialize parser
         depth = 1
-        open_set = [self]
-        pos_set = [np.array(self.spatial_dim * [resolution])]
-        node_counter = 1
         final_layer = False
+        resolution = resolution // 2
+
+        # initialize first nodes
+        open_set = []
+        self.child_nodes = [kdTree(self.spatial_dim) for _ in range(2**self.spatial_dim)]
+        open_set.extend(self.child_nodes)
+        node_counter = len(open_set)
+
+        # compute new positions for future nodes - center of all pixels
+        pos_set = [self.pos + self.resolution // 2 * d for d in self.dirs]
 
         while len(value) > 0 and depth <= max_depth and len(open_set) > 0:
             # consume first token of sequence
@@ -181,8 +195,8 @@ class kdTree():
             # assign values to node
             node.value = head
             node.depth = depth
-            node.resolution = np.array(resolution)
             node.pos = pos_set.pop(0)
+            node.resolution = np.array(resolution)
 
             # final node:
             # - head is '1' or '3', thus all elements have the same value
@@ -246,9 +260,10 @@ class kdTree():
         seq_value = []
         seq_depth = []
         seq_pos = []
+        open_set = []
 
         # start with root node
-        open_set = [self]
+        open_set.extend(self.child_nodes)
 
         while len(open_set) > 0:
             node = open_set.pop(0)
@@ -279,6 +294,6 @@ class kdTree():
     def __repr__(self):
         """ Returns of human readable string representation of the kd-tree. """
         return (
-            f"kdTree() = {self.get_token_sequence()}, " + f"len = {len(self.get_token_sequence())}, " +
+            f"kdTree() = {self.get_token_sequence()[0]}, " + f"len = {len(self.get_token_sequence()[0])}, " +
             f"dim = {self.spatial_dim}"
         )

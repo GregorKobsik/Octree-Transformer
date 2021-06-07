@@ -336,7 +336,7 @@ class TestQuadtree(unittest.TestCase):
         The data is only divisible by 2 up to the second depth layer.
         Anything above this, should result in an error.
         """
-        qtree = kdTree(spatial_dim=2).insert_element_array(self.mnist_28x28(), max_depth=2)
+        qtree = kdTree(spatial_dim=2).insert_element_array(self.mnist_28x28(), max_depth=1)
 
         self.assertEqual(qtree.child_nodes[0].child_nodes[0].value, 1)
         self.assertEqual(qtree.child_nodes[2].child_nodes[2].value, 1)
@@ -379,20 +379,30 @@ class TestQuadtree(unittest.TestCase):
 
         np_test.assert_array_equal(input, output)
 
-    def test_token_sequence_generation_depth3(self):
-        """ Inputs an binarized image and generates a token sequence up to a depth of 3. """
+    def test_token_sequence_generation_depth2(self):
+        """ Inputs an binarized image and generates a token sequence up to a depth of 2. """
         input = self.mnist_32x32_binarized()
-        target = "2" + "2222" + "1112112112122121"
+        target = "2222" + "1112112112122121"
 
         qtree = kdTree(spatial_dim=2).insert_element_array(input)
-        output = qtree.get_token_sequence(depth=3)[0]
+        output = qtree.get_token_sequence(depth=2)[0]
 
         self.assertSequenceEqual(target, ''.join(str(x) for x in output))
+
+    def test_token_sequence_retrival_short(self):
+        """ Inserts a sequence representing a diagonal line and tries to retrive the same token sequence. """
+        input = ("1221" + "12211221")
+
+        qtree = kdTree(spatial_dim=2).insert_token_sequence(input, resolution=32)
+        output = qtree.get_token_sequence()[0]
+
+        self.assertEqual(len(input), len(output))
+        self.assertSequenceEqual(input, ''.join(str(x) for x in output))
 
     def test_token_sequence_retrival_diagonal(self):
         """ Inserts a sequence representing a diagonal line and tries to retrive the same token sequence. """
         input = (
-            "2" + "1221" + "12211221" + "1221122112211221" + "12211221122112211221122112211221" +
+            "1221" + "12211221" + "1221122112211221" + "12211221122112211221122112211221" +
             "1221122112211221122112211221122112211221122112211221122112211221"
         )
 
@@ -408,7 +418,7 @@ class TestQuadtree(unittest.TestCase):
         Implementation error - whitebox test.
         Error resolved: Check the size of the 'open_set' to decide if the parser is done.
         """
-        input = [2, 1, 1, 1, 1, 1]
+        input = [1, 1, 1, 1, 1]
 
         qtree = kdTree(spatial_dim=2).insert_token_sequence(input, resolution=32, autorepair_errors=True, silent=True)
         qtree.get_element_array(depth=1)
@@ -422,11 +432,11 @@ class TestQuadtree(unittest.TestCase):
         Error resolved: Nodes should be assigned final at a resolution of (1,1), too.
         """
         input = [
-            2, 1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1, 1, 2, 1, 2, 1, 1, 2, 2, 2, 1, 2, 1, 1, 2, 1,
-            2, 1, 2, 1, 1, 2, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2,
-            2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1,
-            2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
-            2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1
+            1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1, 1, 2, 1, 2, 1, 1, 2, 2, 2, 1, 2, 1, 1, 2, 1, 2,
+            1, 2, 1, 1, 2, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2,
+            2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 2,
+            1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2,
+            1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1
         ]
 
         qtree = kdTree(spatial_dim=2).insert_token_sequence(input, resolution=32, autorepair_errors=True, silent=True)
@@ -438,11 +448,11 @@ class TestQuadtree(unittest.TestCase):
         """ Inputs an binarized image and generates a value and depth token sequence. """
         input = self.mnist_32x32_binarized()
 
-        target_value = [2, 2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1]
-        target_depth = [1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+        target_value = [2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1]
+        target_depth = [1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 
         qtree = kdTree(spatial_dim=2).insert_element_array(input)
-        output_value, output_depth = qtree.get_token_sequence(depth=3, return_depth=True)
+        output_value, output_depth = qtree.get_token_sequence(depth=2, return_depth=True)
 
         np_test.assert_array_equal(target_value, output_value)
         np_test.assert_array_equal(target_depth, output_depth)
@@ -451,14 +461,14 @@ class TestQuadtree(unittest.TestCase):
         """ Inputs an binarized image and generates a value and position token sequence. """
         input = self.mnist_32x32_binarized()
 
-        target_value = [2, 2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1]
+        target_value = [2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1]
         target_pos = [
-            [32, 32], [16, 16], [16, 48], [48, 16], [48, 48], [8, 8], [8, 24], [24, 8], [24, 24], [8, 40], [8, 56],
-            [24, 40], [24, 56], [40, 8], [40, 24], [56, 8], [56, 24], [40, 40], [40, 56], [56, 40], [56, 56]
+            [16, 16], [16, 48], [48, 16], [48, 48], [8, 8], [8, 24], [24, 8], [24, 24], [8, 40], [8, 56], [24, 40],
+            [24, 56], [40, 8], [40, 24], [56, 8], [56, 24], [40, 40], [40, 56], [56, 40], [56, 56]
         ]
 
         qtree = kdTree(spatial_dim=2).insert_element_array(input)
-        output_value, output_pos = qtree.get_token_sequence(depth=3, return_pos=True)
+        output_value, output_pos = qtree.get_token_sequence(depth=2, return_pos=True)
 
         np_test.assert_array_equal(target_value, output_value)
         np_test.assert_array_equal(target_pos, output_pos)
@@ -467,15 +477,15 @@ class TestQuadtree(unittest.TestCase):
         """ Inputs an binarized image and generates a value, depth and position token sequence. """
         input = self.mnist_32x32_binarized()
 
-        target_value = [2, 2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1]
-        target_depth = [1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+        target_value = [2, 2, 2, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1]
+        target_depth = [1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         target_pos = [
-            [32, 32], [16, 16], [16, 48], [48, 16], [48, 48], [8, 8], [8, 24], [24, 8], [24, 24], [8, 40], [8, 56],
-            [24, 40], [24, 56], [40, 8], [40, 24], [56, 8], [56, 24], [40, 40], [40, 56], [56, 40], [56, 56]
+            [16, 16], [16, 48], [48, 16], [48, 48], [8, 8], [8, 24], [24, 8], [24, 24], [8, 40], [8, 56], [24, 40],
+            [24, 56], [40, 8], [40, 24], [56, 8], [56, 24], [40, 40], [40, 56], [56, 40], [56, 56]
         ]
 
         qtree = kdTree(spatial_dim=2).insert_element_array(input)
-        output_value, output_depth, output_pos = qtree.get_token_sequence(depth=3, return_depth=True, return_pos=True)
+        output_value, output_depth, output_pos = qtree.get_token_sequence(depth=2, return_depth=True, return_pos=True)
 
         np_test.assert_array_equal(target_value, output_value)
         np_test.assert_array_equal(target_depth, output_depth)
