@@ -8,11 +8,11 @@ from tqdm.contrib.concurrent import process_map
 
 from torchvision import datasets
 
-from utils import kdTree, RepresentationTransformator
+from utils import kdTree
 
 
 class QuadtreeMNIST(datasets.MNIST):
-    subfolders = ["value", "depth", "pos", "target"]
+    subfolders = ["value", "depth", "pos"]
     type_folders = ['iterative', 'successive']
 
     def __init__(
@@ -83,16 +83,13 @@ class QuadtreeMNIST(datasets.MNIST):
         # TODO: allow custom resolution
         pixels = np.pad(img, (2, 2)) > 0.1  # pad image (32,32) and binarize with threshold (0.1)
         qtree = kdTree(spatial_dim=2).insert_element_array(pixels)
-        if not self.iterative:
-            sequence = qtree.get_token_sequence(return_depth=True, return_pos=True)
-            return (*sequence, sequence[0])
-        else:
-            repr_trans = RepresentationTransformator(spatial_dim=3)
+        if self.iterative:
             output = []
-            for i in range(2, int(math.log2(self.resolution)) + 2):
-                sequence = qtree.get_token_sequence(return_depth=True, return_pos=True, depth=i)
-                output += [repr_trans.successive_to_iterative(*sequence)]
+            for i in range(2, int(math.log2(self.resolution)) + 1):
+                output += [qtree.get_token_sequence(return_depth=True, return_pos=True, depth=i)]
             return output
+        else:
+            return qtree.get_token_sequence(return_depth=True, return_pos=True)
 
     def quadtree_transform(self) -> None:
         """Transform the MNIST data if it doesn't exist already."""
@@ -135,4 +132,3 @@ class QuadtreeMNIST(datasets.MNIST):
         self.value = torch.load(os.path.join(self.resolution_path, self.subfolders[0], data_file))
         self.depth = torch.load(os.path.join(self.resolution_path, self.subfolders[1], data_file))
         self.pos = torch.load(os.path.join(self.resolution_path, self.subfolders[2], data_file))
-        self.target = torch.load(os.path.join(self.resolution_path, self.subfolders[3], data_file))
