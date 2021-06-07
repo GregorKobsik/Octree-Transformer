@@ -39,8 +39,9 @@ def train(config):
     train_dl, valid_dl, _ = dataloaders(
         dataset=config['dataset'],
         subclass=config['subclass'],
-        resolution=2**(config['tree_depth'] - 1),
-        iterative=False if config['architecture'] == "encoder_only" else True,
+        resolution=config['resolution'],
+        embedding=config['embedding'],
+        architecture=config['architecture'],
         batch_size=config['batch_size'],
         datapath=config['datapath'],
     )
@@ -94,6 +95,6 @@ def train(config):
 
     torch.backends.cudnn.enabled = False
     torch.cuda.empty_cache()
-    torch.cuda.reset_max_memory_allocated()
+    torch.cuda.reset_peak_memory_stats()
 
     trainer.fit(model, train_dl, valid_dl)

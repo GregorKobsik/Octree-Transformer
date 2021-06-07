@@ -27,9 +27,11 @@ if __name__ == "__main__":
     parser_train.add_argument("--subclass", type=str, default=None)
 
     parser_train.add_argument("--num_vocab", type=int, default=None)
-    parser_train.add_argument("--tree_depth", type=int, default=None)
+    parser_train.add_argument("--resolution", type=int, default=None)
     parser_train.add_argument("--spatial_dim", type=int, default=None)
     # architecture
+    parser_train.add_argument("--embedding", type=str, default=None)
+    parser_train.add_argument("--head", type=str, default=None)
     parser_train.add_argument("--architecture", type=str, default=None)
     parser_train.add_argument("--attention", type=str, default=None)
     parser_train.add_argument("--num_positions", type=int, default=None)
