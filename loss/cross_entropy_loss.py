@@ -17,7 +17,7 @@ class CrossEntropyLoss(CrossEntropyLoss):
     ) -> None:
         super(CrossEntropyLoss, self).__init__(weight, size_average, ignore_index, reduce, reduction)
 
-    def forward(self, input: Tensor, target: Tensor, depth: Tensor) -> Tensor:
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
         return F.cross_entropy(
             input, target, weight=self.weight, ignore_index=self.ignore_index, reduction=self.reduction
         )
