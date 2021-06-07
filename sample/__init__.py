@@ -1,5 +1,5 @@
-from sample.sample import Sampler
+from sample.shape_sampler import ShapeSampler
 
 __all__ = [
-    "Sampler",
+    "ShapeSampler",
 ]

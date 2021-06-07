@@ -1,11 +1,13 @@
 import torch
 from modules import ShapeTransformer
 
-from sample.sample_successive import preprocess_successive, sample_successive, postprocess_successive
-from sample.sample_iterative import preprocess_iterative, sample_iterative, postprocess_iterative
+from sample.sampler import (
+    BasicEncoderDecoderSampler,
+    DoubleConvolutionalEncoderDecoderSampler,
+)
 
 
-class Sampler():
+class ShapeSampler():
     def __init__(self, checkpoint_path: str, device="cuda"):
         """ Initializes the sampler class. Loads the correct model and sets functions and parameters according to the
             given model.
@@ -27,19 +29,35 @@ class Sampler():
         # extract hyperparameters from the model
         hparams = pl_module.hparams
 
-        self.max_resolution = 2**(hparams["tree_depth"] - 1)
-        self.max_tokens = hparams["num_positions"]
         self.dataset = hparams["dataset"]
         self.subclass = hparams["subclass"]
-
-        self.batch_first = False if hparams['attention'].startswith("basic") else True
-        self.iterative = True if hparams['architecture'] == "encoder_decoder" else False
         self.spatial_dim = hparams['spatial_dim']
 
-        # prepare sampling functions
-        self.preprocess_function = preprocess_iterative if self.iterative else preprocess_successive
-        self.sample_function = sample_iterative if self.iterative else sample_successive
-        self.postprocess_function = postprocess_iterative if self.iterative else postprocess_successive
+        kwargs = {
+            "spatial_dim": hparams['spatial_dim'],
+            "device": device,
+            "max_tokens": hparams["num_positions"],
+            "max_resolution": hparams["resolution"],
+            "model": self.model,
+        }
+
+        if (
+            hparams['architecture'] == "encoder_decoder" and hparams['embedding'] == "basic" and
+            hparams['head'] == "generative_basic"
+        ):
+            self.sampler = BasicEncoderDecoderSampler(**kwargs)
+        if (
+            hparams['architecture'] == "encoder_decoder" and hparams['embedding'] == "double_conv" and
+            hparams['head'] == "double_conv"
+        ):
+            self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
+        else:
+            print(
+                "No sampler defined for the combination or parameters:" +
+                f"architecture: {hparams['architecture']}, embedding: {hparams['embedding']}," +
+                f"and head: {hparams['head']}."
+            )
+            raise ValueError
 
     def sample_preconditioned(self, precondition, precondition_resolution=1, target_resolution=32, temperature=1.0):
         """ Samples a single array of elements from the model.
@@ -61,27 +79,10 @@ class Sampler():
         TODO: If `input` is None, than a single random sample will be drawn from the dataset used in the model.
         TODO: Extend with `batch_size` to allow parallel sampling.
         """
-
-        kwargs = {
-            "precondition_resolution": precondition_resolution,
-            "target_resolution": target_resolution,
-            "temperature": temperature,
-            "spatial_dim": self.spatial_dim,
-            "device": self.device,
-            "max_tokens": self.max_tokens,
-            "max_resolution": self.max_resolution,
-            "batch_first": self.batch_first,
-            "model": self.model,
-        }
-
-        # preprocess the input and transform it into a token sequence
-        sequence = self.preprocess_function(precondition, **kwargs)
-
-        # enhance the resolution of the sequence or generate a new sequence by sampling new token values
-        value = self.sample_function(sequence, **kwargs)
-
-        # postprocess the token value sequence and return it as an array of elements
-        return self.postprocess_function(value, **kwargs)
+        if input is None:
+            print("ERROR: `input` cannot be `None`.")
+            raise ValueError
+        return self.sampler(precondition, precondition_resolution, target_resolution, temperature)
 
     def sample_random(self, target_resolution=32, temperature=1.0):
         """ Sample a single unconditioned random array of elements from the model.
@@ -97,7 +98,7 @@ class Sampler():
             A sampled array of elements (pixels/voxels) with the size of `target_resolution` as a numpy array.
         """
         # create an initial array, with all elements marked as undefined/mixed.
-        initial_element_array = torch.randint(
-            low=0, high=2, size=self.spatial_dim * [self.max_resolution], dtype=torch.long
+        random_element_array = torch.randint(
+            low=0, high=2, size=self.spatial_dim * [target_resolution], dtype=torch.long
         ).numpy()
-        return self.sample_preconditioned(initial_element_array, 1, target_resolution, temperature)
+        return self.sampler(random_element_array, 2, target_resolution, temperature)
