@@ -3,11 +3,12 @@ from modules import ShapeTransformer
 
 from sample.sampler import (
     BasicEncoderDecoderSampler,
+    SingleConvEncoderDecoderSampler,
     DoubleConvolutionalEncoderDecoderSampler,
 )
 
 
-class ShapeSampler():
+class ShapeSampler:
     def __init__(self, checkpoint_path: str, device="cuda"):
         """ Initializes the sampler class. Loads the correct model and sets functions and parameters according to the
             given model.
@@ -17,7 +18,6 @@ class ShapeSampler():
             device: Selects the device on which the sampling should be performed. Either "cpu" or "cuda" (gpu-support)
                 available.
         """
-        super().__init__()
         self.checkpoint_path = checkpoint_path
         self.device = device
 
@@ -32,7 +32,9 @@ class ShapeSampler():
         self.dataset = hparams["dataset"]
         self.subclass = hparams["subclass"]
         self.spatial_dim = hparams['spatial_dim']
+        transformer_architecture = [hparams['architecture'], hparams['embedding'], hparams['head']]
 
+        # select explicit sampler implementation
         kwargs = {
             "spatial_dim": hparams['spatial_dim'],
             "device": device,
@@ -41,20 +43,21 @@ class ShapeSampler():
             "model": self.model,
         }
 
-        if (
-            hparams['architecture'] == "encoder_decoder" and hparams['embedding'] == "basic" and
-            hparams['head'] == "generative_basic"
-        ):
+        if transformer_architecture == ["encoder_decoder", "basic", "generative_basic"]:
             self.sampler = BasicEncoderDecoderSampler(**kwargs)
-        if (
-            hparams['architecture'] == "encoder_decoder" and hparams['embedding'] == "double_conv" and
-            hparams['head'] == "double_conv"
-        ):
+        elif transformer_architecture == ["encoder_decoder", "single_conv", "single_conv"]:
+            self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
+        elif transformer_architecture == ["encoder_decoder", "double_conv", "double_conv"]:
             self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
+        elif (
+            hparams['architecture'] == "encoder_decoder" and hparams['embedding'].startswith("single_conv") and
+            hparams['head'].startswith("single_conv")
+        ):
+            self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
         else:
             print(
-                "No sampler defined for the combination or parameters:" +
-                f"architecture: {hparams['architecture']}, embedding: {hparams['embedding']}," +
+                "No sampler defined for the combination or parameters - " +
+                f"architecture: {hparams['architecture']}, " + f"embedding: {hparams['embedding']}, " +
                 f"and head: {hparams['head']}."
             )
             raise ValueError
