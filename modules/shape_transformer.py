@@ -9,7 +9,10 @@ from modules.transformer import (
 )
 from modules.embedding import (
     BasicEmbedding,
-    SingleConvolutionalEmbedding,
+    SingleConvolutionalEmbeddingA,
+    SingleConvolutionalEmbeddingB,
+    SingleConvolutionalEmbeddingC,
+    SingleConvolutionalEmbeddingD,
     DoubleConvolutionalEmbedding,
 )
 from modules.generative_head import (
@@ -78,8 +81,14 @@ class ShapeTransformer(pl.LightningModule):
         # token embedding
         if embedding == 'basic':
             embedding = BasicEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv':
-            embedding = SingleConvolutionalEmbedding(embed_dim, spatial_dim)
+        elif embedding in ('single_conv', 'single_conv_A'):
+            embedding = SingleConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+        elif embedding == 'single_conv_B':
+            embedding = SingleConvolutionalEmbeddingB(embed_dim, spatial_dim)
+        elif embedding == 'single_conv_C':
+            embedding = SingleConvolutionalEmbeddingC(num_vocab, embed_dim, resolution, spatial_dim)
+        elif embedding == 'single_conv_D':
+            embedding = SingleConvolutionalEmbeddingD(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'double_conv':
             embedding = DoubleConvolutionalEmbedding(embed_dim, spatial_dim)
         else:

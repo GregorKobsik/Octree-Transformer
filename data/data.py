@@ -49,7 +49,7 @@ def datasets(
 
     """
     # select data transform function
-    if embedding == "basic":
+    if embedding in ("basic") or embedding.startswith('single_conv'):
         transform_fn = BasicTransform(architecture)
     elif embedding == "double_conv":
         transform_fn = DoubleConvolutionalTransform(architecture)
