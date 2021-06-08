@@ -116,7 +116,7 @@ def dataloaders(
     train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, architecture, datapath)
 
     # select padding function
-    if embedding in ("basic", "convolutional"):
+    if embedding in ("basic", "double_conv") or embedding.startswith('single_conv'):
         pad_collate = BasicPadding(architecture)
     else:
         print(f"ERROR: No padding function for {embedding} available.")
