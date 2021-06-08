@@ -32,7 +32,9 @@ class BasicTransformer(nn.Module):
         generative_head: Instance of a head layer, which transforms the output of the transformer into logits.
 
     """
-    def __init__(self, embed_dim, num_heads, num_layers, num_positions, architecture, token_embedding, generative_head):
+    def __init__(
+        self, embed_dim, num_heads, num_layers, num_positions, architecture, token_embedding, generative_head, **_
+    ):
         super(BasicTransformer, self).__init__()
 
         self.embed_dim = embed_dim  # E
@@ -103,6 +105,7 @@ class BasicTransformer(nn.Module):
         Return:
             The output of the last layer of the encoder in latent encoder space - [N, S, E].
         """
+
         # compute the embedding vector sequence for encoder input
         src = self.embedding.source(value, depth, pos)  # [N, S, E]
         if self.architecture == "encoder_only":
