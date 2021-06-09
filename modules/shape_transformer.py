@@ -13,12 +13,14 @@ from modules.embedding import (
     SingleConvolutionalEmbeddingB,
     SingleConvolutionalEmbeddingC,
     SingleConvolutionalEmbeddingD,
+    SingleConvolutionalEmbeddingE,
     DoubleConvolutionalEmbedding,
 )
 from modules.generative_head import (
     LinearHead,
     SingleConvolutionalHeadA,
     SingleConvolutionalHeadB,
+    SingleConvolutionalHeadC,
     DoubleConvolutionalHead,
 )
 from lr_scheduler import (
@@ -90,6 +92,8 @@ class ShapeTransformer(pl.LightningModule):
             embedding = SingleConvolutionalEmbeddingC(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'single_conv_D':
             embedding = SingleConvolutionalEmbeddingD(num_vocab, embed_dim, resolution, spatial_dim)
+        elif embedding == 'single_conv_E':
+            embedding = SingleConvolutionalEmbeddingE(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'double_conv':
             embedding = DoubleConvolutionalEmbedding(embed_dim, spatial_dim)
         else:
@@ -103,6 +107,8 @@ class ShapeTransformer(pl.LightningModule):
             head = SingleConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
         elif head == 'single_conv_B':
             head = SingleConvolutionalHeadB(num_vocab, embed_dim, spatial_dim)
+        elif head == 'single_conv_C':
+            head = SingleConvolutionalHeadC(num_vocab, embed_dim, spatial_dim)
         elif head == 'double_conv':
             head = DoubleConvolutionalHead(num_vocab, embed_dim, spatial_dim)
         else:
