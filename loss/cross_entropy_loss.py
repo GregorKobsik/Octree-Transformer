@@ -11,7 +11,7 @@ class CrossEntropyLoss(CrossEntropyLoss):
         self,
         weight: Optional[Tensor] = None,
         size_average=None,
-        ignore_index: int = -100,
+        ignore_index: int = 0,
         reduce=None,
         reduction='mean',
     ) -> None:

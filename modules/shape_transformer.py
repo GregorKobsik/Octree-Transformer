@@ -137,7 +137,7 @@ class ShapeTransformer(pl.LightningModule):
 
         # loss function
         if loss_function == 'cross_entropy':
-            self.loss_function = CrossEntropyLoss()
+            self.loss_function = CrossEntropyLoss(ignore_index=0)
         else:
             print(f"ERROR: {loss_function} loss not implemented.")
             raise ValueError
