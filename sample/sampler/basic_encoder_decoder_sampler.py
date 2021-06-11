@@ -92,7 +92,7 @@ class BasicEncoderDecoderSampler:
 
         with torch.no_grad():
             # sample new tokens layer by layer - encoder: finished layers, decoder: unfinished/sampled layer
-            for _ in tqdm(range(cur_layer, max_layer), initial=cur_layer, total=max_layer, leave=True, desc="Layer"):
+            for _ in tqdm(range(cur_layer, max_layer), initial=cur_layer, total=max_layer, leave=True, desc="Layers"):
 
                 # init sequences for next layer
                 tgt_val, tgt_depth, tgt_pos = next_layer_tokens(
@@ -106,8 +106,7 @@ class BasicEncoderDecoderSampler:
                     return value
 
                 # sample autoregressive tokens for the next layer
-                # TODO: check indizes - probably correct: range(len(tgt_val) - 1)
-                for cur_token_idx in tqdm(range(len(tgt_val)), leave=False, desc="Sampling"):
+                for cur_token_idx in tqdm(range(len(tgt_val)), leave=False, desc="Tokens"):
 
                     # compute decoder output
                     latent_sequence = self.process_decoder(tgt_val, tgt_depth, tgt_pos, memory, cur_token_idx)
@@ -184,7 +183,7 @@ class BasicEncoderDecoderSampler:
         """
         # compute logits from latent sequence
         logits = self.model.head(
-            latent_sequence[:token_idx + 1].unsqueeze(0),  # [N, T', E]
+            latent_sequence.unsqueeze(0),  # [N, T', E]
             tgt_val[:token_idx + 1].unsqueeze(0),  # [N, T]
             tgt_depth[:token_idx + 1].unsqueeze(0),  # [N, T]
             tgt_pos[:token_idx + 1].unsqueeze(0),  # [N, T, A]

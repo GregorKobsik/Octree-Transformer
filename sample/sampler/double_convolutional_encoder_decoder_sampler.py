@@ -99,7 +99,7 @@ class DoubleConvolutionalEncoderDecoderSampler():
         with torch.no_grad():
             # sample new tokens layer by layer - encoder: finished layers, decoder: unfinished/sampled layer
             # TODO: check ranges
-            for _ in tqdm(range(cur_layer, max_layer), initial=cur_layer, total=max_layer, leave=True, desc="Layer"):
+            for _ in tqdm(range(cur_layer, max_layer), initial=cur_layer, total=max_layer, leave=True, desc="Layers"):
 
                 # init sequences for next layer
                 seq_last = next_layer_tokens(*seq_enc, self.spatial_dim, self.max_resolution)
@@ -112,7 +112,7 @@ class DoubleConvolutionalEncoderDecoderSampler():
 
                 # sample autoregressive tokens for the next layer - iterate over mixed tokens of penultimate layer
                 # TODO: check range - probably correct: range(sum(seq_penult[0] == 2) - 1)
-                for cur_token_idx in tqdm(range(sum(seq_penult[0] == 2)), leave=False, desc="Sampling"):
+                for cur_token_idx in tqdm(range(sum(seq_penult[0] == 2)), leave=False, desc="Tokens"):
 
                     # compute decoder output
                     latent_sequence = self.process_decoder(seq_penult, seq_last, memory, cur_token_idx)
