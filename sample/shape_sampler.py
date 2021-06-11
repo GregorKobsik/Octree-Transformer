@@ -43,17 +43,19 @@ class ShapeSampler:
             "model": self.model,
         }
 
-        if transformer_architecture == ["encoder_decoder", "basic", "generative_basic"]:
+        if transformer_architecture in (
+            ["encoder_decoder", "basic", "generative_basic"],
+            ["encoder_decoder", "basic", "linear"],
+            ["encoder_decoder", "single_conv_F", "linear"],
+        ):
             self.sampler = BasicEncoderDecoderSampler(**kwargs)
-        elif transformer_architecture == ["encoder_decoder", "single_conv", "single_conv"]:
-            self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
-        elif transformer_architecture == ["encoder_decoder", "double_conv", "double_conv"]:
-            self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
         elif (
             hparams['architecture'] == "encoder_decoder" and hparams['embedding'].startswith("single_conv") and
             hparams['head'].startswith("single_conv")
         ):
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
+        elif transformer_architecture == ["encoder_decoder", "double_conv", "double_conv"]:
+            self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
         else:
             print(
                 "No sampler defined for the combination or parameters - " +
