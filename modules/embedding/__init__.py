@@ -8,6 +8,8 @@ from modules.embedding.single_conv_embedding_E import SingleConvolutionalEmbeddi
 from modules.embedding.single_conv_embedding_F import SingleConvolutionalEmbeddingF
 from modules.embedding.single_conv_embedding_G import SingleConvolutionalEmbeddingG
 from modules.embedding.single_conv_embedding_H import SingleConvolutionalEmbeddingH
+from modules.embedding.concat_embedding_A import ConcatEmbeddingA
+from modules.embedding.concat_embedding_B import ConcatEmbeddingB
 from modules.embedding.double_conv_embedding import DoubleConvolutionalEmbedding
 
 __all__ = [
@@ -21,5 +23,7 @@ __all__ = [
     "SingleConvolutionalEmbeddingF",
     "SingleConvolutionalEmbeddingG",
     "SingleConvolutionalEmbeddingH",
+    "ConcatEmbeddingA",
+    "ConcatEmbeddingB",
     "DoubleConvolutionalEmbedding",
 ]

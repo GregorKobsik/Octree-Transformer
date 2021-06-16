@@ -17,6 +17,8 @@ from modules.embedding import (
     SingleConvolutionalEmbeddingF,
     SingleConvolutionalEmbeddingG,
     SingleConvolutionalEmbeddingH,
+    ConcatEmbeddingA,
+    ConcatEmbeddingB,
     DoubleConvolutionalEmbedding,
 )
 from modules.generative_head import (
@@ -25,6 +27,8 @@ from modules.generative_head import (
     SingleConvolutionalHeadB,
     SingleConvolutionalHeadC,
     SingleConvolutionalHeadD,
+    SplitHeadA,
+    SplitHeadB,
     DoubleConvolutionalHead,
 )
 from lr_scheduler import (
@@ -104,6 +108,10 @@ class ShapeTransformer(pl.LightningModule):
             embedding = SingleConvolutionalEmbeddingG(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'single_conv_H':
             embedding = SingleConvolutionalEmbeddingH(num_vocab, embed_dim, resolution, spatial_dim)
+        elif embedding == 'concat_A':
+            embedding = ConcatEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+        elif embedding == 'concat_B':
+            embedding = ConcatEmbeddingB(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'double_conv':
             embedding = DoubleConvolutionalEmbedding(embed_dim, spatial_dim)
         else:
@@ -121,6 +129,10 @@ class ShapeTransformer(pl.LightningModule):
             head = SingleConvolutionalHeadC(num_vocab, embed_dim, spatial_dim)
         elif head == 'single_conv_D':
             head = SingleConvolutionalHeadD(num_vocab, embed_dim, spatial_dim)
+        elif head == 'split_A':
+            head = SplitHeadA(num_vocab, embed_dim, spatial_dim)
+        elif head == 'split_B':
+            head = SplitHeadB(num_vocab, embed_dim, spatial_dim)
         elif head == 'double_conv':
             head = DoubleConvolutionalHead(num_vocab, embed_dim, spatial_dim)
         else:

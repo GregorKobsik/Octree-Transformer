@@ -49,13 +49,10 @@ def datasets(
 
     """
     # select data transform function
-    if embedding in ("basic") or embedding.startswith('single_conv'):
-        transform_fn = BasicTransform(architecture)
-    elif embedding == "double_conv":
+    if embedding.startswith("double"):
         transform_fn = DoubleConvolutionalTransform(architecture)
     else:
-        print(f"ERROR: No data transform function for {embedding} available.")
-        raise ValueError
+        transform_fn = BasicTransform(architecture)
 
     # initialize arguments
     kwargs = {
@@ -116,11 +113,7 @@ def dataloaders(
     train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, architecture, datapath)
 
     # select padding function
-    if embedding in ("basic", "double_conv") or embedding.startswith('single_conv'):
-        pad_collate = BasicPadding(architecture)
-    else:
-        print(f"ERROR: No padding function for {embedding} available.")
-        raise ValueError
+    pad_collate = BasicPadding(architecture)
 
     # initialize arguments
     kwargs = {

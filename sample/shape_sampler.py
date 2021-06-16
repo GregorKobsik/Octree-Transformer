@@ -54,6 +54,11 @@ class ShapeSampler:
             hparams['head'].startswith("single_conv")
         ):
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
+        elif (
+            hparams['architecture'] == "encoder_decoder" and hparams['embedding'].startswith("concat") and
+            hparams['head'].startswith("split")
+        ):
+            self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
         elif transformer_architecture == ["encoder_decoder", "double_conv", "double_conv"]:
             self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
         else:
