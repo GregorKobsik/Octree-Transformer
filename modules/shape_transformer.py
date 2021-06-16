@@ -24,6 +24,7 @@ from modules.generative_head import (
     SingleConvolutionalHeadA,
     SingleConvolutionalHeadB,
     SingleConvolutionalHeadC,
+    SingleConvolutionalHeadD,
     DoubleConvolutionalHead,
 )
 from lr_scheduler import (
@@ -118,6 +119,8 @@ class ShapeTransformer(pl.LightningModule):
             head = SingleConvolutionalHeadB(num_vocab, embed_dim, spatial_dim)
         elif head == 'single_conv_C':
             head = SingleConvolutionalHeadC(num_vocab, embed_dim, spatial_dim)
+        elif head == 'single_conv_D':
+            head = SingleConvolutionalHeadD(num_vocab, embed_dim, spatial_dim)
         elif head == 'double_conv':
             head = DoubleConvolutionalHead(num_vocab, embed_dim, spatial_dim)
         else:
