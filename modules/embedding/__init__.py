@@ -6,6 +6,8 @@ from modules.embedding.single_conv_embedding_C import SingleConvolutionalEmbeddi
 from modules.embedding.single_conv_embedding_D import SingleConvolutionalEmbeddingD
 from modules.embedding.single_conv_embedding_E import SingleConvolutionalEmbeddingE
 from modules.embedding.single_conv_embedding_F import SingleConvolutionalEmbeddingF
+from modules.embedding.single_conv_embedding_G import SingleConvolutionalEmbeddingG
+from modules.embedding.single_conv_embedding_H import SingleConvolutionalEmbeddingH
 from modules.embedding.double_conv_embedding import DoubleConvolutionalEmbedding
 
 __all__ = [
@@ -17,5 +19,7 @@ __all__ = [
     "SingleConvolutionalEmbeddingD",
     "SingleConvolutionalEmbeddingE",
     "SingleConvolutionalEmbeddingF",
+    "SingleConvolutionalEmbeddingG",
+    "SingleConvolutionalEmbeddingH",
     "DoubleConvolutionalEmbedding",
 ]
