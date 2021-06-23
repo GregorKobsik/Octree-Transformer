@@ -9,20 +9,15 @@ os.environ["SLURM_JOB_NAME"] = "bash"
 config = {
     "parameter_search": True,
     "config": "/clusterstorage/gkobsik/shape-transformer/configs/shapenet_debug.yml",
-    "datapath": "/clusterstorage/gkobsik/shape-transformer/data",
+    "datapath": "/clusterstorage/gkobsik/shape-transformer/datasets",
     "pretrained": None,
     "dataset": "shapenet",
-    "subclass": "basket",
-    "tree_depth": 7,  # allow for longer sequences up to 33k tokens
-    "num_layers": tune.grid_search([4, 8, 16]),
-    "embed_dim": tune.grid_search([32, 64, 128]),
-    "num_heads": tune.grid_search([4, 8, 16]),
-    "num_positions": tune.grid_search([1024, 2048, 4096, 8192, 16384, 32768]),
-    #"attention": tune.grid_search(["basic", "fast_linear", "fast_local", "fast_reformer", "fast_favor"]),
-    "attention": tune.grid_search(["reformer", "performer", "sinkhorn", "routing", "linear"]),
-    "epochs": 5,
-    "gpus": 1,
-    "precision": 32,
+    "subclass": "chair",
+    "epochs": 100,
+    "gpus": 2,
+    "batch_size": 2,
+    "loss_function": tune.grid_search(["cross_entropy", "depth_cross_entropy_A", "depth_cross_entropy_B"]),
+    "name": "weighted_cross_entropy",
 }
 
 # Execute the hyperparameter search
