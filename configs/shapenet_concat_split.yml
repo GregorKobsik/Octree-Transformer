@@ -1,0 +1,37 @@
+name: shapenet_concat_split
+
+# data
+dataset: shapenet
+subclass: chair
+resolution: 32
+spatial_dim: 3
+num_vocab: 3
+
+# architecture
+embedding: concat_A
+head: split_A
+architecture: encoder_decoder
+attention: basic
+num_positions: 1024
+embed_dim: 256
+num_layers: 8
+num_heads: 4
+
+# training
+loss_function: cross_entropy
+epochs: 100
+warmup_steps: 0.1
+batch_size: 16
+accumulate_grad_batches: 1
+learning_rate: 0.0003
+
+# hardware
+gpus: 4
+precision: 32
+
+# logging
+log_gpu: 'min_max'
+log_learning_rate: True
+log_gradient: True
+log_weights_and_biases: False
+parameter_search: False
