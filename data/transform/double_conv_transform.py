@@ -27,7 +27,9 @@ class DoubleConvolutionalTransform(BasicTransform):
         pos_dec = torch.cat([torch.tensor(pos[depth == (max_depth - 1)]), torch.tensor(pos[depth == max_depth])])
 
         # target is the last layer
-        target = torch.tensor(value[depth == max_depth])
+        val_tgt = torch.tensor(value[depth == max_depth])
+        dep_tgt = torch.tensor(depth[depth == max_depth])
+        pos_tgt = torch.tensor(pos[depth == max_depth])
 
         # return sequences for encoder, decoder and target
-        return val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, target
+        return val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, val_tgt, dep_tgt, pos_tgt

@@ -34,30 +34,37 @@ class BasicPadding(object):
     def encoder_only(self, batch):
         """ Pads and packs a list of samples for the 'encoder_only' architecture. """
         # unpack batched sequences
-        value, depth, position, target = zip(*batch)
+        val_seq, dep_seq, pos_seq, val_tgt, dep_tgt, pos_tgt = zip(*batch)
 
         # pad each batched sequences with '0' to same length
-        value_pad = pad_sequence(value, batch_first=True, padding_value=0)
-        depth_pad = pad_sequence(depth, batch_first=True, padding_value=0)
-        pos_pad = pad_sequence(position, batch_first=True, padding_value=0)
-        target_pad = pad_sequence(target, batch_first=True, padding_value=0)
+        val_seq_pad = pad_sequence(val_seq, batch_first=True, padding_value=0)
+        dep_seq_pad = pad_sequence(dep_seq, batch_first=True, padding_value=0)
+        pos_seq_pad = pad_sequence(pos_seq, batch_first=True, padding_value=0)
 
-        # return as (input, target)
-        return (value_pad, depth_pad, pos_pad), target_pad
+        val_tgt_pad = pad_sequence(val_tgt, batch_first=True, padding_value=0)
+        dep_tgt_pad = pad_sequence(dep_tgt, batch_first=True, padding_value=0)
+        pos_tgt_pad = pad_sequence(pos_tgt, batch_first=True, padding_value=0)
+
+        # return as (sequence, target)
+        return (val_seq_pad, dep_seq_pad, pos_seq_pad), (val_tgt_pad, dep_tgt_pad, pos_tgt_pad)
 
     def encoder_decoder(self, batch):
         """ Pads and packs a list of samples for the 'encoder_decoder' architecture. """
         # unpack batched sequences
-        val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, target = zip(*batch)
+        val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, val_tgt, dep_tgt, pos_tgt = zip(*batch)
 
         # pad each batched sequences with '0' to same length
         v_enc_pad = pad_sequence(val_enc, batch_first=True, padding_value=0)
         d_enc_pad = pad_sequence(dep_enc, batch_first=True, padding_value=0)
         p_enc_pad = pad_sequence(pos_enc, batch_first=True, padding_value=0)
+
         v_dec_pad = pad_sequence(val_dec, batch_first=True, padding_value=0)
         d_dec_pad = pad_sequence(dep_dec, batch_first=True, padding_value=0)
         p_dec_pad = pad_sequence(pos_dec, batch_first=True, padding_value=0)
-        target_pad = pad_sequence(target, batch_first=True, padding_value=0)
+
+        v_tgt_pad = pad_sequence(val_tgt, batch_first=True, padding_value=0)
+        d_tgt_pad = pad_sequence(dep_tgt, batch_first=True, padding_value=0)
+        p_tgt_pad = pad_sequence(pos_tgt, batch_first=True, padding_value=0)
 
         # return as ((input_enc, input_dec), target)
-        return ((v_enc_pad, d_enc_pad, p_enc_pad), (v_dec_pad, d_dec_pad, p_dec_pad)), target_pad
+        return ((v_enc_pad, d_enc_pad, p_enc_pad), (v_dec_pad, d_dec_pad, p_dec_pad)), (v_tgt_pad, d_tgt_pad, p_tgt_pad)

@@ -35,7 +35,13 @@ class BasicTransform(object):
 
     def encoder_only(self, value, depth, pos):
         """ Transforms a single sample for the 'encoder_only' architecture. """
-        return torch.tensor(value), torch.tensor(depth), torch.tensor(pos), torch.tensor(value)
+        # transform numpy arrays into pytorch tensors
+        val = torch.tensor(value)
+        dep = torch.tensor(depth)
+        pos = torch.tensor(pos)
+
+        # return sequences for encoder and target
+        return val, dep, pos, val, dep, pos
 
     def encoder_decoder(self, value, depth, pos):
         """ Transforms a single sample for the 'encoder_decoder' architecture. """
@@ -52,8 +58,10 @@ class BasicTransform(object):
         dep_dec = torch.tensor(depth[depth == max_depth])
         pos_dec = torch.tensor(pos[depth == max_depth])
 
-        # target is the decoder input sequence
-        target = val_dec.clone()
+        # target is the last layer
+        val_tgt = torch.tensor(value[depth == max_depth])
+        dep_tgt = torch.tensor(depth[depth == max_depth])
+        pos_tgt = torch.tensor(pos[depth == max_depth])
 
         # return sequences for encoder, decoder and target
-        return val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, target
+        return val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, val_tgt, dep_tgt, pos_tgt
