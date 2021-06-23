@@ -41,6 +41,7 @@ if __name__ == "__main__":
     # training
     parser_train.add_argument("--pretrained", type=str, default=None)
     parser_train.add_argument("--loss_function", type=str, default=None)
+    parser_train.add_argument("--val_loss_function", type=str, default=None)
     parser_train.add_argument("--epochs", type=int, default=None)
     parser_train.add_argument("--warmup_steps", default=None)
     parser_train.add_argument("--batch_size", type=int, default=None)
