@@ -1,8 +1,8 @@
-from argparse import ArgumentParser
-
+import math
 import torch
 from torch.optim import Adam
 import pytorch_lightning as pl
+from utils import nanmean
 
 from modules.transformer import (
     BasicTransformer,
@@ -17,8 +17,10 @@ from modules.embedding import (
     SingleConvolutionalEmbeddingF,
     SingleConvolutionalEmbeddingG,
     SingleConvolutionalEmbeddingH,
+    SingleConvolutionalEmbeddingI,
     ConcatEmbeddingA,
     ConcatEmbeddingB,
+    ConcatEmbeddingC,
     DoubleConvolutionalEmbedding,
 )
 from modules.generative_head import (
@@ -36,6 +38,12 @@ from lr_scheduler import (
 )
 from loss import (
     CrossEntropyLoss,
+    DepthWeightedCrossEntropyLossA,
+    DepthWeightedCrossEntropyLossB,
+    DepthWeightedCrossEntropyLossC,
+    DepthWeightedCrossEntropyLossD,
+    DepthWeightedCrossEntropyLossE,
+    DepthWeightedCrossEntropyLossF,
 )
 
 
@@ -62,6 +70,7 @@ class ShapeTransformer(pl.LightningModule):
             define a relative number or used warmup steps in the range [0 .. 1].
         train_steps: Maximum number of training steps used during training.
         loss_function: Defines the loss function used for training.
+        val_loss_function: Defines the loss function used for validation.
         architecture: Defines the base architecture of the transformer, either 'encoder_only' or 'encoder_decoder'
         attention: Defines the used attention implementation in the transformer.
         embedding: Defines the used token embedding of the shape transformer.
@@ -80,6 +89,7 @@ class ShapeTransformer(pl.LightningModule):
         warmup_steps=500,
         train_steps=10_000,
         loss_function='cross_entropy',
+        val_loss_function='cross_entropy',
         architecture='encoder_only',
         attention='basic_full',
         embedding='basic',
@@ -88,6 +98,7 @@ class ShapeTransformer(pl.LightningModule):
     ):
         super(ShapeTransformer, self).__init__()
         self.save_hyperparameters()
+        self.resolution = resolution
 
         # token embedding
         if embedding == 'basic':
@@ -108,10 +119,14 @@ class ShapeTransformer(pl.LightningModule):
             embedding = SingleConvolutionalEmbeddingG(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'single_conv_H':
             embedding = SingleConvolutionalEmbeddingH(num_vocab, embed_dim, resolution, spatial_dim)
+        elif embedding == 'single_conv_I':
+            embedding = SingleConvolutionalEmbeddingI(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'concat_A':
             embedding = ConcatEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'concat_B':
             embedding = ConcatEmbeddingB(num_vocab, embed_dim, resolution, spatial_dim)
+        elif embedding == 'concat_C':
+            embedding = ConcatEmbeddingC(num_vocab, embed_dim, resolution, spatial_dim)
         elif embedding == 'double_conv':
             embedding = DoubleConvolutionalEmbedding(embed_dim, spatial_dim)
         else:
@@ -160,29 +175,49 @@ class ShapeTransformer(pl.LightningModule):
             raise ValueError
 
         # loss function
+        kwargs = {
+            'ignore_index': 0,
+            'max_depth': math.log2(resolution),
+            'spatial_dim': spatial_dim,
+        }
+
         if loss_function == 'cross_entropy':
-            self.loss_function = CrossEntropyLoss(ignore_index=0)
+            self.loss_function = CrossEntropyLoss(**kwargs)
+        elif loss_function == 'depth_cross_entropy_A':
+            self.loss_function = DepthWeightedCrossEntropyLossA(**kwargs)
+        elif loss_function == 'depth_cross_entropy_B':
+            self.loss_function = DepthWeightedCrossEntropyLossB(**kwargs)
+        elif loss_function == 'depth_cross_entropy_C':
+            self.loss_function = DepthWeightedCrossEntropyLossC(**kwargs)
+        elif loss_function == 'depth_cross_entropy_D':
+            self.loss_function = DepthWeightedCrossEntropyLossD(**kwargs)
+        elif loss_function == 'depth_cross_entropy_E':
+            self.loss_function = DepthWeightedCrossEntropyLossE(**kwargs)
+        elif loss_function == 'depth_cross_entropy_F':
+            self.loss_function = DepthWeightedCrossEntropyLossF(**kwargs)
         else:
             print(f"ERROR: {loss_function} loss not implemented.")
             raise ValueError
 
-        print(f"\nShape Transformer parameters:\n{self.hparams}\n")
+        if val_loss_function == 'cross_entropy':
+            self.val_loss_function = CrossEntropyLoss(**kwargs)
+        elif val_loss_function == 'depth_cross_entropy_A':
+            self.val_loss_function = DepthWeightedCrossEntropyLossA(**kwargs)
+        elif val_loss_function == 'depth_cross_entropy_B':
+            self.val_loss_function = DepthWeightedCrossEntropyLossB(**kwargs)
+        elif val_loss_function == 'depth_cross_entropy_C':
+            self.val_loss_function = DepthWeightedCrossEntropyLossC(**kwargs)
+        elif val_loss_function == 'depth_cross_entropy_D':
+            self.val_loss_function = DepthWeightedCrossEntropyLossD(**kwargs)
+        elif val_loss_function == 'depth_cross_entropy_E':
+            self.val_loss_function = DepthWeightedCrossEntropyLossE(**kwargs)
+        elif val_loss_function == 'depth_cross_entropy_F':
+            self.val_loss_function = DepthWeightedCrossEntropyLossF(**kwargs)
+        else:
+            print(f"ERROR: {val_loss_function} loss not implemented.")
+            raise ValueError
 
-    # TODO: check if needed
-    @staticmethod
-    def add_model_specific_args(parent_parser):
-        parser = ArgumentParser(parents=[parent_parser], add_help=False)
-        parser.add_argument("--embed_dim", type=int, default=16)
-        parser.add_argument("--num_heads", type=int, default=2)
-        parser.add_argument("--num_layers", type=int, default=8)
-        parser.add_argument("--num_positions", type=int, default=512)
-        parser.add_argument("--num_vocab", type=int, default=16)
-        parser.add_argument("--spatial_dim", type=int, default=2)
-        parser.add_argument("--tree_depth", type=int, default=6)
-        parser.add_argument("--batch_size", type=int, default=64)
-        parser.add_argument("--learning_rate", type=float, default=3e-3)
-        parser.add_argument("--epochs", type=int, default=50)
-        return parser
+        print(f"\nShape Transformer parameters:\n{self.hparams}\n")
 
     def configure_optimizers(self):
         """ Adam optimizer with cosine annealing and warmup learning rate scheduler. """
@@ -215,30 +250,52 @@ class ShapeTransformer(pl.LightningModule):
         """
         return self.model(sequence)
 
-    def step(self, batch):
-        """ Perform one full transformer pass and compute the loss.
-
-        Args:
-            batch: Holds batched input sequences.
-
-        Return:
-            Return the loss value for the given batch.
-        """
-        sequence, target = batch
-        logits = self.forward(sequence)
-        target = target[:, :logits.shape[1]].contiguous()  # limit target tokens, if we had to limit input size
-        loss = self.loss_function(logits.view(-1, logits.size(-1)), target.view(-1))
-        return loss
-
     def training_step(self, batch, batch_idx):
         """ Perform one training step with the given batch and log the loss. """
-        loss = self.step(batch)
-        self.log('loss', loss, sync_dist=True)
+        sequence, target = batch
+
+        logits = self.forward(sequence)
+        loss = self.compute_and_log_loss(logits, target, self.loss_function, prefix='training/train_')
+        self.compute_and_log_loss(logits, target, self.val_loss_function, prefix='training/val_')
+
         return loss
 
     def validation_step(self, batch, batch_idx):
         """ Perform one validation step with the given batch and log the loss as well the allocated memory. """
-        loss = self.step(batch)
-        self.log('val_loss', loss, prog_bar=True, sync_dist=True)
-        self.log('mem_alloc', torch.cuda.max_memory_allocated() / 1024**2, prog_bar=True, sync_dist=True)
+        sequence, target = batch
+
+        logits = self.forward(sequence)
+        self.compute_and_log_loss(logits, target, self.loss_function, prefix='validation/train_')
+        loss = self.compute_and_log_loss(logits, target, self.val_loss_function, prefix='validation/val_')
+
+        # log allocated memory
+        self.log('mem_alloc', torch.cuda.max_memory_allocated() / 1024**2, sync_dist=True)
+
         return loss
+
+    def compute_and_log_loss(self, logits, target, loss_fx, prefix=""):
+        """ Compute mean loss and per layer loss and log it. Return mean loss. """
+        tgt_val, tgt_dep, tgt_pos = target
+
+        # limit target tokens, if we had to limit input size
+        tgt_val = tgt_val[:, :logits.shape[1]]
+        tgt_dep = tgt_dep[:, :logits.shape[1]]
+        tgt_pos = tgt_pos[:, :, :logits.shape[1]]
+
+        # compute loss for each token
+        loss = loss_fx(logits, (tgt_val, tgt_dep, tgt_pos))
+
+        # compute mean loss
+        mean_loss = torch.mean(loss[tgt_dep != 0])
+        self.log(prefix + 'loss_mean', mean_loss, sync_dist=True)
+
+        # compute loss per layer
+        loss_per_layer = []
+        for i in range(2, int(math.log2(self.resolution) + 1)):
+            layer_loss = torch.mean(loss[tgt_dep == i])
+            loss_per_layer += [layer_loss]
+            self.log(prefix + f'loss_layer_{i}', layer_loss, sync_dist=True, reduce_fx=nanmean)
+        mean_loss_per_layer = nanmean(torch.tensor(loss_per_layer, device=loss.device))
+        self.log(prefix + 'loss_layer_mean', mean_loss_per_layer, sync_dist=True, reduce_fx=nanmean)
+
+        return mean_loss
