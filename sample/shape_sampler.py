@@ -114,6 +114,6 @@ class ShapeSampler:
         """
         # create an initial array, with all elements marked as undefined/mixed.
         random_element_array = torch.randint(
-            low=0, high=2, size=self.spatial_dim * [target_resolution], dtype=torch.long
+            low=0, high=2, size=self.spatial_dim * [min(16, target_resolution)], dtype=torch.long
         ).numpy()
         return self.sampler(random_element_array, 2, target_resolution, temperature)
