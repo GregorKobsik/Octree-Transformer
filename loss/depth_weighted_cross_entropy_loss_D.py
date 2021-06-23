@@ -17,17 +17,16 @@ class DepthWeightedCrossEntropyLossD(CrossEntropyLoss):
         max_depth: int = 5,
         **_,
     ) -> None:
-        """ TODO: add description
+        """ Defines a weighted cross entropy loss function based on the depth of each layer.
+
+        This criterion combines LogSoftmax and NLLLoss in one single class. The weighting of the loss is done
+        expotentially based on the depth of the token: fx(d) = (2*`spatial_dim`)^(`max_depth` - d).
 
         Args:
-            weight:
-            size_average:
-            ignore_index:
-            spatial_dim:
-            max_depth:
-
-        Return:
-
+            weight: Manual rescaling weight given to each class. If given, has to be a Tensor of size V.
+            ignore_index: Specifies a target value that is ignored and does not contribute to the input gradient.
+            spatial_dim: Defines the spatial dimension of the data used in the model.
+            max_depth: Defines the maximum depth value used in the model.
         """
         super(DepthWeightedCrossEntropyLossD, self).__init__(weight, size_average, ignore_index, None, 'none')
         self.ignore_index = ignore_index
@@ -35,14 +34,14 @@ class DepthWeightedCrossEntropyLossD(CrossEntropyLoss):
         self.spatial_dim = spatial_dim
 
     def forward(self, logits: Tensor, target: Tensor) -> Tensor:
-        """ TODO: add description
+        """ Computes the weighted cross entropy loss given logits and targets.
 
         Args:
-            logits: [N, T, V]
-            target: [N, T]
+            logits: Contains raw, unnormalized scores for each class [N, T, V].
+            target: Is a tuple of target sequences for value, depth and position with each a shape of [N, T].
 
         Return:
-
+            Loss for each token with the shape [N, T].
         """
         # unpack target sequence
         tgt_val, tgt_dep, _ = target  # [N, T]
