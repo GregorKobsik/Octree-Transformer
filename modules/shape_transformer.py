@@ -177,7 +177,7 @@ class ShapeTransformer(pl.LightningModule):
         # limit target tokens, if we had to limit input size
         tgt_val = tgt_val[:, :logits.shape[1]]
         tgt_dep = tgt_dep[:, :logits.shape[1]]
-        tgt_pos = tgt_pos[:, :, :logits.shape[1]]
+        tgt_pos = tgt_pos[:, :logits.shape[1]]
 
         # compute loss for each token
         loss = loss_fx(logits, (tgt_val, tgt_dep, tgt_pos))
