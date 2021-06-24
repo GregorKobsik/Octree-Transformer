@@ -1,5 +1,6 @@
 from modules.transformer import (
     BasicTransformer,
+    Autoencoder,
 )
 
 
@@ -8,14 +9,10 @@ def create_transformer(
     token_embedding,
     generative_head,
     architecture,
-    attention,
     embed_dim,
     num_heads,
     num_layers,
     num_positions,
-    num_vocab,
-    resolution,
-    spatial_dim,
 ):
     """ Creates a transformer model.
 
@@ -47,5 +44,10 @@ def create_transformer(
 
     if name == "basic":
         return BasicTransformer(**kwargs)
+    if name == "none":
+        if architecture == "autoencoder":
+            return Autoencoder(**kwargs)
+        else:
+            raise ValueError("ERROR: Please select `autoencoder` archicture for `none` attention.")
     else:
         raise ValueError(f"ERROR: {name} attention transformer not implemented.")

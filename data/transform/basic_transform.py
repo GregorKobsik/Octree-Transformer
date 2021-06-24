@@ -29,9 +29,10 @@ class BasicTransform(object):
             return self.encoder_only(value, depth, pos)
         elif self.architecture == "encoder_decoder":
             return self.encoder_decoder(value, depth, pos)
+        elif self.architecture == "autoencoder":
+            return self.autoencoder(value, depth, pos)
         else:
-            print(f"ERROR: No transform function implemented for {self.architecture}")
-            raise ValueError
+            raise ValueError(f"ERROR: No transform function implemented for {self.architecture}")
 
     def encoder_only(self, value, depth, pos):
         """ Transforms a single sample for the 'encoder_only' architecture. """
@@ -65,3 +66,16 @@ class BasicTransform(object):
 
         # return sequences for encoder, decoder and target
         return val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, val_tgt, dep_tgt, pos_tgt
+
+    def autoencoder(self, value, depth, pos):
+        """ Transforms a single sample for the 'autoencoder' architecture. """
+        # get maximum depth layer value
+        max_depth = max(depth)
+
+        # transform numpy arrays into pytorch tensors
+        val = torch.tensor(value[depth == max_depth])
+        dep = torch.tensor(depth[depth == max_depth])
+        pos = torch.tensor(pos[depth == max_depth])
+
+        # return sequences for encoder and target
+        return val, dep, pos, val, dep, pos

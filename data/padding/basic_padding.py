@@ -27,9 +27,10 @@ class BasicPadding(object):
             return self.encoder_only(batch)
         elif self.architecture == "encoder_decoder":
             return self.encoder_decoder(batch)
+        if self.architecture == "autoencoder":
+            return self.encoder_only(batch)
         else:
-            print(f"ERROR: No padding function implemented for {self.architecture}")
-            raise ValueError
+            raise ValueError(f"ERROR: No padding function implemented for {self.architecture}")
 
     def encoder_only(self, batch):
         """ Pads and packs a list of samples for the 'encoder_only' architecture. """
