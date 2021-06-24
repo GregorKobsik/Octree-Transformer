@@ -4,46 +4,15 @@ from torch.optim import Adam
 import pytorch_lightning as pl
 from utils import nanmean
 
-from modules.transformer import (
-    BasicTransformer,
+from factories import (
+    create_embedding,
+    create_head,
+    create_loss,
+    create_transformer,
 )
-from modules.embedding import (
-    BasicEmbedding,
-    SingleConvolutionalEmbeddingA,
-    SingleConvolutionalEmbeddingB,
-    SingleConvolutionalEmbeddingC,
-    SingleConvolutionalEmbeddingD,
-    SingleConvolutionalEmbeddingE,
-    SingleConvolutionalEmbeddingF,
-    SingleConvolutionalEmbeddingG,
-    SingleConvolutionalEmbeddingH,
-    SingleConvolutionalEmbeddingI,
-    ConcatEmbeddingA,
-    ConcatEmbeddingB,
-    ConcatEmbeddingC,
-    DoubleConvolutionalEmbedding,
-)
-from modules.generative_head import (
-    LinearHead,
-    SingleConvolutionalHeadA,
-    SingleConvolutionalHeadB,
-    SingleConvolutionalHeadC,
-    SingleConvolutionalHeadD,
-    SplitHeadA,
-    SplitHeadB,
-    DoubleConvolutionalHead,
-)
+
 from lr_scheduler import (
     ConstantWithWarmup,
-)
-from loss import (
-    CrossEntropyLoss,
-    DepthWeightedCrossEntropyLossA,
-    DepthWeightedCrossEntropyLossB,
-    DepthWeightedCrossEntropyLossC,
-    DepthWeightedCrossEntropyLossD,
-    DepthWeightedCrossEntropyLossE,
-    DepthWeightedCrossEntropyLossF,
 )
 
 
@@ -55,13 +24,13 @@ class ShapeTransformer(pl.LightningModule):
     reimplementing the whole training process, while defining a clean API for the data input and training process.
 
     Args:
-        embed_dim: Number of embedding dimensions used by `attention`.
+        embed_dim: Size of embedding dimensions used by `attention`.
         num_heads: Number of heads used by `attention`.
         num_layers: Number of layers for each the 'decoder' and 'encoder' part of the transformer.
         num_positions: Maximal length of processed input tokens for the 'decoder' and 'encoder'. You can pass longer
             sequences as input, but they will be truncated before feeding into the transformer. Although longer
             sequences can be accepted by a non-basic embedding and possibly compressed to stay within the limit.
-        num_vocab: Number of different used vocabs in the vocabulary set.
+        num_vocab: Number of different vocabs in the vocabulary set.
         resolution: Maximum side length of input data.
         spatial_dim: Spatial dimensionality of input data.
         learning_rate: Maximum learning rate used durring the training process.
@@ -101,121 +70,49 @@ class ShapeTransformer(pl.LightningModule):
         self.resolution = resolution
 
         # token embedding
-        if embedding == 'basic':
-            embedding = BasicEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding in ('single_conv', 'single_conv_A'):
-            embedding = SingleConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv_B':
-            embedding = SingleConvolutionalEmbeddingB(embed_dim, spatial_dim)
-        elif embedding == 'single_conv_C':
-            embedding = SingleConvolutionalEmbeddingC(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv_D':
-            embedding = SingleConvolutionalEmbeddingD(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv_E':
-            embedding = SingleConvolutionalEmbeddingE(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv_F':
-            embedding = SingleConvolutionalEmbeddingF(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv_G':
-            embedding = SingleConvolutionalEmbeddingG(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv_H':
-            embedding = SingleConvolutionalEmbeddingH(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'single_conv_I':
-            embedding = SingleConvolutionalEmbeddingI(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'concat_A':
-            embedding = ConcatEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'concat_B':
-            embedding = ConcatEmbeddingB(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'concat_C':
-            embedding = ConcatEmbeddingC(num_vocab, embed_dim, resolution, spatial_dim)
-        elif embedding == 'double_conv':
-            embedding = DoubleConvolutionalEmbedding(embed_dim, spatial_dim)
-        else:
-            print(f"ERROR: {embedding} embedding not implemented.")
-            raise ValueError
+        embedding = create_embedding(
+            name=embedding,
+            num_vocab=num_vocab,
+            embed_dim=embed_dim,
+            resolution=resolution,
+            spatial_dim=spatial_dim,
+        )
 
         # generative head
-        if head in ('generative_basic', 'linear'):
-            head = LinearHead(num_vocab, embed_dim)
-        elif head in ('single_conv', 'single_conv_A'):
-            head = SingleConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
-        elif head == 'single_conv_B':
-            head = SingleConvolutionalHeadB(num_vocab, embed_dim, spatial_dim)
-        elif head == 'single_conv_C':
-            head = SingleConvolutionalHeadC(num_vocab, embed_dim, spatial_dim)
-        elif head == 'single_conv_D':
-            head = SingleConvolutionalHeadD(num_vocab, embed_dim, spatial_dim)
-        elif head == 'split_A':
-            head = SplitHeadA(num_vocab, embed_dim, spatial_dim)
-        elif head == 'split_B':
-            head = SplitHeadB(num_vocab, embed_dim, spatial_dim)
-        elif head == 'double_conv':
-            head = DoubleConvolutionalHead(num_vocab, embed_dim, spatial_dim)
-        else:
-            print(f"ERROR: {head} head not implemented.")
-            raise ValueError
+        head = create_head(
+            name=head,
+            num_vocab=num_vocab,
+            embed_dim=embed_dim,
+            spatial_dim=spatial_dim,
+        )
 
         # transformer model
-        kwargs = {
-            'token_embedding': embedding,
-            'generative_head': head,
-            'architecture': architecture,
-            'attention': attention,
-            'embed_dim': embed_dim,
-            'num_heads': num_heads,
-            'num_layers': num_layers,
-            'num_positions': num_positions,
-            'num_vocab': num_vocab,
-            'resolution': resolution,
-            'spatial_dim': spatial_dim,
-        }
-        if attention == "basic":
-            self.model = BasicTransformer(**kwargs)
-        else:
-            print(f"ERROR: {attention} attention not implemented.")
-            raise ValueError
+        self.model = create_transformer(
+            name=attention,
+            token_embedding=embedding,
+            generative_head=head,
+            architecture=architecture,
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            num_layers=num_layers,
+            num_positions=num_positions,
+        )
 
-        # loss function
-        kwargs = {
-            'ignore_index': 0,
-            'max_depth': math.log2(resolution),
-            'spatial_dim': spatial_dim,
-        }
+        # training loss function
+        self.loss_function = create_loss(
+            name=loss_function,
+            ignore_index=0,
+            max_depth=math.log2(resolution),
+            spatial_dim=spatial_dim,
+        )
 
-        if loss_function == 'cross_entropy':
-            self.loss_function = CrossEntropyLoss(**kwargs)
-        elif loss_function == 'depth_cross_entropy_A':
-            self.loss_function = DepthWeightedCrossEntropyLossA(**kwargs)
-        elif loss_function == 'depth_cross_entropy_B':
-            self.loss_function = DepthWeightedCrossEntropyLossB(**kwargs)
-        elif loss_function == 'depth_cross_entropy_C':
-            self.loss_function = DepthWeightedCrossEntropyLossC(**kwargs)
-        elif loss_function == 'depth_cross_entropy_D':
-            self.loss_function = DepthWeightedCrossEntropyLossD(**kwargs)
-        elif loss_function == 'depth_cross_entropy_E':
-            self.loss_function = DepthWeightedCrossEntropyLossE(**kwargs)
-        elif loss_function == 'depth_cross_entropy_F':
-            self.loss_function = DepthWeightedCrossEntropyLossF(**kwargs)
-        else:
-            print(f"ERROR: {loss_function} loss not implemented.")
-            raise ValueError
-
-        if val_loss_function == 'cross_entropy':
-            self.val_loss_function = CrossEntropyLoss(**kwargs)
-        elif val_loss_function == 'depth_cross_entropy_A':
-            self.val_loss_function = DepthWeightedCrossEntropyLossA(**kwargs)
-        elif val_loss_function == 'depth_cross_entropy_B':
-            self.val_loss_function = DepthWeightedCrossEntropyLossB(**kwargs)
-        elif val_loss_function == 'depth_cross_entropy_C':
-            self.val_loss_function = DepthWeightedCrossEntropyLossC(**kwargs)
-        elif val_loss_function == 'depth_cross_entropy_D':
-            self.val_loss_function = DepthWeightedCrossEntropyLossD(**kwargs)
-        elif val_loss_function == 'depth_cross_entropy_E':
-            self.val_loss_function = DepthWeightedCrossEntropyLossE(**kwargs)
-        elif val_loss_function == 'depth_cross_entropy_F':
-            self.val_loss_function = DepthWeightedCrossEntropyLossF(**kwargs)
-        else:
-            print(f"ERROR: {val_loss_function} loss not implemented.")
-            raise ValueError
+        # validation loss function
+        self.val_loss_function = create_loss(
+            name=val_loss_function,
+            ignore_index=0,
+            max_depth=math.log2(resolution),
+            spatial_dim=spatial_dim,
+        )
 
         print(f"\nShape Transformer parameters:\n{self.hparams}\n")
 
