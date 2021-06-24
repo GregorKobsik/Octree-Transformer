@@ -1,5 +1,4 @@
 import yaml
-import math
 
 import torch
 import pytorch_lightning as pl
@@ -51,22 +50,13 @@ def train(config):
     logger = pl_loggers.TensorBoardLogger("logs", name=config['name'])
     callbacks = [
         ModelCheckpoint(
-            filename="best-layer=mean",
+            filename="best",
             monitor="validation/val_loss_layer_mean",
             mode="min",
             save_last=True,
             save_top_k=1,
         )
     ]
-    for i in range(2, int(math.log2(config['resolution']) + 1)):
-        callbacks.append(
-            ModelCheckpoint(
-                filename=f"best-layer={i}",
-                monitor=f"validation/val_loss_layer_{i}",
-                mode="min",
-                save_top_k=1,
-            )
-        )
     if config['log_gradient']:
         callbacks.append(TrackedGradientOutput(global_only=True))
     if config['log_weights_and_biases']:
