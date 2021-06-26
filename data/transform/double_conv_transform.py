@@ -33,3 +33,16 @@ class DoubleConvolutionalTransform(BasicTransform):
 
         # return sequences for encoder, decoder and target
         return val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, val_tgt, dep_tgt, pos_tgt
+
+    def autoencoder(self, value, depth, pos):
+        """ Transforms a single sample for the 'autoencoder' architecture. """
+        # get maximum depth layer value
+        max_depth = max(depth)
+
+        # extract penultimate and last sequence layer
+        val = torch.cat([torch.tensor(value[depth == (max_depth - 1)]), torch.tensor(value[depth == max_depth])])
+        dep = torch.cat([torch.tensor(depth[depth == (max_depth - 1)]), torch.tensor(depth[depth == max_depth])])
+        pos = torch.cat([torch.tensor(pos[depth == (max_depth - 1)]), torch.tensor(pos[depth == max_depth])])
+
+        # return sequences for encoder and target
+        return val, dep, pos, val, dep, pos
