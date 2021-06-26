@@ -42,12 +42,9 @@ def create_transformer(
         'num_positions': num_positions,
     }
 
-    if name == "basic":
+    if architecture == "autoencoder":
+        return Autoencoder(**kwargs)
+    elif name == "basic":
         return BasicTransformer(**kwargs)
-    if name == "none":
-        if architecture == "autoencoder":
-            return Autoencoder(**kwargs)
-        else:
-            raise ValueError("ERROR: Please select `autoencoder` archicture for `none` attention.")
     else:
         raise ValueError(f"ERROR: {name} attention transformer not implemented.")
