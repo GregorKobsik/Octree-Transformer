@@ -97,8 +97,8 @@ def dataloaders(
         dataset: Select a dataset. Currently only 'mnist' and 'shapenet' available.
         subclass: Select a subclass of a dataset, if available.
         resolution: Select the underlying resolution of the selected dataset, if available.
-        embedding: TODO
-        architecture: TODO
+        embedding: Defines the used token embedding of the shape transformer.
+        architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
         batch_size: Defines the batch size for the data loader
         datapath: Path to the dataset. If the dataset is not found then
             the data is automatically downloaded to the specified location.
