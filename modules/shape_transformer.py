@@ -191,7 +191,7 @@ class ShapeTransformer(pl.LightningModule):
         for i in range(2, int(math.log2(self.resolution) + 1)):
             layer_loss = torch.mean(loss[tgt_dep == i])
             loss_per_layer += [layer_loss]
-            self.log(prefix + f'loss_layer_{i}', layer_loss, sync_dist=True, reduce_fx=nanmean)
+            #self.log(prefix + f'loss_layer_{i}', layer_loss, sync_dist=True, reduce_fx=nanmean)
         mean_loss_per_layer = nanmean(torch.tensor(loss_per_layer, device=loss.device))
         self.log(prefix + 'loss_layer_mean', mean_loss_per_layer, sync_dist=True, reduce_fx=nanmean)
 
