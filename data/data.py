@@ -7,18 +7,18 @@ from data import (
     QuadtreeMNIST,
     OctreeShapeNet,
 )
-from data.transform import (
-    BasicTransform,
-    DoubleConvolutionalTransform,
-)
-from data.padding import (
-    BasicPadding,
-)
+from data.padding import BasicPadding
+from factories import create_data_transform
 
 # Defines a dictionary of available datasets, which can be selected.
 DATASETS = {
     "mnist": QuadtreeMNIST,
     "shapenet": OctreeShapeNet,
+}
+
+spatial_dim = {
+    "mnist": 2,
+    "shapenet": 3,
 }
 
 
@@ -49,10 +49,7 @@ def datasets(
 
     """
     # select data transform function
-    if embedding.startswith("double"):
-        transform_fn = DoubleConvolutionalTransform(architecture)
-    else:
-        transform_fn = BasicTransform(architecture)
+    transform_fn = create_data_transform(embedding, architecture, spatial_dim[dataset])
 
     # initialize arguments
     kwargs = {
