@@ -16,11 +16,11 @@ def create_data_transform(name, architecture, spatial_dim):
     Return:
         data transformation function initialised with specified parameters.
     """
-    if name.startswith('double_conv'):
-        return DoubleConvolutionalTransform(architecture)
+    if name.startswith(('basic', 'single_conv', 'concat')):
+        return BasicTransform(architecture)
     elif name.startswith('discrete'):
         return TrianryTransform(architecture, spatial_dim)
-    elif name.startswith(('basic', 'single_conv', 'concat')):
-        return BasicTransform(architecture)
+    elif name.startswith('double_conv'):
+        return DoubleConvolutionalTransform(architecture)
     else:
         raise ValueError(f"ERROR: No data transform for {name} embedding available.")
