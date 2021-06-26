@@ -6,7 +6,7 @@ class DoubleConvolutionalTransform(BasicTransform):
     """ Creates a transform module, which transforms the input data samples for the 'double_conv' embedding.
 
     Args:
-        architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
+        architecture: Defines which architecture is used in the transformer model.
     """
     def __init__(self, architecture):
         super(DoubleConvolutionalTransform, self).__init__(architecture)

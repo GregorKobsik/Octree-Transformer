@@ -6,14 +6,21 @@ class BasicTransform(object):
         """ Creates a transform module, which transforms the input data samples for the 'basic' embedding.
 
         Args:
-            architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
+            architecture: Defines which architecture is used in the transformer model.
         """
-        self.architecture = architecture
+        if architecture == "encoder_only":
+            self.transform_fx = self.encoder_only
+        elif architecture == "encoder_decoder":
+            self.transform_fx = self.encoder_decoder
+        elif architecture == "autoencoder":
+            self.transform_fx = self.autoencoder
+        else:
+            raise ValueError(f"ERROR: No transform function implemented for {architecture}")
 
     def __call__(self, value, depth, pos):
         """ Performs the transformation of a single sample sequence into the desired format.
 
-        Note: Uses different output shapes for 'encoder_only' and 'encoder_decoder' architecture.
+        Note: Uses different output shapes for different architectures.
 
         Args:
             value: Raw value token sequence.
@@ -22,17 +29,11 @@ class BasicTransform(object):
 
         Return:
             Tuple representing the given sequences transformed to match the architecture requirements. The tuple has
-            the shape (value, depth, pos, target) for the 'encoder_only' architecture and (enc_value, enc_depth,
-            enc_pos, dec_value, dec_depth, dec_pos, target) for the 'encoder_decoder' architecture.
+            the shape (val, dep, pos, val, dep, pos) for the 'encoder_only' and 'autoencoder' architecture and
+            (enc_value, enc_depth, enc_pos, dec_value, dec_depth, dec_pos, target) for the 'encoder_decoder'
+            architecture.
         """
-        if self.architecture == "encoder_only":
-            return self.encoder_only(value, depth, pos)
-        elif self.architecture == "encoder_decoder":
-            return self.encoder_decoder(value, depth, pos)
-        elif self.architecture == "autoencoder":
-            return self.autoencoder(value, depth, pos)
-        else:
-            raise ValueError(f"ERROR: No transform function implemented for {self.architecture}")
+        return self.transform_fx(value, depth, pos)
 
     def encoder_only(self, value, depth, pos):
         """ Transforms a single sample for the 'encoder_only' architecture. """
