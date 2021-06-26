@@ -1,10 +1,6 @@
 from modules.generative_head import (
     LinearHead,
     SingleConvolutionalHeadA,
-    SingleConvolutionalHeadB,
-    SingleConvolutionalHeadC,
-    SingleConvolutionalHeadD,
-    SplitHeadA,
     SplitHeadB,
     DoubleConvolutionalHead,
 )
@@ -28,14 +24,6 @@ def create_head(name, num_vocab, embed_dim, spatial_dim):
         return LinearHead(num_vocab, embed_dim)
     elif name in ('single_conv', 'single_conv_A'):
         return SingleConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
-    elif name == 'single_conv_B':
-        return SingleConvolutionalHeadB(num_vocab, embed_dim, spatial_dim)
-    elif name == 'single_conv_C':
-        return SingleConvolutionalHeadC(num_vocab, embed_dim, spatial_dim)
-    elif name == 'single_conv_D':
-        return SingleConvolutionalHeadD(num_vocab, embed_dim, spatial_dim)
-    elif name == 'split_A':
-        return SplitHeadA(num_vocab, embed_dim, spatial_dim)
     elif name == 'split_B':
         return SplitHeadB(num_vocab, embed_dim, spatial_dim)
     elif name == 'double_conv':
