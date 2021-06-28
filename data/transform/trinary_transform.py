@@ -5,7 +5,7 @@ from utils import TrinaryRepresentation
 
 class TrinaryTransform(BasicTransform):
     def __init__(self, architecture, spatial_dim):
-        """ Creates a transform module, which transforms the input data samples for the 'basic' embedding.
+        """ Creates a transform module, which transforms the input data samples for the 'discrete_transformation' embedding.
 
         Args:
             architecture: Defines which architecture is used in the transformer model.
