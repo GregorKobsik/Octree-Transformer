@@ -155,12 +155,10 @@ class kdTree():
         # fail-fast: malformed input sequence
         all_tokens_valid = all(str(c) in '123' for c in value)
         if not all_tokens_valid:
-            if not silent:
-                print(
-                    "ERROR: Input sequence consists of invalid tokens. Check token values and array type." +
-                    f"Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). Sequence: {value}."
-                )
-            raise ValueError
+            raise ValueError(
+                "ERROR: Input sequence consists of invalid tokens. Check token values and array type." +
+                f"Valid tokens consist of 1 (white), 2 (mixed) and 3 (black). Sequence: {value}."
+            )
 
         # initialize self
         self.value = 0
