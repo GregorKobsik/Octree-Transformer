@@ -95,6 +95,23 @@ class TrinaryRepresentation():
 
         return value, depth, position
 
+    def decode_trinary_value(self, value):
+        """ Transforms given trinary value sequence into a basic sequence representation.
+
+        Args:
+            value: Numpy array holding the value token sequence with shape (S), with token values in [0, 3].
+
+        Return:
+            Value sequence in basic sequence representation.
+        """
+        # iterate over the value sequence to decode a single token into multiple basic tokens
+        value_new = []
+        for val_token in value:
+            value_new += self.dec_to_tri(val_token)
+        value = np.array(value_new).reshape(-1)
+
+        return value
+
     def decode_trinary(self, value, depth, position):
         """ Transforms given trinary sequence into a basic sequence representation.
 
@@ -106,11 +123,8 @@ class TrinaryRepresentation():
         Return:
             A tuple of (value, depth, position) in basic sequence representation.
         """
-        # iterate over the value sequence to decode a single token into multiple basic tokens
-        value_new = []
-        for val_token in value:
-            value_new += self.dec_to_tri(val_token)
-        value = np.array(value_new).reshape(-1)
+        # decode a value sequence in trinary representation into basic representation
+        value = self.decode_trinary_value(value)
 
         # create n-times as much depth tokens, as we decoded each value token into multiple ones
         depth = np.repeat(depth, self.num_tokens)

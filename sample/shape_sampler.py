@@ -44,7 +44,10 @@ class ShapeSampler:
             "device": device,
             "max_tokens": hparams["num_positions"],
             "max_resolution": hparams["resolution"],
-            "model": self.model,
+            "model": model,
+            "architecture": architecture,
+            "embedding": embedding,
+            "head": head,
         }
 
         if transformer_architecture in (
