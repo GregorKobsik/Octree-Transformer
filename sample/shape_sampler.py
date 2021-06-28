@@ -37,7 +37,6 @@ class ShapeSampler:
         architecture = hparams['architecture']
         embedding = hparams['embedding']
         head = hparams['head']
-        transformer_architecture = [architecture, embedding, head]
 
         # select explicit sampler implementation
         kwargs = {
@@ -51,10 +50,9 @@ class ShapeSampler:
             "head": head,
         }
 
-        if transformer_architecture in (
-            ["encoder_decoder", "basic", "generative_basic"],
-            ["encoder_decoder", "basic", "linear"],
-            ["encoder_decoder", "single_conv_F", "linear"],
+        if (
+            architecture == "encoder_decoder" and embedding.startswith(("basic", "single_conv_F")) and
+            head.startswith(("linear", "generative_basic"))
         ):
             self.sampler = BasicEncoderDecoderSampler(**kwargs)
         elif (
@@ -66,7 +64,10 @@ class ShapeSampler:
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
         elif (architecture == "encoder_decoder" and embedding.startswith("single_conv") and head.startswith("split")):
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
-        elif transformer_architecture == ["encoder_decoder", "double_conv", "double_conv"]:
+        elif (
+            architecture == "encoder_decoder" and embedding.startswith("double_conv") and
+            head.startswith("double_conv")
+        ):
             self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
         elif architecture == "autoencoder":
             self.sampler = AutoencoderSampler(**kwargs)
