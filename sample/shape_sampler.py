@@ -1,12 +1,7 @@
 import torch
-from modules import ShapeTransformer
 
-from sample.sampler import (
-    BasicEncoderDecoderSampler,
-    SingleConvEncoderDecoderSampler,
-    DoubleConvolutionalEncoderDecoderSampler,
-    AutoencoderSampler,
-)
+from modules import ShapeTransformer
+from factories import create_sampler
 
 
 class ShapeSampler:
@@ -19,63 +14,20 @@ class ShapeSampler:
             device: Selects the device on which the sampling should be performed. Either "cpu" or "cuda" (gpu-support)
                 available.
         """
-        self.checkpoint_path = checkpoint_path
-        self.device = device
-
         # load and restore model from checkpoint
         pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path)
         pl_module.freeze()
-        model = pl_module.model.eval().to(device)
 
         # extract hyperparameters from the model
         hparams = pl_module.hparams
-
-        self.dataset = hparams["dataset"]
-        self.subclass = hparams["subclass"]
         self.spatial_dim = hparams['spatial_dim']
 
-        architecture = hparams['architecture']
-        embedding = hparams['embedding']
-        head = hparams['head']
-
-        # select explicit sampler implementation
-        kwargs = {
-            "spatial_dim": hparams['spatial_dim'],
-            "device": device,
-            "max_tokens": hparams["num_positions"],
-            "max_resolution": hparams["resolution"],
-            "model": model,
-            "architecture": architecture,
-            "embedding": embedding,
-            "head": head,
-        }
-
-        if (
-            architecture == "encoder_decoder" and embedding.startswith(("basic", "single_conv_F")) and
-            head.startswith(("linear", "generative_basic"))
-        ):
-            self.sampler = BasicEncoderDecoderSampler(**kwargs)
-        elif (
-            architecture == "encoder_decoder" and embedding.startswith("single_conv") and
-            head.startswith("single_conv")
-        ):
-            self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
-        elif (architecture == "encoder_decoder" and embedding.startswith("concat") and head.startswith("split")):
-            self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
-        elif (architecture == "encoder_decoder" and embedding.startswith("single_conv") and head.startswith("split")):
-            self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
-        elif (
-            architecture == "encoder_decoder" and embedding.startswith("double_conv") and
-            head.startswith("double_conv")
-        ):
-            self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
-        elif architecture == "autoencoder":
-            self.sampler = AutoencoderSampler(**kwargs)
-        else:
-            raise ValueError(
-                "No sampler defined for the combination or parameters - " +
-                f"architecture: {architecture}, embedding: {embedding}, and head: {head}."
-            )
+        # create sampler model
+        self.sampler = create_sampler(
+            hparams['architecture'], hparams['embedding'], hparams['head'],
+            pl_module.model.eval().to(device), hparams['spatial_dim'], hparams["num_positions"], hparams["resolution"],
+            device
+        )
 
     def sample_preconditioned(self, precondition, precondition_resolution=1, target_resolution=32, temperature=1.0):
         """ Samples a single array of elements from the model.
