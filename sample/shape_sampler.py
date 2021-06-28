@@ -5,6 +5,7 @@ from sample.sampler import (
     BasicEncoderDecoderSampler,
     SingleConvEncoderDecoderSampler,
     DoubleConvolutionalEncoderDecoderSampler,
+    AutoencoderSampler,
 )
 
 
@@ -67,6 +68,8 @@ class ShapeSampler:
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
         elif transformer_architecture == ["encoder_decoder", "double_conv", "double_conv"]:
             self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
+        elif architecture == "autoencoder":
+            self.sampler = AutoencoderSampler(**kwargs)
         else:
             raise ValueError(
                 "No sampler defined for the combination or parameters - " +
