@@ -58,12 +58,12 @@ class TrinaryRepresentation():
 
         # recompute positions: compute the mean position of each n tokens.
         position = position.reshape(-1, self.num_tokens, self.spatial_dim)
-        position = position.sum(axis=1) / self.num_tokens
+        position = position.sum(axis=1) // self.num_tokens
 
         # take each n-th depth token, as we summarized them
         depth = depth[::self.num_tokens]
 
-        return value_trinary, depth, position
+        return np.array(value_trinary), depth, position
 
     def encode_trinary_pytorch(self, value, depth, position):
         """ Transforms given basic sequence into a trinary sequence representation. Provides a wrapper for pytorch
@@ -121,7 +121,6 @@ class TrinaryRepresentation():
         pos_deltas = np.tile(self.dirs, (len(position), 1)) * pos_steps
         # compute new position values for each generated token
         position = np.repeat(position, self.num_tokens, axis=0) + pos_deltas
-        print(position)
 
         return value, depth, position
 
