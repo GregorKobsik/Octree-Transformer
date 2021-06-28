@@ -8,20 +8,23 @@ from sample.sampler import BasicEncoderDecoderSampler
 
 
 class SingleConvEncoderDecoderSampler(BasicEncoderDecoderSampler):
-    def __init__(self, spatial_dim, device, max_tokens, max_resolution, model, **_):
+    def __init__(self, model, embedding, head, spatial_dim, max_tokens, max_resolution, device, **_):
         """ Provides a basic implementation of the sampler for the encoder decoder architecture with all basic modules.
 
         The following sampler works with the following combinations of modules [architecture, embedding, head]:
             - 'encoder_decoder', 'single_conv', 'single_conv'
 
         Args:
+            model: Model which is used for sampling.
+            embedding: Token embedding type used in the model.
+            head: Generative head type used in the model.
             spatial_dim: Spatial dimensionality of the array of elements.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
             max_tokens: Maximum number of tokens a sequence can have.
-            max_resolution: Maximum resolution the model is trained on
-            model: Instance of model which is used for sampling.
+            max_resolution: Maximum resolution the model is trained on.
         """
-        super(SingleConvEncoderDecoderSampler, self).__init__(spatial_dim, device, max_tokens, max_resolution, model)
+        super(SingleConvEncoderDecoderSampler,
+              self).__init__(model, embedding, head, spatial_dim, max_tokens, max_resolution, device)
         self.num_sampled_tokens = 2**spatial_dim
 
     def sample(self, sequences, target_resolution, temperature):

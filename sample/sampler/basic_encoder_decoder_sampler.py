@@ -1,76 +1,30 @@
 import math
 import torch
 
+from sample.sampler import AbstractSampler
 from tqdm.auto import tqdm
-from utils import kdTree
 from sample.sample_utils import next_layer_tokens
 
 
-class BasicEncoderDecoderSampler:
-    def __init__(self, spatial_dim, device, max_tokens, max_resolution, model, **_):
+class BasicEncoderDecoderSampler(AbstractSampler):
+    def __init__(self, model, embedding, head, spatial_dim, max_tokens, max_resolution, device, **_):
         """ Provides a basic implementation of the sampler for the encoder decoder architecture with all basic modules.
 
         The following sampler works with the following combinations of modules [architecture, embedding, head]:
             - 'encoder_decoder', 'basic', 'generative_basic'
 
         Args:
+            model: Model which is used for sampling.
+            embedding: Token embedding type used in the model.
+            head: Generative head type used in the model.
             spatial_dim: Spatial dimensionality of the array of elements.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
             max_tokens: Maximum number of tokens a sequence can have.
-            max_resolution: Maximum resolution the model is trained on
-            model: Instance of model which is used for sampling.
+            max_resolution: Maximum resolution the model is trained on.
         """
-        self.spatial_dim = spatial_dim
-        self.device = device
+        super(BasicEncoderDecoderSampler, self).__init__(model, embedding, head, spatial_dim, device)
         self.max_tokens = max_tokens
         self.max_resolution = max_resolution
-        self.model = model
-
-    def __call__(self, precondition, precondition_resolution, target_resolution, temperature):
-        """ Sample a single example based on the given `precondition` up to `target_resolution`.
-
-        Args:
-            precondition: An array of elements (pixels/voxels) as an numpy array.
-            precondition_resolution: Resolution, to which the input array will be downscaled and used as a precondition
-                for sampling.
-            target_resolution: Resolution up to which an object should be sampled.
-            temperature: Defines the randomness of the samples.
-
-        Return:
-            An array of elements as a numpy array, which represents the sampled shape.
-        """
-        # preprocess the input and transform it into a token sequence
-        sequence = self.preprocess(precondition, precondition_resolution)
-
-        # enhance the resolution of the sequence or generate a new sequence by sampling new token values
-        value = self.sample(sequence, target_resolution, temperature)
-
-        # postprocess the token value sequence and return it as an array of elements
-        return self.postprocess(value, target_resolution)
-
-    def preprocess(self, precondition, precondition_resolution):
-        """ Transform input array elements into token sequences.
-
-        Args:
-            precondition: An array of elements (pixels/voxels) as an numpy array.
-            precondition_resolution: Resolution, to which the input array will be downscaled and used as a precondition
-                for sampling.
-
-        Return:
-            PyTorch tensor consisting of token sequences: (value, depth, position).
-        """
-        # convert input array into token sequence
-        tree = kdTree(self.spatial_dim).insert_element_array(precondition)
-        value, depth, pos = tree.get_token_sequence(
-            depth=math.log2(precondition_resolution), return_depth=True, return_pos=True
-        )
-
-        # convert sequence tokens to PyTorch as a long tensor
-        value = torch.tensor(value, dtype=torch.long, device=self.device)
-        depth = torch.tensor(depth, dtype=torch.long, device=self.device)
-        pos = torch.tensor(pos, dtype=torch.long, device=self.device)
-
-        return value, depth, pos
 
     def sample(self, sequences, target_resolution, temperature):
         """ Perform an iterative sampling of the given sequence until reaching the end of sequence, the maximum sequence
@@ -214,22 +168,3 @@ class BasicEncoderDecoderSampler:
         # sample next sequence token
         tgt_val[token_idx] = torch.multinomial(probs, num_samples=1)[0]
         return tgt_val
-
-    def postprocess(self, value, target_resolution):
-        """ Transform sequence of value tokens into an array of elements (voxels/pixels).
-
-        Args:
-            value: Value token sequence as a pytorch tensor.
-            target_resolution: Resolution up to which an object should be sampled.
-
-        Return:
-            An array of elements as a numpy array.
-        """
-        tree = kdTree(self.spatial_dim)
-        tree = tree.insert_token_sequence(
-            value.cpu().numpy(),
-            resolution=target_resolution,
-            autorepair_errors=True,
-            silent=True,
-        )
-        return tree.get_element_array(mode="occupancy")

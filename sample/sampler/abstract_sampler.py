@@ -94,16 +94,20 @@ class AbstractSampler():
         Return:
             An array of elements as a numpy array.
         """
+        # move value sequence to the cpu and convert to numpy array
+        value = value.cpu().numpy()
 
-        # if neccessary, transform data into trinary representation
+        # if neccessary, transform data from trinary to basic representation
         if self.head.startswith('discrete_transformation'):
-            value = self.tri_repr.decode_trinary_value(value.cpu().numpy())
+            value = self.tri_repr.decode_trinary_value(value)
 
-        tree = kdTree(self.spatial_dim)
-        tree = tree.insert_token_sequence(
+        # insert the sequence into a kd-tree
+        tree = kdTree(self.spatial_dim).insert_token_sequence(
             value,
             resolution=target_resolution,
             autorepair_errors=True,
             silent=True,
         )
+
+        # retrive pixels/voxels from the kd-tree
         return tree.get_element_array(mode="occupancy")

@@ -11,11 +11,10 @@ class AutoencoderSampler(AbstractSampler):
 
         Args:
             model: Model which is used for sampling.
-            spatial_dim: The spatial dimensionality of the array of elements.
-            device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
             embedding: Token embedding type used in the model.
             head: Generative head type used in the model.
-
+            spatial_dim: The spatial dimensionality of the array of elements.
+            device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         """
         super(AutoencoderSampler, self).__init__(model, embedding, head, spatial_dim, device)
 
