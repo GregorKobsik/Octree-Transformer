@@ -24,7 +24,7 @@ class ShapeSampler:
         # load and restore model from checkpoint
         pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path)
         pl_module.freeze()
-        self.model = pl_module.model.eval().to(device)
+        model = pl_module.model.eval().to(device)
 
         # extract hyperparameters from the model
         hparams = pl_module.hparams
@@ -32,7 +32,11 @@ class ShapeSampler:
         self.dataset = hparams["dataset"]
         self.subclass = hparams["subclass"]
         self.spatial_dim = hparams['spatial_dim']
-        transformer_architecture = [hparams['architecture'], hparams['embedding'], hparams['head']]
+
+        architecture = hparams['architecture']
+        embedding = hparams['embedding']
+        head = hparams['head']
+        transformer_architecture = [architecture, embedding, head]
 
         # select explicit sampler implementation
         kwargs = {
@@ -50,29 +54,21 @@ class ShapeSampler:
         ):
             self.sampler = BasicEncoderDecoderSampler(**kwargs)
         elif (
-            hparams['architecture'] == "encoder_decoder" and hparams['embedding'].startswith("single_conv") and
-            hparams['head'].startswith("single_conv")
+            architecture == "encoder_decoder" and embedding.startswith("single_conv") and
+            head.startswith("single_conv")
         ):
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
-        elif (
-            hparams['architecture'] == "encoder_decoder" and hparams['embedding'].startswith("concat") and
-            hparams['head'].startswith("split")
-        ):
+        elif (architecture == "encoder_decoder" and embedding.startswith("concat") and head.startswith("split")):
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
-        elif (
-            hparams['architecture'] == "encoder_decoder" and hparams['embedding'].startswith("single_conv") and
-            hparams['head'].startswith("split")
-        ):
+        elif (architecture == "encoder_decoder" and embedding.startswith("single_conv") and head.startswith("split")):
             self.sampler = SingleConvEncoderDecoderSampler(**kwargs)
         elif transformer_architecture == ["encoder_decoder", "double_conv", "double_conv"]:
             self.sampler = DoubleConvolutionalEncoderDecoderSampler(**kwargs)
         else:
-            print(
+            raise ValueError(
                 "No sampler defined for the combination or parameters - " +
-                f"architecture: {hparams['architecture']}, " + f"embedding: {hparams['embedding']}, " +
-                f"and head: {hparams['head']}."
+                f"architecture: {architecture}, embedding: {embedding}, and head: {head}."
             )
-            raise ValueError
 
     def sample_preconditioned(self, precondition, precondition_resolution=1, target_resolution=32, temperature=1.0):
         """ Samples a single array of elements from the model.
