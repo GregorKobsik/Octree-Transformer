@@ -7,7 +7,7 @@ from sample.sample_utils import next_layer_tokens
 
 
 class BasicEncoderDecoderSampler:
-    def __init__(self, spatial_dim, device, max_tokens, max_resolution, model):
+    def __init__(self, spatial_dim, device, max_tokens, max_resolution, model, **_):
         """ Provides a basic implementation of the sampler for the encoder decoder architecture with all basic modules.
 
         The following sampler works with the following combinations of modules [architecture, embedding, head]:

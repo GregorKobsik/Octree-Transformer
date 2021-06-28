@@ -7,7 +7,7 @@ from sample.sample_utils import next_layer_tokens
 
 
 class DoubleConvolutionalEncoderDecoderSampler():
-    def __init__(self, spatial_dim, device, max_tokens, max_resolution, model):
+    def __init__(self, spatial_dim, device, max_tokens, max_resolution, model, **_):
         """ Provides an implementation of the sampler for a convolutional encoder decoder architecture.
 
         The following sampler works with the following combinations of modules [architecture, embedding, head]:
