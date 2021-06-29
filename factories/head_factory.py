@@ -2,7 +2,7 @@ from modules.generative_head import (
     LinearHead,
     SingleConvolutionalHeadA,
     SplitHeadB,
-    DoubleConvolutionalHead,
+    SubstitutionHead,
 )
 
 
@@ -26,8 +26,8 @@ def create_head(name, num_vocab, embed_dim, spatial_dim):
         return SingleConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
     elif name == 'split_B':
         return SplitHeadB(num_vocab, embed_dim, spatial_dim)
-    elif name == 'double_conv':
-        return DoubleConvolutionalHead(num_vocab, embed_dim, spatial_dim)
+    elif name == 'substitution':
+        return SubstitutionHead(num_vocab, embed_dim, spatial_dim)
     elif name == 'discrete_transformation':
         return LinearHead(num_vocab**2**spatial_dim + 1, embed_dim)
     else:

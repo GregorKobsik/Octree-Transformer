@@ -2,7 +2,7 @@ from modules.embedding import (
     BasicEmbeddingB,
     SingleConvolutionalEmbeddingA,
     ConcatEmbeddingB,
-    DoubleConvolutionalEmbedding,
+    SubstitutionEmbedding,
 )
 
 
@@ -28,8 +28,8 @@ def create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
         return SingleConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
     elif name == 'concat_B':
         return ConcatEmbeddingB(num_vocab, embed_dim, resolution, spatial_dim)
-    elif name == 'double_conv':
-        return DoubleConvolutionalEmbedding(embed_dim, spatial_dim)
+    elif name == 'substitution':
+        return SubstitutionEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
     elif name == 'discrete_transformation':
         return BasicEmbeddingB(num_vocab**2**spatial_dim + 1, embed_dim, resolution, spatial_dim)
     else:
