@@ -3,6 +3,8 @@ from modules.embedding import (
     SingleConvolutionalEmbeddingA,
     ConcatEmbeddingB,
     SubstitutionEmbedding,
+    HalfConvolutionalEmbeddingA,
+    MultiConvolutionalEmbeddingA,
 )
 
 
@@ -32,5 +34,9 @@ def create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
         return SubstitutionEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
     elif name == 'discrete_transformation':
         return BasicEmbeddingB(num_vocab**2**spatial_dim + 1, embed_dim, resolution, spatial_dim)
+    elif name == 'half_conv_A':
+        return HalfConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+    elif name == 'multi_conv_A':
+        return MultiConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")

@@ -3,6 +3,8 @@ from modules.generative_head import (
     SingleConvolutionalHeadA,
     SplitHeadB,
     SubstitutionHead,
+    HalfConvolutionalHeadA,
+    MultiConvolutionalHeadA,
 )
 
 
@@ -30,5 +32,9 @@ def create_head(name, num_vocab, embed_dim, spatial_dim):
         return SubstitutionHead(num_vocab, embed_dim, spatial_dim)
     elif name == 'discrete_transformation':
         return LinearHead(num_vocab**2**spatial_dim + 1, embed_dim)
+    elif name == 'half_conv_A':
+        return HalfConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
+    elif name == 'multi_conv_A':
+        return MultiConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")

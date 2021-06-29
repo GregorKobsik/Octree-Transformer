@@ -16,7 +16,7 @@ def create_data_transform(name, architecture, spatial_dim):
     Return:
         data transformation function initialised with specified parameters.
     """
-    if name.startswith(('basic', 'single_conv', 'concat')):
+    if name.startswith(('basic', 'single_conv', 'concat', 'half_conv', 'multi_conv')):
         return BasicTransform(architecture)
     elif name.startswith('discrete'):
         return TrinaryTransform(architecture, spatial_dim)
