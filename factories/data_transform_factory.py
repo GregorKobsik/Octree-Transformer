@@ -1,7 +1,7 @@
 from data.transform import (
     BasicTransform,
     TrinaryTransform,
-    DoubleConvolutionalTransform,
+    PenultimateLayerTransform,
 )
 
 
@@ -20,7 +20,7 @@ def create_data_transform(name, architecture, spatial_dim):
         return BasicTransform(architecture)
     elif name.startswith('discrete'):
         return TrinaryTransform(architecture, spatial_dim)
-    elif name.startswith('double_conv'):
-        return DoubleConvolutionalTransform(architecture)
+    elif name.startswith('substitution'):
+        return PenultimateLayerTransform(architecture)
     else:
         raise ValueError(f"ERROR: No data transform for {name} embedding available.")

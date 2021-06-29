@@ -2,14 +2,14 @@ import torch
 from data.transform import BasicTransform
 
 
-class DoubleConvolutionalTransform(BasicTransform):
-    """ Creates a transform module, which transforms the input data samples for the 'double_conv' embedding.
+class PenultimateLayerTransform(BasicTransform):
+    """ Creates a transform module, which transforms the input data samples for the 'substitution' embedding.
 
     Args:
         architecture: Defines which architecture is used in the transformer model.
     """
     def __init__(self, architecture):
-        super(DoubleConvolutionalTransform, self).__init__(architecture)
+        super(PenultimateLayerTransform, self).__init__(architecture)
 
     def encoder_decoder(self, value, depth, pos):
         """ Performs a transformation of a single sample for the 'encoder_decoder' architecture. """
