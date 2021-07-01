@@ -2,8 +2,6 @@ import math
 import torch
 import torch.nn as nn
 
-from torch.nn.utils.rnn import pad_sequence
-
 
 class SubstitutionEmbedding(nn.Module):
     def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
@@ -67,48 +65,22 @@ class SubstitutionEmbedding(nn.Module):
         TODO: Check gradients!
         """
         batch_size = value.shape[0]
+        max_depth = torch.max(depth)
+        len_1 = torch.sum(depth == (max_depth - 1), dim=1)
+        len_2 = torch.sum(depth == max_depth, dim=1)
 
         # create intermediate list to hold values
-        val_1 = batch_size * [0]
-        dep_1 = batch_size * [0]
-        pos_1 = batch_size * [0]
-
-        val_2 = batch_size * [0]
-        dep_2 = batch_size * [0]
-        pos_2 = batch_size * [0]
+        val_1 = torch.zeros((batch_size, max(len_1)), dtype=torch.long, device=value.device)
+        val_2 = torch.zeros((batch_size, max(len_2)), dtype=torch.long, device=value.device)
 
         # splitt input in penultimate (1) and last (2) layer
-        idx = torch.argmax(depth, dim=1)
         for i in range(batch_size):
-            # split sequence in two layers
-            val_1[i], val_2[i] = value[i, :idx[i]], value[i, idx[i]:]
-            dep_1[i], dep_2[i] = depth[i, :idx[i]], depth[i, idx[i]:]
-            pos_1[i], pos_2[i] = pos[i, :idx[i]], pos[i, idx[i]:]
-            # unpad last layer
-            pos_2[i] = pos_2[i][val_2[i] != 0]
-            dep_2[i] = dep_2[i][val_2[i] != 0]
-            val_2[i] = val_2[i][val_2[i] != 0]
+            val_1[i, :len_1[i]] = value[i, :len_1[i]]
+            val_2[i, :len_2[i]] = value[i, len_1[i]:len_1[i] + len_2[i]]
 
-        # repad each layer
-        val_1 = pad_sequence(val_1, batch_first=True, padding_value=0)
-        dep_1 = pad_sequence(dep_1, batch_first=True, padding_value=0)
-        pos_1 = pad_sequence(pos_1, batch_first=True, padding_value=0)
-
-        val_2 = pad_sequence(val_2, batch_first=True, padding_value=0)
-        dep_2 = pad_sequence(dep_2, batch_first=True, padding_value=0)
-        pos_2 = pad_sequence(pos_2, batch_first=True, padding_value=0)
-
-        # compute embeddings for penultimate layer - [N, T1] -> [N, T1, C]
-        x = self.value_embedding_1(val_1)
-        x = x + self.depth_embedding_1(dep_1)
-        for axis, spatial_embedding in enumerate(self.spatial_embeddings_1):
-            x = x + spatial_embedding(pos_1[:, :, axis])
-
-        # compute embeddings for last layer - [N, T2] -> [N, T2, C]
-        y = self.value_embedding_2(val_2)
-        y = y + self.depth_embedding_2(dep_2)
-        for axis, spatial_embedding in enumerate(self.spatial_embeddings_2):
-            y = y + spatial_embedding(pos_2[:, :, axis])
+        # compute embeddings
+        x = self.value_embedding_1(val_1)  # [N, T1] -> [N, T1, C]
+        y = self.value_embedding_2(val_2)  # [N, T2] -> [N, T2, C]
 
         # convolute embedded tokens of last layer
         y = self.conv_2(y.transpose(1, 2)).transpose(1, 2)  # [N, T2', C]
@@ -117,5 +89,5 @@ class SubstitutionEmbedding(nn.Module):
         x[val_1 == 2] = y[val_2[:, ::2**self.spatial_dim] != 0]  # [N, T1, C]
         x = x.contiguous()
 
-        # convolute embedded and substituted tokens of penultimate layer
+        # convolute substituted tokens of penultimate layer
         return self.conv_1(x.transpose(1, 2)).transpose(1, 2)  # [N, T1', E]
