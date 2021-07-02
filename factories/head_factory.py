@@ -5,7 +5,6 @@ from modules.generative_head import (
     SubstitutionHead,
     HalfConvolutionalHeadA,
     MultiConvolutionalHeadA,
-    SubstitutionLinearHead,
 )
 
 
@@ -37,7 +36,5 @@ def create_head(name, num_vocab, embed_dim, spatial_dim):
         return HalfConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
     elif name == 'multi_conv_A':
         return MultiConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
-    elif name == 'substitution_linear':
-        return SubstitutionLinearHead(num_vocab, embed_dim, spatial_dim)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")

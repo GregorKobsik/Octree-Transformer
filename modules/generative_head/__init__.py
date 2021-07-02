@@ -4,7 +4,6 @@ from modules.generative_head.split_head_B import SplitHeadB
 from modules.generative_head.substitution_head import SubstitutionHead
 from modules.generative_head.half_conv_head_A import HalfConvolutionalHeadA
 from modules.generative_head.multi_conv_head_A import MultiConvolutionalHeadA
-from modules.generative_head.substitution_linear_head import SubstitutionLinearHead
 
 __all__ = [
     "LinearHead",
@@ -13,5 +12,4 @@ __all__ = [
     "SubstitutionHead",
     "HalfConvolutionalHeadA",
     "MultiConvolutionalHeadA",
-    "SubstitutionLinearHead",
 ]

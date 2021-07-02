@@ -5,7 +5,6 @@ from modules.embedding import (
     SubstitutionEmbedding,
     HalfConvolutionalEmbeddingA,
     MultiConvolutionalEmbeddingA,
-    SubstitutionLinearEmbedding,
 )
 
 
@@ -39,7 +38,5 @@ def create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
         return HalfConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
     elif name == 'multi_conv_A':
         return MultiConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
-    elif name == 'substitution_linear':
-        return SubstitutionLinearEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")

@@ -4,7 +4,6 @@ from modules.embedding.concat_embedding_B import ConcatEmbeddingB
 from modules.embedding.substitution_embedding import SubstitutionEmbedding
 from modules.embedding.half_conv_embedding_A import HalfConvolutionalEmbeddingA
 from modules.embedding.multi_conv_embedding_A import MultiConvolutionalEmbeddingA
-from modules.embedding.substitution_linear_embedding import SubstitutionLinearEmbedding
 
 __all__ = [
     "BasicEmbeddingB",
@@ -13,5 +12,4 @@ __all__ = [
     "SubstitutionEmbedding",
     "HalfConvolutionalEmbeddingA",
     "MultiConvolutionalEmbeddingA",
-    "SubstitutionLinearEmbedding",
 ]
