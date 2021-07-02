@@ -42,7 +42,7 @@ class SubstitutionHead(nn.Module):
 
         # create intermediate tensor to hold values of penultimate layer
         penult_idx = torch.argmax(depth, dim=1)
-        penult_val = torch.zeros((batch_size, max(penult_idx)), device=x.device)  # [N, T'']
+        penult_val = torch.zeros((batch_size, torch.max(penult_idx)), device=x.device)  # [N, T'']
 
         # get values of penultimate layer - discard last layer of value tokens
         for i in range(batch_size):
@@ -53,7 +53,7 @@ class SubstitutionHead(nn.Module):
 
         # create intermediate tensor to hold mixed tokens
         penult_len = torch.sum(penult_val == 2, dim=1)
-        y = torch.zeros((batch_size, int(max(penult_len)), self.conv_depth), device=x.device)  # [N, T', C]
+        y = torch.zeros((batch_size, int(torch.max(penult_len)), self.conv_depth), device=x.device)  # [N, T', C]
 
         # select only latent vectors, which correspond to mixed tokens in the penultimate layer
         for i in range(batch_size):

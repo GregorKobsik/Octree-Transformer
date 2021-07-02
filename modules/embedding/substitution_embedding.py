@@ -70,8 +70,8 @@ class SubstitutionEmbedding(nn.Module):
         len_2 = torch.sum(depth == max_depth, dim=1)
 
         # create intermediate list to hold values
-        val_1 = torch.zeros((batch_size, max(len_1)), dtype=torch.long, device=value.device)
-        val_2 = torch.zeros((batch_size, max(len_2)), dtype=torch.long, device=value.device)
+        val_1 = torch.zeros((batch_size, torch.max(len_1)), dtype=torch.long, device=value.device)
+        val_2 = torch.zeros((batch_size, torch.max(len_2)), dtype=torch.long, device=value.device)
 
         # splitt input in penultimate (1) and last (2) layer
         for i in range(batch_size):
