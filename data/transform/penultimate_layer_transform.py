@@ -39,10 +39,20 @@ class PenultimateLayerTransform(BasicTransform):
         # get maximum depth layer value
         max_depth = max(depth)
 
-        # extract penultimate and last sequence layer
-        val = torch.cat([torch.tensor(value[depth == (max_depth - 1)]), torch.tensor(value[depth == max_depth])])
-        dep = torch.cat([torch.tensor(depth[depth == (max_depth - 1)]), torch.tensor(depth[depth == max_depth])])
-        pos = torch.cat([torch.tensor(pos[depth == (max_depth - 1)]), torch.tensor(pos[depth == max_depth])])
+        # extract penultimate (1) and last (2) sequence layer
+        val_1 = torch.tensor(value[depth == (max_depth - 1)])
+        val_2 = torch.tensor(value[depth == (max_depth)])
+
+        dep_1 = torch.tensor(depth[depth == (max_depth - 1)])
+        dep_2 = torch.tensor(depth[depth == (max_depth)])
+
+        pos_1 = torch.tensor(pos[depth == (max_depth - 1)])
+        pos_2 = torch.tensor(pos[depth == (max_depth)])
+
+        # concat penultimate and last layer
+        val_enc = torch.cat([val_1, val_2])
+        dep_enc = torch.cat([dep_1, dep_2])
+        pos_enc = torch.cat([pos_1, pos_2])
 
         # return sequences for encoder and target
-        return val, dep, pos, val, dep, pos
+        return val_enc, dep_enc, pos_enc, val_2, dep_2, pos_2
