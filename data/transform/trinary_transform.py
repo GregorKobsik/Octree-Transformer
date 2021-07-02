@@ -52,19 +52,3 @@ class TrinaryTransform(BasicTransform):
 
         # return sequences for encoder, decoder and target
         return val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, val_tgt, dep_tgt, pos_tgt
-
-    def autoencoder(self, value, depth, pos):
-        """ Transforms a single sample for the 'autoencoder' architecture. """
-        # encoder sequences into trinary representation
-        val_tri, dep_tri, pos_tri = self.tri_repr.encode_trinary(value, depth, pos)
-
-        # get maximum depth layer value
-        max_depth = max(dep_tri)
-
-        # transform numpy arrays into pytorch tensors
-        val = torch.tensor(val_tri[dep_tri == max_depth])
-        dep = torch.tensor(dep_tri[dep_tri == max_depth])
-        pos = torch.tensor(pos_tri[dep_tri == max_depth])
-
-        # return sequences for encoder and target
-        return val, dep, pos, val, dep, pos
