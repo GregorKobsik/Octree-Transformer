@@ -24,9 +24,14 @@ class ShapeSampler:
 
         # create sampler model
         self.sampler = create_sampler(
-            hparams['architecture'], hparams['embedding'], hparams['head'],
-            pl_module.model.eval().to(device), hparams['spatial_dim'], hparams["num_positions"], hparams["resolution"],
-            device
+            hparams['architecture'],
+            hparams['embedding'],
+            hparams['head'],
+            pl_module.model.eval().to(device),
+            hparams['spatial_dim'],
+            hparams["num_positions"],
+            hparams["resolution"],
+            device,
         )
 
     def sample_preconditioned(self, precondition, precondition_resolution=1, target_resolution=32, temperature=1.0):
