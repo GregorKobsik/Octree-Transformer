@@ -62,4 +62,4 @@ def create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
     if type(name) == list:
         return nn.ModuleList([_create_embedding(n, num_vocab, embed_dim, resolution, spatial_dim) for n in name])
     else:
-        return _create_embedding(name, num_vocab, embed_dim, spatial_dim)
+        return _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim)
