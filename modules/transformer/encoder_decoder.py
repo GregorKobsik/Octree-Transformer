@@ -5,33 +5,32 @@ from masks import look_ahead_mask
 
 
 class EncoderDecoder(nn.Module):
-    """ Creates an instance of a transformer with basic attention implementation.
-
-    The transformer can be either a 'decoder_only' or 'encoder_decoder' transformer defined by `architecture`.
-    It accepts different implementations of `token_embedding`s and `generative_head`s. The following abbrevations
-    are used to reference the size and the content of a dimension in used tensors.
-
-    Shapes:
-        N: batch size
-        S: source sequence length
-        T: target sequence length
-        E: embedding dimension
-        A: spatial dimension
-        V: vocabulary size
-
-    Args:
-        embed_dim: Number of embedding dimensions used by the attention.
-        num_heads: Number of heads used by the attention.
-        num_layers: Number of layers for each the 'decoder' and 'encoder' part of the transformer.
-        num_positions: Maximal length of processed input tokens for the 'decoder' and 'encoder'. You can pass longer
-            sequences as input, but they will be truncated before feeding into the transformer. Although longer
-            sequences can be accepted by a non-basic embedding and possibly compressed to stay within the limit.
-        token_embedding: Instance of an embedding layer, which embedds given sequences of tokens into an embedding
-            space, which is the direct input for the transformer layers.
-        generative_head: Instance of a head layer, which transforms the output of the transformer into logits.
-
-    """
     def __init__(self, embed_dim, num_heads, num_layers, num_positions, token_embedding, generative_head, **_):
+        """ Creates an instance of an encoder decoder transformer.
+
+        It accepts different implementations of `token_embedding`s and `generative_head`s. The following abbrevations
+        are used to reference the size and the content of a dimension in used tensors.
+
+        Shapes:
+            N: batch size
+            S: source sequence length
+            T: target sequence length
+            E: embedding dimension
+            A: spatial dimension
+            V: vocabulary size
+
+        Args:
+            embed_dim: Number of embedding dimensions used by the attention.
+            num_heads: Number of heads used by the attention.
+            num_layers: Number of layers for each the 'decoder' and 'encoder' part of the transformer.
+            num_positions: Maximal length of processed input tokens. You can pass longer sequences as input, but they
+                will be truncated before feeding into the transformer, but after the embedding. Thus longer sequences
+                can be accepted by a non-basic embedding and possibly compressed to stay within the limit.
+            token_embedding: Instance of an embedding layer, which embedds given sequences of tokens into an embedding
+                space, which is the direct input for the transformer layers.
+            generative_head: Instance of a head layer, which transforms the output of the transformer into logits.
+
+        """
         super(EncoderDecoder, self).__init__()
 
         self.embed_dim = embed_dim  # E
@@ -89,9 +88,7 @@ class EncoderDecoder(nn.Module):
         """ Performs computations in the encoder part of the transformer.
 
         It embedds the given token sequences into the embedding space, given the `token_embedding`. Next, it creates
-        masks for the encoder. A upper triangular mask is created for the 'encoder_only' and a full mask is created for
-        the 'encoder_decoder' `architecture`. Therefore the 'encoder_only' can access its input tokens only
-        autoregressiv, while in the 'decoder_encoder' every token can access every other token.
+        a full mask therefore every token can access every other token.
 
         Args:
             value: Value token sequence - [N, S].
@@ -106,17 +103,16 @@ class EncoderDecoder(nn.Module):
         src = self.embedding.source(value, depth, pos)  # [N, S, E]
 
         # create padding mask
-        attn_mask = None
         padding_mask = self.embedding.src_padding_mask(value, depth)  # [N, S]
 
         # limit sequence length to max `num_position`
         src = src[:, :self.num_positions]  # [N, S, E]
         padding_mask = padding_mask[:, :self.num_positions]  # [N, S]
 
-        # encoder part of the transformer - pytorch expects, unlike any other, the sequence dimension to be first.
+        # encoder part of the transformer - pytorch expects, the sequence dimension to be first.
         out = self.transformer_encoder(
             src=self._transpose(src),  # [S, N, E]
-            mask=attn_mask,  # Optional: [S, S] or None
+            mask=None,
             src_key_padding_mask=padding_mask,  # [N, S]
         )  # [S, N, E]
         return self._transpose(out)  # [N, S, E]
@@ -124,8 +120,8 @@ class EncoderDecoder(nn.Module):
     def decode(self, value, depth, pos, memory):
         """ Performs computations in the decoder part of the transformer.
 
-        It is only used in the 'encoder_decoder' architecture. It embeds the target token sequence into the embedding
-        space of the decoder and creates an upper triangular mask to allow only for autoregressive token access.
+        It embeds the target token sequence into the embedding space of the decoder and creates an upper triangular
+        mask to allow only for autoregressive token access.
 
         Args:
             value: Target value token sequence - [N, T].
@@ -150,7 +146,7 @@ class EncoderDecoder(nn.Module):
         attn_mask = attn_mask[:self.num_positions, :self.num_positions]  # [T, T]
         padding_mask = padding_mask[:, :self.num_positions]  # [N, T]
 
-        # decoder part of the transformer - pytorch expects, unlike any other, the sequence dimension to be first.
+        # decoder part of the transformer - pytorch expects, the sequence dimension to be first.
         out = self.transformer_decoder(
             tgt=self._transpose(tgt),  # [T, N, E]
             memory=self._transpose(memory),  # [S, N, E]
@@ -163,15 +159,12 @@ class EncoderDecoder(nn.Module):
         """ Performs a full transformer pass of the input sequence through embedding, transformer and generative head.
 
         Args:
-            sequence: Tuple containing different input sequences for the 'encoder_only' and 'encoder_decoder'
-                architecture. The 'encoder_only' architecture expects sequence to be a tuple of (value, depth, position)
-                sequences with the shapes ([N, S], [N, S], [N, S, A]). The 'encoder_decoder' architecture expects
-                sequence to the a tuple of (encoder_sequence, decoder_sequence), where each of the elements is another
-                tuple of (value, depth, position) sequence inputs for the encoder and decoder, respectively.
+            sequence: Tuple containing input sequences as a tuple of (encoder_sequence, decoder_sequence), where each
+                of the elements is another tuple of (value, depth, position) sequence inputs for the encoder and decoder
+                with the shape ([N, S/T], [N, S/T], [N, S/T, A]), respectively.
 
         Return:
-            Logits which describe the autoregressive likelihood of the next target token. The output shape is [N, S, V]
-                or [N, T, V] for the 'encoder_only' or 'encoder_decoder' architecture, respectively.
+            Logits which describe the autoregressive likelihood of the next target token, with shape [N, T, V].
         """
         # execute one transformer step on the input sequences
         seq_enc, seq_dec = sequence
