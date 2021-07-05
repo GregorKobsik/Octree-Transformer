@@ -37,11 +37,10 @@ def create_sampler(architecture, embedding, head, model, spatial_dim, max_tokens
         head.startswith(("linear", "generative_basic"))
     ):
         return BasicEncoderDecoderSampler(**kwargs)
-    elif (architecture == "encoder_decoder" and embedding.startswith("single_conv") and head.startswith("single_conv")):
-        return SingleConvEncoderDecoderSampler(**kwargs)
-    elif (architecture == "encoder_decoder" and embedding.startswith("concat") and head.startswith("split")):
-        return SingleConvEncoderDecoderSampler(**kwargs)
-    elif (architecture == "encoder_decoder" and embedding.startswith("single_conv") and head.startswith("split")):
+    elif (
+        architecture == "encoder_decoder" and embedding.startswith(("single_conv", "concat")) and
+        head.startswith(("single_conv", "concat"))
+    ):
         return SingleConvEncoderDecoderSampler(**kwargs)
     elif (architecture == "encoder_decoder" and embedding.startswith("double_conv") and head.startswith("double_conv")):
         return DoubleConvolutionalEncoderDecoderSampler(**kwargs)

@@ -55,8 +55,7 @@ class ShapeSampler:
         TODO: Extend with `batch_size` to allow parallel sampling.
         """
         if input is None:
-            print("ERROR: `input` cannot be `None`.")
-            raise ValueError
+            raise ValueError("ERROR: `input` cannot be `None`.")
         return self.sampler(precondition, precondition_resolution, target_resolution, temperature)
 
     def sample_random(self, target_resolution=32, temperature=1.0):
