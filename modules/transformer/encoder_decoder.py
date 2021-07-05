@@ -4,7 +4,7 @@ import torch.nn as nn
 from masks import look_ahead_mask
 
 
-class BasicTransformer(nn.Module):
+class EncoderDecoder(nn.Module):
     """ Creates an instance of a transformer with basic attention implementation.
 
     The transformer can be either a 'decoder_only' or 'encoder_decoder' transformer defined by `architecture`.
@@ -26,20 +26,16 @@ class BasicTransformer(nn.Module):
         num_positions: Maximal length of processed input tokens for the 'decoder' and 'encoder'. You can pass longer
             sequences as input, but they will be truncated before feeding into the transformer. Although longer
             sequences can be accepted by a non-basic embedding and possibly compressed to stay within the limit.
-        architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
         token_embedding: Instance of an embedding layer, which embedds given sequences of tokens into an embedding
             space, which is the direct input for the transformer layers.
         generative_head: Instance of a head layer, which transforms the output of the transformer into logits.
 
     """
-    def __init__(
-        self, embed_dim, num_heads, num_layers, num_positions, architecture, token_embedding, generative_head, **_
-    ):
-        super(BasicTransformer, self).__init__()
+    def __init__(self, embed_dim, num_heads, num_layers, num_positions, token_embedding, generative_head, **_):
+        super(EncoderDecoder, self).__init__()
 
         self.embed_dim = embed_dim  # E
         self.num_positions = num_positions
-        self.architecture = architecture
 
         # token embedding
         self.embedding = token_embedding
@@ -108,20 +104,13 @@ class BasicTransformer(nn.Module):
 
         # compute the embedding vector sequence for encoder input
         src = self.embedding.source(value, depth, pos)  # [N, S, E]
-        if self.architecture == "encoder_only":
-            src = self._prepend_sos_token(src)  # [N, S, E]
 
-        # create (optional: autoregressive attention and) padding mask
-        src_len = src.shape[1]
+        # create padding mask
         attn_mask = None
-        if self.architecture == "encoder_only":
-            attn_mask = look_ahead_mask(src_len, device=src.device)  # [S, S]
         padding_mask = self.embedding.src_padding_mask(value, depth)  # [N, S]
 
         # limit sequence length to max `num_position`
         src = src[:, :self.num_positions]  # [N, S, E]
-        if self.architecture == "encoder_only":
-            attn_mask = attn_mask[:self.num_positions, :self.num_positions]  # [S, S]
         padding_mask = padding_mask[:, :self.num_positions]  # [N, S]
 
         # encoder part of the transformer - pytorch expects, unlike any other, the sequence dimension to be first.
@@ -185,13 +174,8 @@ class BasicTransformer(nn.Module):
                 or [N, T, V] for the 'encoder_only' or 'encoder_decoder' architecture, respectively.
         """
         # execute one transformer step on the input sequences
-        if self.architecture == "encoder_only":
-            z = self.encode(*sequence)  # [N, S, E]
-            # return logits
-            return self.head(z, *sequence)  # [N, S, V]
-        elif self.architecture == "encoder_decoder":
-            seq_enc, seq_dec = sequence
-            memory = self.encode(*seq_enc)  # [N, S, E]
-            z = self.decode(*seq_dec, memory)  # [N, T, E]
-            # return logits
-            return self.head(z, *seq_dec)  # [N, T, V]
+        seq_enc, seq_dec = sequence
+        memory = self.encode(*seq_enc)  # [N, S, E]
+        z = self.decode(*seq_dec, memory)  # [N, T, E]
+        # return logits
+        return self.head(z, *seq_dec)  # [N, T, V]

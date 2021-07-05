@@ -88,10 +88,10 @@ class ShapeTransformer(pl.LightningModule):
 
         # transformer model
         self.model = create_transformer(
-            name=attention,
+            architecture=architecture,
+            attention=attention,
             token_embedding=embedding,
             generative_head=head,
-            architecture=architecture,
             embed_dim=embed_dim,
             num_heads=num_heads,
             num_layers=num_layers,

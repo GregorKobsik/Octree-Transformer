@@ -1,7 +1,9 @@
-from modules.transformer.basic_transformer import BasicTransformer
 from modules.transformer.autoencoder import Autoencoder
+from modules.transformer.encoder_only import EncoderOnly
+from modules.transformer.encoder_decoder import EncoderDecoder
 
 __all__ = [
-    "BasicTransformer",
     "Autoencoder",
+    "EncoderOnly",
+    "EncoderDecoder",
 ]

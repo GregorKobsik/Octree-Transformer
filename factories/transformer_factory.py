@@ -1,14 +1,15 @@
 from modules.transformer import (
-    BasicTransformer,
     Autoencoder,
+    EncoderOnly,
+    EncoderDecoder,
 )
 
 
 def create_transformer(
-    name,
+    architecture,
+    attention,
     token_embedding,
     generative_head,
-    architecture,
     embed_dim,
     num_heads,
     num_layers,
@@ -19,13 +20,13 @@ def create_transformer(
     If the module specified in `name` does not exist raises a value error.
 
     Args:
-        name: Defines which transformer model will be created, e.g. which attention will be used.
+        architecture: Defines the underlying architecture of the transformer model.
+        attention: Defines the attention of the transformer mode.
         token_embedding: Instance of a token embedding layer.
         generative_head: Instance of a generative head.
-        architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
         embed_dim: Size of embedding dimensions used by the transformer model.
         num_heads: Number of heads used by the attention.
-        num_layers: Number of layers for each the 'decoder' and 'encoder' part of the transformer.
+        num_layers: Number of layers for each of 'decoder' and 'encoder' part in the transformer.
         num_positions: Maximal length of processed input tokens by the attention layers.
 
     Return:
@@ -35,7 +36,6 @@ def create_transformer(
     kwargs = {
         'token_embedding': token_embedding,
         'generative_head': generative_head,
-        'architecture': architecture,
         'embed_dim': embed_dim,
         'num_heads': num_heads,
         'num_layers': num_layers,
@@ -44,7 +44,9 @@ def create_transformer(
 
     if architecture == "autoencoder":
         return Autoencoder(**kwargs)
-    elif name == "basic":
-        return BasicTransformer(**kwargs)
+    elif architecture == "encoder_only":
+        return EncoderOnly(**kwargs)
+    elif architecture == "encoder_decoder":
+        return EncoderDecoder(**kwargs)
     else:
-        raise ValueError(f"ERROR: {name} attention transformer not implemented.")
+        raise ValueError(f"ERROR: {attention}_{architecture} attention transformer not implemented.")
