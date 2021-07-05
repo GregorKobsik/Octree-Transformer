@@ -1,3 +1,5 @@
+import torch.nn as nn
+
 from modules.generative_head import (
     LinearHead,
     SingleConvolutionalHeadA,
@@ -8,7 +10,7 @@ from modules.generative_head import (
 )
 
 
-def create_head(name, num_vocab, embed_dim, spatial_dim):
+def _create_head(name, num_vocab, embed_dim, spatial_dim):
     """ Creates a generative head.
 
     If the module specified in `name` does not exist raises a value error.
@@ -38,3 +40,25 @@ def create_head(name, num_vocab, embed_dim, spatial_dim):
         return MultiConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")
+
+
+def create_head(name, num_vocab, embed_dim, spatial_dim):
+    """ Creates a generative head.
+
+    If `name` is a list, creates a list of heads for each element of the list, otherwise a single one. If the module
+    specified in `name` does not exist raises a value error.
+
+
+    Args:
+        name: Defines which generative head will be created.
+        num_vocab: Number of different vocabs in the vocabulary set.
+        embed_dim: Size of embedding dimensions used by the transformer model.
+        spatial_dim: Spatial dimensionality of input data.
+
+    Return:
+        Generative head or a list of heads initialised with specified parameters.
+    """
+    if type(name) == list:
+        return nn.ModuleList([_create_head(n, num_vocab, embed_dim, spatial_dim) for n in name])
+    else:
+        return _create_head(name, num_vocab, embed_dim, spatial_dim)
