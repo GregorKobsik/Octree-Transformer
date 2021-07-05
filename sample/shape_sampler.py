@@ -57,7 +57,8 @@ class ShapeSampler:
         """
         if input is None:
             raise ValueError("ERROR: `input` cannot be `None`.")
-        return self.sampler(precondition, precondition_resolution, target_resolution, temperature)
+        precon_res = max(self.trained_resolution, precondition_resolution)
+        return self.sampler(precondition, precon_res, target_resolution, temperature)
 
     def sample_random(self, target_resolution=32, temperature=1.0):
         """ Sample a single unconditioned random array of elements from the model.
@@ -73,7 +74,7 @@ class ShapeSampler:
             A sampled array of elements (pixels/voxels) with the size of `target_resolution` as a numpy array.
         """
         # create an initial array, with all elements marked as undefined/mixed.
-        random_element_array = torch.randint(
-            low=0, high=2, size=self.spatial_dim * [self.trained_resolution], dtype=torch.long
-        ).numpy()
+        array_size = self.spatial_dim * [self.trained_resolution]
+        random_element_array = torch.randint(low=0, high=2, size=array_size, dtype=torch.long).numpy()
+
         return self.sampler(random_element_array, 2, target_resolution, temperature)
