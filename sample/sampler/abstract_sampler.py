@@ -5,7 +5,7 @@ from utils import kdTree, TrinaryRepresentation
 
 
 class AbstractSampler():
-    def __init__(self, model, embedding, head, spatial_dim, device, **_):
+    def __init__(self, model, embedding, head, spatial_dim, max_resolution, device, **_):
         """ Provides an abstract implementation of the sampler.
 
         Args:
@@ -13,13 +13,16 @@ class AbstractSampler():
             embedding: Token embedding type used in the model.
             head: Generative head type used in the model.
             spatial_dim: The spatial dimensionality of the array of elements.
+            max_resolution: Maximum resolution the model is trained on.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
+
         """
         self.embedding = embedding
         self.head = head
         self.spatial_dim = spatial_dim
         self.device = device
         self.model = model
+        self.max_resolution = max_resolution
 
         self.tri_repr = TrinaryRepresentation(spatial_dim)
 
@@ -55,7 +58,8 @@ class AbstractSampler():
             PyTorch tensor consisting of token sequences: (value, depth, position).
         """
         # convert input array into token sequence
-        tree = kdTree(self.spatial_dim).insert_element_array(precondition)
+        tree = kdTree(self.spatial_dim)
+        tree = tree.insert_element_array(precondition, max_depth=math.log2(precondition_resolution) + 1)
         value, depth, pos = tree.get_token_sequence(
             depth=math.log2(precondition_resolution), return_depth=True, return_pos=True
         )

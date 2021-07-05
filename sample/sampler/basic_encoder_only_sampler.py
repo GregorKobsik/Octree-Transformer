@@ -17,9 +17,8 @@ class BasicEncoderOnlySampler(AbstractSampler):
             max_tokens: Maximum number of tokens a sequence can have.
             max_resolution: Maximum resolution the model is trained on.
         """
-        super(BasicEncoderOnlySampler, self).__init__(model, embedding, head, spatial_dim, device)
+        super(BasicEncoderOnlySampler, self).__init__(model, embedding, head, spatial_dim, max_resolution, device)
         self.max_tokens = max_tokens
-        self.max_resolution = max_resolution
 
     def sample(self, sequences, target_resolution, temperature):
         """ Perform an iterative sampling of the given sequence until reaching the end of sequence, the maximum sequence

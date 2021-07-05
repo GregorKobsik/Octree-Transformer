@@ -23,9 +23,9 @@ class DoubleConvolutionalEncoderDecoderSampler(AbstractSampler):
             max_tokens: Maximum number of tokens a sequence can have.
             max_resolution: Maximum resolution the model is trained on.
         """
-        super(DoubleConvolutionalEncoderDecoderSampler, self).__init__(model, embedding, head, spatial_dim, device)
+        super(DoubleConvolutionalEncoderDecoderSampler,
+              self).__init__(model, embedding, head, spatial_dim, max_resolution, device)
         self.max_tokens = max_tokens
-        self.max_resolution = max_resolution
 
     def preprocess(self, precondition, precondition_resolution):
         """ Transform input array elements into token sequences.

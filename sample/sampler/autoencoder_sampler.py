@@ -3,7 +3,7 @@ from sample.sampler import AbstractSampler
 
 
 class AutoencoderSampler(AbstractSampler):
-    def __init__(self, model, embedding, head, spatial_dim, device, **_):
+    def __init__(self, model, embedding, head, spatial_dim, max_resolution, device, **_):
         """ Provides a basic implementation of the sampler for the autoencoder.
 
         The following sampler works with the following combinations of modules [architecture, embedding, head]:
@@ -14,9 +14,10 @@ class AutoencoderSampler(AbstractSampler):
             embedding: Token embedding type used in the model.
             head: Generative head type used in the model.
             spatial_dim: The spatial dimensionality of the array of elements.
+            max_resolution: Maximum resolution the model is trained on.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         """
-        super(AutoencoderSampler, self).__init__(model, embedding, head, spatial_dim, device)
+        super(AutoencoderSampler, self).__init__(model, embedding, head, spatial_dim, max_resolution, device)
 
     def sample(self, sequences, target_resolution, temperature):
         """ Run the model once on the last layer of the input sequence and sample new values for each token.
