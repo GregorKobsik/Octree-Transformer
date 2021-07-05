@@ -1,4 +1,4 @@
-name: shapenet_weighted_loss
+name: shapenet_autoencoder
 
 # data
 dataset: shapenet
@@ -8,26 +8,26 @@ spatial_dim: 3
 num_vocab: 3
 
 # architecture
-embedding: concat_B
-head: split_B
-architecture: encoder_decoder
-attention: basic
-num_positions: 1024
+embedding: substitution
+head: substitution
+architecture: autoencoder
+attention: none
+num_positions: 0
 embed_dim: 256
-num_layers: 8
-num_heads: 4
+num_layers: 0
+num_heads: 0
 
 # training
-loss_function: depth_cross_entropy_A
+loss_function: cross_entropy
 val_loss_function: cross_entropy
-epochs: 100
+epochs: 10
 warmup_steps: 0.1
-batch_size: 16
+batch_size: 8
 accumulate_grad_batches: 1
-learning_rate: 0.0003
+learning_rate: 0.001
 
 # hardware
-gpus: 8
+gpus: 1
 precision: 32
 
 # logging

@@ -8,8 +8,8 @@ spatial_dim: 3
 num_vocab: 3
 
 # architecture
-embedding: basic
-head: generative_basic
+embedding: basic_B
+head: linear
 architecture: encoder_decoder
 attention: basic
 num_positions: 2048
@@ -19,9 +19,10 @@ num_heads: 4
 
 # training
 loss_function: cross_entropy
+val_loss_function: cross_entropy
 epochs: 100
-warmup_steps: 0.02
-batch_size: 2
+warmup_steps: 0.1
+batch_size: 1
 accumulate_grad_batches: 1
 learning_rate: 0.0003
 
@@ -31,7 +32,7 @@ precision: 32
 
 # logging
 log_gpu: 'min_max'
-log_gradient: True
+log_gradient: False
 log_weights_and_biases: False
 log_learning_rate: True
 parameter_search: False
