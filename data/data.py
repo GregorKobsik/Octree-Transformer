@@ -7,7 +7,7 @@ from data import (
     QuadtreeMNIST,
     OctreeShapeNet,
 )
-from data.padding import BasicPadding
+from data.collate import PadCollate
 from factories.data_transform_factory import create_data_transform
 
 # Defines a dictionary of available datasets, which can be selected.
@@ -110,13 +110,13 @@ def dataloaders(
     train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, architecture, datapath)
 
     # select padding function
-    pad_collate = BasicPadding(architecture)
+    collate_fn = PadCollate(architecture)
 
     # initialize arguments
     kwargs = {
         "batch_size": batch_size,
         "pin_memory": True,
-        "collate_fn": pad_collate,
+        "collate_fn": collate_fn,
         "num_workers": mp.cpu_count(),
     }
 

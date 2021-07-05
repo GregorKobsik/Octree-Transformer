@@ -1,19 +1,19 @@
 from torch.nn.utils.rnn import pad_sequence
 
 
-class BasicPadding(object):
+class PadCollate(object):
     def __init__(self, architecture):
-        """ Creates a padding module, which pads batched sequences to equal length with the padding token '0'.
+        """ Creates a collate module, which pads batched sequences to equal length with the padding token '0'.
 
         Args:
-            architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
+            architecture: Defines the underlying transformer architecture.
         """
         self.architecture = architecture
 
     def __call__(self, batch):
         """ Pads the sequence batch and packs it into required tuples.
 
-        Note: Uses different output shapes for 'encoder_only' and 'encoder_decoder' architecture.
+        Note: Uses different output shapes for different architectures architecture.
 
         Args:
             batch: List of transformed input sequences.
@@ -30,7 +30,7 @@ class BasicPadding(object):
         if self.architecture == "autoencoder":
             return self.encoder_only(batch)
         else:
-            raise ValueError(f"ERROR: No padding function implemented for {self.architecture}")
+            raise ValueError(f"ERROR: No padding collate function implemented for {self.architecture}")
 
     def encoder_only(self, batch):
         """ Pads and packs a list of samples for the 'encoder_only' architecture. """
