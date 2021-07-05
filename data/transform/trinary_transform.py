@@ -1,9 +1,9 @@
 import torch
-from data.transform import BasicTransform
+from data.transform import AbstractTransform
 from utils import TrinaryRepresentation
 
 
-class TrinaryTransform(BasicTransform):
+class TrinaryTransform(AbstractTransform):
     def __init__(self, architecture, spatial_dim):
         """ Creates a transform module, which transforms the input data samples for the 'discrete_transformation' embedding.
 

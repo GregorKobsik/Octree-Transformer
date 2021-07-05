@@ -1,8 +1,9 @@
 import torch
-from data.transform import BasicTransform
+
+from data.transform import AbstractTransform
 
 
-class PenultimateLayerTransform(BasicTransform):
+class PenultimateLayerTransform(AbstractTransform):
     """ Creates a transform module, which transforms the input data samples for the 'substitution' embedding.
 
     Args:

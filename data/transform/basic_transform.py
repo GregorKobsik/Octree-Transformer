@@ -1,39 +1,16 @@
 import torch
 
+from data.transform import AbstractTransform
 
-class BasicTransform(object):
+
+class BasicTransform(AbstractTransform):
     def __init__(self, architecture):
         """ Creates a transform module, which transforms the input data samples for the 'basic' embedding.
 
         Args:
             architecture: Defines which architecture is used in the transformer model.
         """
-        if architecture == "encoder_only":
-            self.transform_fx = self.encoder_only
-        elif architecture == "encoder_decoder":
-            self.transform_fx = self.encoder_decoder
-        elif architecture == "autoencoder":
-            self.transform_fx = self.autoencoder
-        else:
-            raise ValueError(f"ERROR: No transform function implemented for {architecture}")
-
-    def __call__(self, value, depth, pos):
-        """ Performs the transformation of a single sample sequence into the desired format.
-
-        Note: Uses different output shapes for different architectures.
-
-        Args:
-            value: Raw value token sequence.
-            depth: Raw depth token sequence.
-            pos: Raw position token sequence.
-
-        Return:
-            Tuple representing the given sequences transformed to match the architecture requirements. The tuple has
-            the shape (val, dep, pos, val, dep, pos) for the 'encoder_only' and 'autoencoder' architecture and
-            (enc_value, enc_depth, enc_pos, dec_value, dec_depth, dec_pos, target) for the 'encoder_decoder'
-            architecture.
-        """
-        return self.transform_fx(value, depth, pos)
+        super(BasicTransform, self).__init__(architecture)
 
     def encoder_only(self, value, depth, pos):
         """ Transforms a single sample for the 'encoder_only' architecture. """
