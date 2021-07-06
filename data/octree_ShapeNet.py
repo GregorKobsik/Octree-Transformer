@@ -78,7 +78,7 @@ class OctreeShapeNet(Dataset):
 
     training_file = 'training.pt'
     test_file = 'test.pt'
-    subfolders = ["value", "depth", "pos"]
+    subfolders = ["value", "depth"]
 
     def __init__(
         self,
@@ -88,6 +88,7 @@ class OctreeShapeNet(Dataset):
         num_workers: int = None,
         subclass: str = "all",
         resolution: int = 32,
+        position_encoding='centered',
         transform: Callable = None,
         **kwargs,
     ) -> None:
@@ -102,6 +103,7 @@ class OctreeShapeNet(Dataset):
             num_workers: Defines the number of workers used to preprocess the data.
             subclass: Defines which subclass of the dataset should be loaded. Select 'all' for all subclasses.
             resolution: Defines the used resolution of the dataset.
+            position_encoding: Defines which positional encoding is used.
             transform: Holds a transform module, which is used to transform raw sequences into sequence samples.
         """
         self.root = root
@@ -109,6 +111,9 @@ class OctreeShapeNet(Dataset):
         self.num_workers = num_workers
         self.class_folder = _class_folder_map[subclass]
         self.resolution = resolution
+        self.position_encoding = position_encoding
+        assert position_encoding in ('centered', 'intertwined')
+        self.subfolders += ["pos_" + position_encoding]
         self.transform = transform
 
         # check if data already exists, otherwise create it accordingly
@@ -157,7 +162,7 @@ class OctreeShapeNet(Dataset):
     def _transform_voxels(self, data_path: str):
         # TODO: catch and model resolutions below 16
         voxels = load_hsp(data_path, max(self.resolution, 16))
-        octree = kdTree(spatial_dim=3).insert_element_array(voxels)
+        octree = kdTree(3, self.position_encoding == 'intertwined').insert_element_array(voxels)
         return octree.get_token_sequence(return_depth=True, return_pos=True)
 
     def octree_transform(self) -> None:

@@ -27,6 +27,7 @@ def datasets(
     subclass="all",
     resolution=32,
     embedding='basic',
+    position_encoding='centered',
     datapath="datasets",
 ):
     """ Loads datasets for training, validation and testing.
@@ -36,7 +37,8 @@ def datasets(
         subclass: Select a subclass of a dataset, if available.
         resolution: Select the underlying resolution of the selected dataset, if available.
         embedding: Defines the used token embedding of the shape transformer.
-        batch_size: Defines the batch size for the data loader
+        batch_size: Defines the batch size for the data loader.
+        position_encoding: Defines the positional encoding of the data.
         datapath: Path to the dataset. If the dataset is not found then
             the data is automatically downloaded to the specified location.
 
@@ -57,6 +59,7 @@ def datasets(
         "subclass": subclass,
         "resolution": resolution,
         "transform": transform_fn,
+        "position_encoding": position_encoding,
     }
 
     # load train and test datasets
@@ -83,6 +86,7 @@ def dataloaders(
     embedding,
     architecture,
     batch_size,
+    position_encoding,
     datapath="datasets",
 ):
     """ Creates dataloaders for training, validation and testing.
@@ -94,6 +98,7 @@ def dataloaders(
         embedding: Defines the used token embedding of the shape transformer.
         architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
         batch_size: Defines the batch size for the data loader
+        position_encoding: Defines the positional encoding of the data.
         datapath: Path to the dataset. If the dataset is not found then
             the data is automatically downloaded to the specified location.
 
@@ -104,7 +109,7 @@ def dataloaders(
     """
 
     # load datasets
-    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, datapath)
+    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, position_encoding, datapath)
 
     # select padding function
     collate_fn = PadCollate(architecture)

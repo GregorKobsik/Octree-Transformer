@@ -44,6 +44,7 @@ def train(config):
         architecture=config['architecture'],
         batch_size=config['batch_size'],
         datapath=config['datapath'],
+        position_encoding=config['position_encoding'],
     )
 
     # setup tensorboard logging

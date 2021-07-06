@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser_train.add_argument("--datapath", type=str, default='datasets')
     parser_train.add_argument("--dataset", type=str, default=None)
     parser_train.add_argument("--subclass", type=str, default=None)
+    parser_train.add_argument("--position_encoding", type=str, default=None)
 
     parser_train.add_argument("--num_vocab", type=int, default=None)
     parser_train.add_argument("--resolution", type=int, default=None)
