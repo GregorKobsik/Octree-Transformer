@@ -3,8 +3,11 @@ import itertools
 import torch
 
 
-def _directions(spatial_dim):
-    return np.array(list(itertools.product([-1, 1], repeat=spatial_dim)))
+def _directions(spatial_dim, interwiened_positions=False):
+    if interwiened_positions:
+        return np.array(list(itertools.product([1, 2], repeat=spatial_dim)))
+    else:
+        return np.array(list(itertools.product([-1, 1], repeat=spatial_dim)))
 
 
 class TrinaryRepresentation():
