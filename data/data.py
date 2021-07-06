@@ -27,7 +27,6 @@ def datasets(
     subclass="all",
     resolution=32,
     embedding='basic',
-    architecture="encoder_decoder",
     datapath="datasets",
 ):
     """ Loads datasets for training, validation and testing.
@@ -37,7 +36,6 @@ def datasets(
         subclass: Select a subclass of a dataset, if available.
         resolution: Select the underlying resolution of the selected dataset, if available.
         embedding: Defines the used token embedding of the shape transformer.
-        architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
         batch_size: Defines the batch size for the data loader
         datapath: Path to the dataset. If the dataset is not found then
             the data is automatically downloaded to the specified location.
@@ -49,7 +47,7 @@ def datasets(
 
     """
     # select data transform function
-    transform_fn = create_data_transform(embedding, architecture, spatial_dim[dataset])
+    transform_fn = create_data_transform(embedding, spatial_dim[dataset])
 
     # initialize arguments
     kwargs = {
@@ -106,7 +104,7 @@ def dataloaders(
     """
 
     # load datasets
-    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, architecture, datapath)
+    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, datapath)
 
     # select padding function
     collate_fn = PadCollate(architecture)

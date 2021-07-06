@@ -1,3 +1,7 @@
+import torch
+from torch.nn.utils.rnn import pad_sequence
+
+
 class AbstractCollate(object):
     def __init__(self, architecture):
         """ Defines an abstract definition of the data collate function.
@@ -36,3 +40,18 @@ class AbstractCollate(object):
             Tensor with layerwise packed sequences.
         """
         return self.collate_fx(batch)
+
+    def _pad_batch(self, batch):
+        """ Unpack batch and pad each sequence to a tensor of equal length. """
+        # transform a list on numpy arrays into a list of pytorch tensors.
+        batch = [(torch.tensor(v), torch.tensor(d), torch.tensor(p)) for v, d, p in batch]
+
+        # unpack batched sequences
+        val, dep, pos = zip(*batch)
+
+        # pad each sequence
+        val_pad = pad_sequence(val, batch_first=True, padding_value=0)
+        dep_pad = pad_sequence(dep, batch_first=True, padding_value=0)
+        pos_pad = pad_sequence(pos, batch_first=True, padding_value=0)
+
+        return val_pad, dep_pad, pos_pad

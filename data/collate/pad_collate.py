@@ -1,5 +1,6 @@
+from random import randint
+
 from data.collate import AbstractCollate
-from torch.nn.utils.rnn import pad_sequence
 
 
 class PadCollate(AbstractCollate):
@@ -13,55 +14,43 @@ class PadCollate(AbstractCollate):
 
     def encoder_only(self, batch):
         """ Pads and packs a list of samples for the 'encoder_only' architecture. """
-        # unpack batched sequences
-        val_seq, dep_seq, pos_seq, val_tgt, dep_tgt, pos_tgt = zip(*batch)
-
-        # pad each batched sequences with '0' to same length
-        val_seq_pad = pad_sequence(val_seq, batch_first=True, padding_value=0)
-        dep_seq_pad = pad_sequence(dep_seq, batch_first=True, padding_value=0)
-        pos_seq_pad = pad_sequence(pos_seq, batch_first=True, padding_value=0)
-
-        val_tgt_pad = pad_sequence(val_tgt, batch_first=True, padding_value=0)
-        dep_tgt_pad = pad_sequence(dep_tgt, batch_first=True, padding_value=0)
-        pos_tgt_pad = pad_sequence(pos_tgt, batch_first=True, padding_value=0)
+        # pad batched sequences with '0' to same length
+        seq_pad = self._pad_batch(batch)
 
         # return as (sequence, target)
-        return (val_seq_pad, dep_seq_pad, pos_seq_pad), (val_tgt_pad, dep_tgt_pad, pos_tgt_pad)
+        return seq_pad, seq_pad
 
     def encoder_decoder(self, batch):
         """ Pads and packs a list of samples for the 'encoder_decoder' architecture. """
-        # unpack batched sequences
-        val_enc, dep_enc, pos_enc, val_dec, dep_dec, pos_dec, val_tgt, dep_tgt, pos_tgt = zip(*batch)
+        # get maximal depth value
+        max_depth = max(batch[0][1])
 
-        # pad each batched sequences with '0' to same length
-        v_enc_pad = pad_sequence(val_enc, batch_first=True, padding_value=0)
-        d_enc_pad = pad_sequence(dep_enc, batch_first=True, padding_value=0)
-        p_enc_pad = pad_sequence(pos_enc, batch_first=True, padding_value=0)
+        # select a random depth limit for this batch
+        lim_depth = randint(2, max_depth)
 
-        v_dec_pad = pad_sequence(val_dec, batch_first=True, padding_value=0)
-        d_dec_pad = pad_sequence(dep_dec, batch_first=True, padding_value=0)
-        p_dec_pad = pad_sequence(pos_dec, batch_first=True, padding_value=0)
+        # extract layers as input for the encoder
+        batch_src = [(v[d < lim_depth], d[d < lim_depth], p[d < lim_depth]) for v, d, p in batch]
 
-        v_tgt_pad = pad_sequence(val_tgt, batch_first=True, padding_value=0)
-        d_tgt_pad = pad_sequence(dep_tgt, batch_first=True, padding_value=0)
-        p_tgt_pad = pad_sequence(pos_tgt, batch_first=True, padding_value=0)
+        # extract last layer as input for the decoder & target
+        batch_tgt = [(v[d == lim_depth], d[d == lim_depth], p[d == lim_depth]) for v, d, p in batch]
+
+        # pad sequences
+        src_pad = self._pad_batch(batch_src)
+        tgt_pad = self._pad_batch(batch_tgt)
 
         # return as ((input_enc, input_dec), target)
-        return ((v_enc_pad, d_enc_pad, p_enc_pad), (v_dec_pad, d_dec_pad, p_dec_pad)), (v_tgt_pad, d_tgt_pad, p_tgt_pad)
+        return (src_pad, tgt_pad), tgt_pad
 
     def autoencoder(self, batch):
         """ Pads and packs a list of samples for the 'autoencoder' architecture. """
-        # unpack batched sequences
-        val_seq, dep_seq, pos_seq, val_tgt, dep_tgt, pos_tgt = zip(*batch)
+        # get maximal depth value
+        max_depth = max(batch[0][1])
 
-        # pad each batched sequences with '0' to same length
-        val_seq_pad = pad_sequence(val_seq, batch_first=True, padding_value=0)
-        dep_seq_pad = pad_sequence(dep_seq, batch_first=True, padding_value=0)
-        pos_seq_pad = pad_sequence(pos_seq, batch_first=True, padding_value=0)
+        # extract last layer
+        batch = [(v[d == max_depth], d[d == max_depth], p[d == max_depth]) for v, d, p in batch]
 
-        val_tgt_pad = pad_sequence(val_tgt, batch_first=True, padding_value=0)
-        dep_tgt_pad = pad_sequence(dep_tgt, batch_first=True, padding_value=0)
-        pos_tgt_pad = pad_sequence(pos_tgt, batch_first=True, padding_value=0)
+        # pad sequences and return tensors
+        seq_pad = self._pad_batch(batch)
 
         # return as (sequence, target)
-        return (val_seq_pad, dep_seq_pad, pos_seq_pad), (val_tgt_pad, dep_tgt_pad, pos_tgt_pad)
+        return seq_pad, seq_pad
