@@ -473,7 +473,7 @@ class TestQuadtree(unittest.TestCase):
         np_test.assert_array_equal(target_value, output_value)
         np_test.assert_array_equal(target_pos, output_pos)
 
-    def test_token_sequence_retrival_value_pos_interwiened(self):
+    def test_token_sequence_retrival_value_pos_intertwined(self):
         """ Inputs an binarized image and generates a value and position token sequence. """
         input = self.mnist_32x32_binarized()
 
@@ -483,7 +483,7 @@ class TestQuadtree(unittest.TestCase):
             [5, 4], [6, 3], [6, 4], [5, 5], [5, 6], [6, 5], [6, 6]
         ]
 
-        qtree = kdTree(spatial_dim=2, interwiened_positions=True).insert_element_array(input)
+        qtree = kdTree(spatial_dim=2, intertwined_positions=True).insert_element_array(input)
         output_value, output_pos = qtree.get_token_sequence(depth=2, return_pos=True)
 
         np_test.assert_array_equal(target_value, output_value)
@@ -507,7 +507,7 @@ class TestQuadtree(unittest.TestCase):
         np_test.assert_array_equal(target_depth, output_depth)
         np_test.assert_array_equal(target_pos, output_pos)
 
-    def test_token_sequence_retrival_value_depth_pos_interwiened(self):
+    def test_token_sequence_retrival_value_depth_pos_intertwined(self):
         """ Inputs an binarized image and generates a value, depth and position token sequence. """
         input = self.mnist_32x32_binarized()
 
@@ -518,7 +518,7 @@ class TestQuadtree(unittest.TestCase):
             [5, 4], [6, 3], [6, 4], [5, 5], [5, 6], [6, 5], [6, 6]
         ]
 
-        qtree = kdTree(spatial_dim=2, interwiened_positions=True).insert_element_array(input)
+        qtree = kdTree(spatial_dim=2, intertwined_positions=True).insert_element_array(input)
         output_value, output_depth, output_pos = qtree.get_token_sequence(depth=2, return_depth=True, return_pos=True)
 
         np_test.assert_array_equal(target_value, output_value)
