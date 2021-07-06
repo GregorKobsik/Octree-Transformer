@@ -1,7 +1,6 @@
 import os
 import torch
 import numpy as np
-import math
 
 from typing import Any, Tuple
 from tqdm.contrib.concurrent import process_map
@@ -13,7 +12,6 @@ from utils import kdTree
 
 class QuadtreeMNIST(datasets.MNIST):
     subfolders = ["value", "depth", "pos"]
-    type_folders = ['iterative', 'successive']
 
     def __init__(
         self,
@@ -23,7 +21,6 @@ class QuadtreeMNIST(datasets.MNIST):
         num_workers: int = None,
         subclass: str = None,
         resolution: int = 32,  # TODO: allow custom resolution
-        iterative: bool = False,  # TODO: allow iterative setup
         **kwargs,
     ) -> None:
         super(QuadtreeMNIST, self).__init__(root, train=train, download=download)
@@ -31,11 +28,9 @@ class QuadtreeMNIST(datasets.MNIST):
         self.root = root
         self.train = train  # training set or test set
         self.num_workers = num_workers
-        self.type_folder = self.type_folders[0] if iterative else self.type_folders[1]
         if resolution != 32:
             print("WARNING: Currently only a resolution of 32 is available. Continue with resolution of 32.")
         self.resolution = 32  # TODO: allow custom resolution
-        self.iterative = iterative
 
         # check if data already exists, otherwise create it accordingly
         self.quadtree_transform()
@@ -68,7 +63,7 @@ class QuadtreeMNIST(datasets.MNIST):
 
     @property
     def resolution_path(self) -> str:
-        return os.path.join(self.quadtree_path, self.type_folder, str(self.resolution))
+        return os.path.join(self.quadtree_path, str(self.resolution))
 
     def _check_exists_quadtree(self) -> bool:
         return np.all(
@@ -83,13 +78,7 @@ class QuadtreeMNIST(datasets.MNIST):
         # TODO: allow custom resolution
         pixels = np.pad(img, (2, 2)) > 0.1  # pad image (32,32) and binarize with threshold (0.1)
         qtree = kdTree(spatial_dim=2).insert_element_array(pixels)
-        if self.iterative:
-            output = []
-            for i in range(2, int(math.log2(self.resolution)) + 1):
-                output += [qtree.get_token_sequence(return_depth=True, return_pos=True, depth=i)]
-            return output
-        else:
-            return qtree.get_token_sequence(return_depth=True, return_pos=True)
+        return qtree.get_token_sequence(return_depth=True, return_pos=True)
 
     def quadtree_transform(self) -> None:
         """Transform the MNIST data if it doesn't exist already."""
@@ -108,8 +97,6 @@ class QuadtreeMNIST(datasets.MNIST):
         training_transformed = np.asarray(
             process_map(self._transform_pixels, training_data, max_workers=self.num_workers, chunksize=10)
         )
-        if self.iterative:
-            training_transformed = np.concatenate(training_transformed)
 
         for i, subfolder in enumerate(self.subfolders):
             with open(os.path.join(self.resolution_path, subfolder, self.training_file), 'wb') as f:
@@ -118,8 +105,6 @@ class QuadtreeMNIST(datasets.MNIST):
         test_transformed = np.asarray(
             process_map(self._transform_pixels, test_data, max_workers=self.num_workers, chunksize=10)
         )
-        if self.iterative:
-            test_transformed = np.concatenate(test_transformed)
 
         for i, subfolder in enumerate(self.subfolders):
             with open(os.path.join(self.resolution_path, subfolder, self.test_file), 'wb') as f:

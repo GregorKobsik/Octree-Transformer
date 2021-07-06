@@ -1,7 +1,6 @@
 import os
 import torch
 import numpy as np
-import math
 
 from glob import glob
 from torch.utils.data import Dataset
@@ -89,7 +88,6 @@ class OctreeShapeNet(Dataset):
         num_workers: int = None,
         subclass: str = "all",
         resolution: int = 32,
-        mode: str = None,
         transform: Callable = None,
         **kwargs,
     ) -> None:
@@ -104,16 +102,13 @@ class OctreeShapeNet(Dataset):
             num_workers: Defines the number of workers used to preprocess the data.
             subclass: Defines which subclass of the dataset should be loaded. Select 'all' for all subclasses.
             resolution: Defines the used resolution of the dataset.
-            mode: Defines the used transformation mode if the dataset. Can be either 'iterative' or 'successive'.
             transform: Holds a transform module, which is used to transform raw sequences into sequence samples.
         """
         self.root = root
         self.train = train  # training or test set
         self.num_workers = num_workers
-        self.mode_folder = mode
         self.class_folder = _class_folder_map[subclass]
         self.resolution = resolution
-        self.mode = mode
         self.transform = transform
 
         # check if data already exists, otherwise create it accordingly
@@ -147,7 +142,7 @@ class OctreeShapeNet(Dataset):
 
     @property
     def resolution_path(self) -> str:
-        return os.path.join(self.octree_path, self.mode_folder, self.class_folder, str(self.resolution))
+        return os.path.join(self.octree_path, self.class_folder, str(self.resolution))
 
     def _check_exists_octree(self) -> bool:
         return np.all(
@@ -163,13 +158,7 @@ class OctreeShapeNet(Dataset):
         # TODO: catch and model resolutions below 16
         voxels = load_hsp(data_path, max(self.resolution, 16))
         octree = kdTree(spatial_dim=3).insert_element_array(voxels)
-        if self.mode == "iterative":
-            output = []
-            for i in range(2, int(math.log2(self.resolution)) + 1):
-                output += [octree.get_token_sequence(return_depth=True, return_pos=True, depth=i)]
-            return output
-        elif self.mode == "successive":
-            return octree.get_token_sequence(return_depth=True, return_pos=True)
+        return octree.get_token_sequence(return_depth=True, return_pos=True)
 
     def octree_transform(self) -> None:
         """Transform the ShapeNet data if it doesn't exist already."""
@@ -187,8 +176,6 @@ class OctreeShapeNet(Dataset):
         training_transformed = np.asarray(
             process_map(self._transform_voxels, data_paths, max_workers=self.num_workers, chunksize=1), dtype=object
         )
-        if self.mode == "iterative":
-            training_transformed = np.concatenate(training_transformed)
 
         # save data
         for i, subfolder in enumerate(self.subfolders):

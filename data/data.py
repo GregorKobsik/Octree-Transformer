@@ -58,7 +58,6 @@ def datasets(
         "num_workers": mp.cpu_count(),
         "subclass": subclass,
         "resolution": resolution,
-        "mode": 'iterative' if architecture == "encoder_decoder" else 'successive',
         "transform": transform_fn,
     }
 
