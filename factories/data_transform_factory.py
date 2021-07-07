@@ -14,7 +14,9 @@ def create_data_transform(name, spatial_dim):
     Return:
         data transformation function initialised with specified parameters.
     """
-    if name.startswith(('basic', 'single_conv', 'concat', 'half_conv', 'multi_conv')):
+    if type(name) == list:
+        return BasicTransform()
+    elif name.startswith(('basic', 'single_conv', 'concat', 'half_conv', 'multi_conv')):
         return BasicTransform()
     elif name.startswith('discrete'):
         return TrinaryTransform(spatial_dim)

@@ -2,6 +2,7 @@ from modules.transformer import (
     Autoencoder,
     EncoderOnly,
     EncoderDecoder,
+    EncoderMultiDecoder,
 )
 
 
@@ -48,5 +49,7 @@ def create_transformer(
         return EncoderOnly(**kwargs)
     elif architecture == "encoder_decoder":
         return EncoderDecoder(**kwargs)
+    elif architecture == "encoder_multi_decoder":
+        return EncoderMultiDecoder(**kwargs)
     else:
-        raise ValueError(f"ERROR: {attention}_{architecture} attention transformer not implemented.")
+        raise ValueError(f"ERROR: {attention}_{architecture} shape transformer not implemented.")
