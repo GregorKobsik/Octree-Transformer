@@ -24,7 +24,7 @@ def _create_head(name, num_vocab, embed_dim, spatial_dim):
     Return:
         Generative head initialised with specified parameters.
     """
-    if name in ('generative_basic', 'linear'):
+    if name in ('generative_basic', 'linear', 'basic'):
         return LinearHead(num_vocab, embed_dim)
     elif name in ('single_conv', 'single_conv_A'):
         return SingleConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
