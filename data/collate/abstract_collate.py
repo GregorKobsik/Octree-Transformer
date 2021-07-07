@@ -41,13 +41,16 @@ class AbstractCollate(object):
         """
         return self.collate_fx(batch)
 
-    def _pad_batch(self, batch):
-        """ Unpack batch and pad each sequence to a tensor of equal length. """
-        # transform a list on numpy arrays into a list of pytorch tensors.
+    def _to_sequences(self, batch):
+        """ Transform a list on numpy arrays into sequences of pytorch tensors. """
         batch = [(torch.tensor(v), torch.tensor(d), torch.tensor(p)) for v, d, p in batch]
 
         # unpack batched sequences
-        val, dep, pos = zip(*batch)
+        return zip(*batch)
+
+    def _pad_batch(self, batch):
+        """ Unpack batch and pad each sequence to a tensor of equal length. """
+        val, dep, pos = self._to_sequences(batch)
 
         # pad each sequence
         val_pad = pad_sequence(val, batch_first=True, padding_value=0)

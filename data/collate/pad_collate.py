@@ -62,3 +62,24 @@ class PadCollate(AbstractCollate):
 
         # return as (sequence, target)
         return seq_pad, seq_pad
+
+    def encoder_multi_decoder(self, batch):
+        """ Packs a list of samples for the 'encoder_multi_decoder' architecture. """
+        # get maximal depth value
+        max_depth = self._get_max_batch_depth(batch)
+
+        # concat the first 3 layers
+        batch_layer = [(v[d <= 3], d[d <= 3], p[d <= 3]) for v, d, p in batch]
+        seq_enc = self._pad_batch(batch_layer)
+
+        # select a random depth limit for this batch
+        lim_depth = randint(4, max_depth)
+
+        # extract further layers separatly up to the depth limit
+        seq_dec = []
+        for i in range(4, lim_depth + 1):
+            batch_layer = [(v[d == i], d[d == i], p[d == i]) for v, d, p in batch]
+            seq_dec += [self._pad_batch(batch_layer)]
+
+        # return as (sequence, target)
+        return (seq_enc, seq_dec), seq_dec[-1]
