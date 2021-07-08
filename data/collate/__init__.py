@@ -1,11 +1,3 @@
-from data.collate.autoencoder_collate import AutoencoderCollate
-from data.collate.encoder_only_collate import EncoderOnlyCollate
-from data.collate.encoder_decoder_collate import EncoderDecoderCollate
-from data.collate.encoder_multi_decoder_collate import EncoderMultiDecoderCollate
+from data.collate.data_collate_factory import create_data_collate
 
-__all__ = [
-    "AutoencoderCollate",
-    "EncoderOnlyCollate",
-    "EncoderDecoderCollate",
-    "EncoderMultiDecoderCollate",
-]
+__all__ = ["create_data_collate"]

@@ -1,7 +1,3 @@
-from data.transform.basic_transform import BasicTransform
-from data.transform.trinary_transform import TrinaryTransform
+from data.transform.data_transform_factory import create_data_transform
 
-__all__ = [
-    "BasicTransform",
-    "TrinaryTransform",
-]
+__all__ = ["create_data_transform"]

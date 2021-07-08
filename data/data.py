@@ -8,8 +8,8 @@ from data import (
     OctreeShapeNet,
 )
 
-from factories.data_transform_factory import create_data_transform
-from factories.data_collate_factory import create_data_collate
+from data.transform import create_data_transform
+from data.collate import create_data_collate
 
 # Defines a dictionary of available datasets, which can be selected.
 DATASETS = {

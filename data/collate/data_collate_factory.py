@@ -1,11 +1,9 @@
 import math
 
-from data.collate import (
-    AutoencoderCollate,
-    EncoderOnlyCollate,
-    EncoderDecoderCollate,
-    EncoderMultiDecoderCollate,
-)
+from data.collate.autoencoder_collate import AutoencoderCollate
+from data.collate.encoder_only_collate import EncoderOnlyCollate
+from data.collate.encoder_decoder_collate import EncoderDecoderCollate
+from data.collate.encoder_multi_decoder_collate import EncoderMultiDecoderCollate
 
 
 def create_data_collate(architecture, embeddings, resolution):
