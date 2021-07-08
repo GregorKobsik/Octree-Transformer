@@ -1,4 +1,7 @@
-from data.collate.collate_utils import pad_batch
+from data.collate.collate_utils import (
+    get_min_batch_depth,
+    pad_batch,
+)
 
 
 class AutoencoderCollate():
@@ -6,7 +9,7 @@ class AutoencoderCollate():
     def __call__(self, batch):
         """ Pads and packs a list of samples for the 'autoencoder' architecture. """
         # get get the maximal usable depth value for every sample
-        max_depth = self.get_min_batch_depth(batch)
+        max_depth = get_min_batch_depth(batch)
 
         # extract last layer
         batch = [(v[d == max_depth], d[d == max_depth], p[d == max_depth]) for v, d, p in batch]
