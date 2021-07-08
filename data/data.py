@@ -7,8 +7,9 @@ from data import (
     QuadtreeMNIST,
     OctreeShapeNet,
 )
-from data.collate import PadCollate
+
 from factories.data_transform_factory import create_data_transform
+from factories.data_collate_factory import create_data_collate
 
 # Defines a dictionary of available datasets, which can be selected.
 DATASETS = {
@@ -96,7 +97,7 @@ def dataloaders(
         subclass: Select a subclass of a dataset, if available.
         resolution: Select the underlying resolution of the selected dataset, if available.
         embedding: Defines the used token embedding of the shape transformer.
-        architecture: Defines whether the transformer uses a 'encoder_only' or 'encoder_decocer' architecture.
+        architecture: Defines the architecture of the transformer.
         batch_size: Defines the batch size for the data loader
         position_encoding: Defines the positional encoding of the data.
         datapath: Path to the dataset. If the dataset is not found then
@@ -112,7 +113,7 @@ def dataloaders(
     train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, position_encoding, datapath)
 
     # select padding function
-    collate_fn = PadCollate(architecture)
+    collate_fn = create_data_collate(architecture, embedding, resolution)
 
     # initialize arguments
     kwargs = {
