@@ -1,12 +1,11 @@
 import torch.nn as nn
 
 from modules.embedding import (
-    BasicEmbeddingB,
-    SingleConvolutionalEmbeddingA,
-    ConcatEmbeddingB,
-    SubstitutionEmbedding,
+    BasicEmbeddingA,
     HalfConvolutionalEmbeddingA,
+    SingleConvolutionalEmbeddingA,
     MultiConvolutionalEmbeddingA,
+    SubstitutionEmbedding,
 )
 
 
@@ -25,20 +24,18 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
     Return:
         Token embedding initialised with specified parameters.
     """
-    if name == 'basic_B':
-        return BasicEmbeddingB(num_vocab, embed_dim, resolution, spatial_dim)
-    elif name in ('single_conv', 'single_conv_A'):
-        return SingleConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
-    elif name == 'concat_B':
-        return ConcatEmbeddingB(num_vocab, embed_dim, resolution, spatial_dim)
-    elif name == 'substitution':
-        return SubstitutionEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
+    if name in ('basic', 'basic_A'):
+        return BasicEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
     elif name == 'discrete_transformation':
-        return BasicEmbeddingB(num_vocab**2**spatial_dim + 1, embed_dim, resolution, spatial_dim)
+        return BasicEmbeddingA(num_vocab**2**spatial_dim + 1, embed_dim, resolution, spatial_dim)
     elif name == 'half_conv_A':
         return HalfConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+    elif name in ('single_conv', 'single_conv_A'):
+        return SingleConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
     elif name == 'multi_conv_A':
         return MultiConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+    elif name == 'substitution':
+        return SubstitutionEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")
 

@@ -1,6 +1,8 @@
 import math
 import torch.nn as nn
 
+from masks import padding_mask
+
 
 class MultiConvolutionalEmbeddingA(nn.Module):
     def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
@@ -18,8 +20,6 @@ class MultiConvolutionalEmbeddingA(nn.Module):
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
         super(MultiConvolutionalEmbeddingA, self).__init__()
-        self.embed_dim = embed_dim
-        self.spatial_dim = spatial_dim
         tree_depth = int(math.log2(resolution))
         conv_dim = embed_dim // 2
 
@@ -31,18 +31,17 @@ class MultiConvolutionalEmbeddingA(nn.Module):
         )
 
         # convolutions
-        s = 2**(spatial_dim)
-        self.convolution = nn.Conv1d(conv_dim, conv_dim, kernel_size=s, stride=s)
+        self.chunk_size = 2**(spatial_dim)
+        self.convolution = nn.Conv1d(conv_dim, conv_dim, kernel_size=self.chunk_size, stride=self.chunk_size)
+        self.multi_convolution = nn.Conv1d(conv_dim, embed_dim, kernel_size=self.chunk_size, stride=self.chunk_size)
 
-        self.multi_convolution = nn.Sequential(nn.Conv1d(conv_dim, embed_dim, kernel_size=8, stride=8), )
-
-    def source(self, value, depth, position):
+    def forward(self, value, depth, position):
         """ Transform sequences into embedding space for the encoder and reduce number of tokens.
 
         Args:
-            value: Value token sequence for the encoder input.
-            depth: Depth token sequence for the encoder input.
-            position: Position token sequence for the encoder input.
+            value: Value token sequence.
+            depth: Depth token sequence.
+            position: Position token sequence.
 
         Return:
             Reduced token sequence in the embedding space.
@@ -58,3 +57,18 @@ class MultiConvolutionalEmbeddingA(nn.Module):
 
         # convolute tokens to reduce sequence length even more
         return self.multi_convolution(y.transpose(1, 2)).transpose(1, 2)  # [N, S'', E]
+
+    def padding_mask(self, value, depth, position):
+        """ Creates a token padding mask, based on the value and depth sequence token.
+
+        Uses only every n-th value token as input, where n is the convolution kernel size.
+
+        Args:
+            value: Value token sequence.
+            depth: Depth token sequence.
+            position: Position token sequence.
+
+        Return:
+            Padding mask, where padding tokens '0' of the value sequence are masked out.
+        """
+        return padding_mask(value[:, ::self.chunk_size**2], device=value.device)

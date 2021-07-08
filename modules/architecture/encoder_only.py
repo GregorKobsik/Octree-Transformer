@@ -99,13 +99,13 @@ class EncoderOnly(nn.Module):
         """
 
         # compute the embedding vector sequence for encoder input
-        src = self.embedding.source(value, depth, pos)  # [N, S, E]
+        src = self.embedding(value, depth, pos)  # [N, S, E]
         src = self._prepend_sos_token(src)  # [N, S, E]
 
         # create (optional: autoregressive attention and) padding mask
         src_len = src.shape[1]
         attn_mask = look_ahead_mask(src_len, device=src.device)  # [S, S]
-        padding_mask = self.embedding.src_padding_mask(value, depth)  # [N, S]
+        padding_mask = self.embedding.padding_mask(value, depth, pos)  # [N, S]
 
         # limit sequence length to max `num_position`
         src = src[:, :self.num_positions]  # [N, S, E]

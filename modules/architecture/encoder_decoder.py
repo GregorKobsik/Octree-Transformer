@@ -37,7 +37,12 @@ class EncoderDecoder(nn.Module):
         self.num_positions = num_positions
 
         # token embedding
-        self.embedding = token_embedding
+        if isinstance(token_embedding, nn.ModuleList):
+            self.enc_embedding = token_embedding[0]
+            self.dec_embedding = token_embedding[1]
+        else:
+            self.enc_embedding = token_embedding
+            self.dec_embedding = token_embedding
 
         # start of sequence token
         self.sos = torch.nn.Parameter(torch.zeros(embed_dim))
@@ -100,10 +105,10 @@ class EncoderDecoder(nn.Module):
         """
 
         # compute the embedding vector sequence for encoder input
-        src = self.embedding.source(value, depth, pos)  # [N, S, E]
+        src = self.enc_embedding(value, depth, pos)  # [N, S, E]
 
         # create padding mask
-        padding_mask = self.embedding.src_padding_mask(value, depth)  # [N, S]
+        padding_mask = self.enc_embedding.padding_mask(value, depth, pos)  # [N, S]
 
         # limit sequence length to max `num_position`
         src = src[:, :self.num_positions]  # [N, S, E]
@@ -133,13 +138,13 @@ class EncoderDecoder(nn.Module):
             The output of the last layer of the decoder in latent decoder space - [N, T, E].
         """
         # compute the embedding vector sequence for decoder input
-        tgt = self.embedding.target(value, depth, pos)  # [N, T, E]
+        tgt = self.dec_embedding(value, depth, pos)  # [N, T, E]
         tgt = self._prepend_sos_token(tgt)  # [N, T, E]
 
         # create autoregressive attention and padding masks
         tgt_len = tgt.shape[1]
         attn_mask = look_ahead_mask(tgt_len, device=tgt.device)  # [T, T]
-        padding_mask = self.embedding.tgt_padding_mask(value, depth)  # [N, T]
+        padding_mask = self.dec_embedding.padding_mask(value, depth, pos)  # [N, T]
 
         # limit sequence length to max `num_position`
         tgt = tgt[:, :self.num_positions]  # [N, T, E]

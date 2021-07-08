@@ -158,8 +158,8 @@ class EncoderMultiDecoder(nn.Module):
             is_final = idx == seq_len - 1
 
             # embed sequence tokens
-            emb = self.embedding[idx].source(*seq_layer)  # [N, L, E]
-            seq_mask = self.embedding[idx].src_padding_mask(*seq_layer[:2])  # [N, L]
+            emb = self.embedding[idx](*seq_layer)  # [N, L, E]
+            seq_mask = self.embedding[idx].padding_mask(*seq_layer)  # [N, L]
 
             # compute memory / process sequence
             memory = self.process(emb, memory, seq_mask, idx, is_final)  # [N, L, E]

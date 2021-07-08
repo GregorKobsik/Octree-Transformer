@@ -31,6 +31,6 @@ class Autoencoder(nn.Module):
             Logits which describe the likelihood of the current token with shape [N, S, V].
         """
         # encode input into embedding space
-        z = self.embedding.source(*sequence)  # [N, T, E]
+        z = self.embedding(*sequence)  # [N, T, E]
         # return logits
         return self.head(z, *sequence)  # [N, S, V]

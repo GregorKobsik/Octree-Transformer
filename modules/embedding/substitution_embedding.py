@@ -2,6 +2,8 @@ import math
 import torch
 import torch.nn as nn
 
+from masks import padding_mask
+
 
 class SubstitutionEmbedding(nn.Module):
     def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
@@ -20,11 +22,9 @@ class SubstitutionEmbedding(nn.Module):
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
         super(SubstitutionEmbedding, self).__init__()
-        self.embed_dim = embed_dim
-        self.spatial_dim = spatial_dim
         tree_depth = int(math.log2(resolution))
-        s = 2**spatial_dim
-        conv_depth = embed_dim // s
+        self.chunck_size = 2**spatial_dim
+        conv_depth = embed_dim // self.chunck_size
 
         # embeddings
         self.value_embedding_1 = nn.Embedding(num_vocab + 1, conv_depth, padding_idx=0)
@@ -40,10 +40,10 @@ class SubstitutionEmbedding(nn.Module):
         )
 
         # convolutions
-        self.conv_1 = nn.Conv1d(conv_depth, embed_dim, kernel_size=s, stride=s)
-        self.conv_2 = nn.Conv1d(conv_depth, conv_depth, kernel_size=s, stride=s)
+        self.conv_1 = nn.Conv1d(conv_depth, embed_dim, kernel_size=self.chunck_size, stride=self.chunck_size)
+        self.conv_2 = nn.Conv1d(conv_depth, conv_depth, kernel_size=self.chunck_size, stride=self.chunck_size)
 
-    def source(self, value, depth, pos):
+    def forward(self, value, depth, pos):
         """ Transform sequences into embedding space for the encoder.
 
         Uses a convolutional operation to pack multiple tokens of the last layer into one token in higher dimension.
@@ -59,10 +59,6 @@ class SubstitutionEmbedding(nn.Module):
 
         Return:
             Token sequence in the embedding space.
-
-        TODO: Make layer splitt prettier.
-        TODO: Make substitution prettier.
-        TODO: Check gradients!
         """
         batch_size = value.shape[0]
         max_depth = torch.max(depth)
@@ -86,8 +82,23 @@ class SubstitutionEmbedding(nn.Module):
         y = self.conv_2(y.transpose(1, 2)).transpose(1, 2)  # [N, T2', C]
 
         # substitite all mixed token embeddings of penultimate layer, with token embeddings of last layer
-        x[val_1 == 2] = y[val_2[:, ::2**self.spatial_dim] != 0]  # [N, T1, C]
+        x[val_1 == 2] = y[val_2[:, ::self.chunck_size] != 0]  # [N, T1, C]
         x = x.contiguous()
 
         # convolute substituted tokens of penultimate layer
         return self.conv_1(x.transpose(1, 2)).transpose(1, 2)  # [N, T1', E]
+
+    def padding_mask(self, value, depth, position):
+        """ Creates a token padding mask, based on the value and depth sequence token.
+
+        Uses only every n-th value token as input, where n is the convolution kernel size.
+
+        Args:
+            value: Value token sequence.
+            depth: Depth token sequence.
+            position: Position token sequence.
+
+        Return:
+            Padding mask, where padding tokens '0' of the value sequence are masked out.
+        """
+        return padding_mask(value[:, ::self.chunk_size**2], device=value.device)
