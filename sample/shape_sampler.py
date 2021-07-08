@@ -1,7 +1,7 @@
 import torch
 
 from modules import ShapeTransformer
-from factories.sampler_factory import create_sampler
+from sample.sampler import create_sampler
 
 
 class ShapeSampler:

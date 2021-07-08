@@ -4,12 +4,10 @@ from torch.optim import Adam
 import pytorch_lightning as pl
 from utils import nanmean
 
-from factories import (
-    create_embedding,
-    create_head,
-    create_loss,
-    create_transformer,
-)
+from modules.embedding import create_embedding
+from modules.generative_head import create_head
+from modues.architecture import create_transformer
+from loss import create_loss
 
 from lr_scheduler import (
     ConstantWithWarmup,

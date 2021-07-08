@@ -1,12 +1,10 @@
 import torch.nn as nn
 
-from modules.embedding import (
-    BasicEmbeddingA,
-    HalfConvolutionalEmbeddingA,
-    SingleConvolutionalEmbeddingA,
-    MultiConvolutionalEmbeddingA,
-    SubstitutionEmbedding,
-)
+from modules.embedding.basic_embedding_A import BasicEmbeddingA
+from modules.embedding.half_conv_embedding_A import HalfConvolutionalEmbeddingA
+from modules.embedding.single_conv_embedding_A import SingleConvolutionalEmbeddingA
+from modules.embedding.multi_conv_embedding_A import MultiConvolutionalEmbeddingA
+from modules.embedding.substitution_embedding import SubstitutionEmbedding
 
 
 def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
