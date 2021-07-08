@@ -1,4 +1,4 @@
-from modules.transformer import (
+from modules.architecture import (
     Autoencoder,
     EncoderOnly,
     EncoderDecoder,
