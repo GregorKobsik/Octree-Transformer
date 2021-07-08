@@ -1,3 +1,3 @@
-from modules.architecture.transformer_factory import create_transformer
+from modules.architecture.architecture_factory import create_architecture
 
-__all__ = ["create_transformer"]
+__all__ = ["create_architecture"]

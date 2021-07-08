@@ -4,7 +4,7 @@ from modules.architecture.encoder_decoder import EncoderDecoder
 from modules.architecture.encoder_multi_decoder import EncoderMultiDecoder
 
 
-def create_transformer(
+def create_architecture(
     architecture,
     attention,
     token_embedding,
