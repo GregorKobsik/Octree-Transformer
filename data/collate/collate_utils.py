@@ -22,7 +22,7 @@ def pad_batch(batch):
     return val_pad, dep_pad, pos_pad
 
 
-def get_min_batch_depth(self, batch):
+def get_min_batch_depth(batch):
     """ Compute the smallest max depth layer of all samples in the batch. """
     max_depth = float('Inf')
     for b in batch:
