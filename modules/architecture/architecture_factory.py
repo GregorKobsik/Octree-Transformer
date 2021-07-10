@@ -1,5 +1,5 @@
-from modules.architecture.autoencoder import Autoencoder
-from modules.architecture.transformer import Transformer
+from .autoencoder import Autoencoder
+from .transformer import Transformer
 
 
 def create_architecture(

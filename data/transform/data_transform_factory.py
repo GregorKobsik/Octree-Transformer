@@ -1,5 +1,5 @@
-from data.transform.basic_transform import BasicTransform
-from data.transform.trinary_transform import TrinaryTransform
+from .basic_transform import BasicTransform
+from .trinary_transform import TrinaryTransform
 
 
 def create_data_transform(name, spatial_dim):

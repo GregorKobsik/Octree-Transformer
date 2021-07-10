@@ -1,4 +1,4 @@
-from data.collate.collate_utils import (
+from .collate_utils import (
     get_min_batch_depth,
     pad_batch,
 )

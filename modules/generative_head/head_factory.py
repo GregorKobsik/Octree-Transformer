@@ -1,11 +1,11 @@
 import torch.nn as nn
 
-from modules.generative_head.linear_head import LinearHead
-from modules.generative_head.single_conv_head_A import SingleConvolutionalHeadA
-from modules.generative_head.split_head_B import SplitHeadB
-from modules.generative_head.substitution_head import SubstitutionHead
-from modules.generative_head.half_conv_head_A import HalfConvolutionalHeadA
-from modules.generative_head.multi_conv_head_A import MultiConvolutionalHeadA
+from .linear_head import LinearHead
+from .single_conv_head_A import SingleConvolutionalHeadA
+from .split_head_B import SplitHeadB
+from .substitution_head import SubstitutionHead
+from .half_conv_head_A import HalfConvolutionalHeadA
+from .multi_conv_head_A import MultiConvolutionalHeadA
 
 
 def _create_head(name, num_vocab, embed_dim, spatial_dim):

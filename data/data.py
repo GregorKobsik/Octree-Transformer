@@ -3,13 +3,13 @@ from torch.utils.data import DataLoader, random_split
 
 import multiprocessing as mp
 
-from data import (
+from . import (
     QuadtreeMNIST,
     OctreeShapeNet,
 )
 
-from data.transform import create_data_transform
-from data.collate import create_data_collate
+from .transform import create_data_transform
+from .collate import create_data_collate
 
 # Defines a dictionary of available datasets, which can be selected.
 DATASETS = {

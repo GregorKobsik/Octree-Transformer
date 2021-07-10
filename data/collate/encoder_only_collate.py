@@ -1,4 +1,4 @@
-from data.collate.collate_utils import pad_batch
+from .collate_utils import pad_batch
 
 
 class EncoderOnlyCollate():
