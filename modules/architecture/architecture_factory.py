@@ -1,7 +1,5 @@
 from modules.architecture.autoencoder import Autoencoder
-from modules.architecture.encoder_only import EncoderOnly
-from modules.architecture.encoder_decoder import EncoderDecoder
-from modules.architecture.encoder_multi_decoder import EncoderMultiDecoder
+from modules.architecture.transformer import Transformer
 
 
 def create_architecture(
@@ -44,10 +42,15 @@ def create_architecture(
     if architecture == "autoencoder":
         return Autoencoder(**kwargs)
     elif architecture == "encoder_only":
-        return EncoderOnly(**kwargs)
+        assert len(token_embedding) == 1, "Only one token embedding allowed."
+        assert len(generative_head) == 1, "Only one generative head allowed."
+        return Transformer(**kwargs, num_decoders=0)
     elif architecture == "encoder_decoder":
-        return EncoderDecoder(**kwargs)
+        assert len(token_embedding) == 2, "Only two token embeddings allowed."
+        assert len(generative_head) == 1, "Only one generative head allowed."
+        generative_head.insert(0, None)
+        return Transformer(**kwargs, num_decoders=1)
     elif architecture == "encoder_multi_decoder":
-        return EncoderMultiDecoder(**kwargs)
+        return Transformer(**kwargs, num_decoders=len(token_embedding) - 1)
     else:
-        raise ValueError(f"ERROR: {attention}_{architecture} shape transformer not implemented.")
+        raise ValueError(f"ERROR: {attention}_{architecture} transformer architecture not implemented.")

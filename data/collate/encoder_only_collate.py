@@ -6,7 +6,7 @@ class EncoderOnlyCollate():
     def __call__(self, batch):
         """ Pads and packs a list of samples for the 'encoder_only' architecture. """
         # pad batched sequences with '0' to same length
-        seq_pad = pad_batch(batch)
+        seq = [pad_batch(batch)]
 
         # return as (sequence, target)
-        return seq_pad, seq_pad
+        return seq, seq[-1]

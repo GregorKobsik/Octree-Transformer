@@ -6,7 +6,7 @@ from utils import nanmean
 
 from modules.embedding import create_embedding
 from modules.generative_head import create_head
-from modues.architecture import create_architecture
+from modules.architecture import create_architecture
 from loss import create_loss
 
 from lr_scheduler import (

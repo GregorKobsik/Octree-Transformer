@@ -4,12 +4,24 @@ import torch.nn as nn
 from masks import look_ahead_mask, full_mask
 
 
-class EncoderMultiDecoder(nn.Module):
-    def __init__(self, embed_dim, num_heads, num_layers, num_positions, token_embedding, generative_head, **_):
-        """ Creates an instance of an encoder multi decoder transformer.
+class Transformer(nn.Module):
+    def __init__(
+        self,
+        embed_dim,
+        num_heads,
+        num_layers,
+        num_positions,
+        num_decoders,
+        token_embedding,
+        generative_head,
+        **_,
+    ):
+        """ Creates an instance of a transformer module.
 
-        It accepts different implementations of `token_embedding`s and `generative_head`s. The following abbrevations
-        are used to reference the size and the content of a dimension in used tensors.
+        It accepts different implementations of `token_embedding`s and `generative_head`s, which define the architecture
+        of the transformer. It can be either an 'encoder_only', 'encoder_decoder' or an 'encoder_multi_decoder'.
+
+        The following abbrevations are used to reference the size and the content of a dimension in used tensors.
 
         Shapes:
             N: batch size
@@ -26,16 +38,15 @@ class EncoderMultiDecoder(nn.Module):
             num_positions: Maximal length of processed input tokens. You can pass longer sequences as input, but they
                 will be truncated before feeding into the transformer, but after the embedding. Thus longer sequences
                 can be accepted by a non-basic embedding and possibly compressed to stay within the limit.
+            num_decoders: Defines the number of decoder instances.
             token_embedding: Instance of an embedding layer, which embedds given sequences of tokens into an embedding
                 space, which is the direct input for the transformer layers.
             generative_head: Instance of a head layer, which transforms the output of the transformer into logits.
         """
-        super(EncoderMultiDecoder, self).__init__()
+        super(Transformer, self).__init__()
 
         self.embed_dim = embed_dim  # E
         self.num_positions = num_positions
-        assert len(token_embedding) == len(generative_head), "Number of embeddings and heads is not equal."
-        num_decoders = len(generative_head) - 1
 
         # token embedding
         self.embedding = token_embedding

@@ -23,8 +23,8 @@ class EncoderDecoderCollate():
         batch_tgt = [(v[d == lim_depth], d[d == lim_depth], p[d == lim_depth]) for v, d, p in batch]
 
         # pad sequences
-        src_pad = pad_batch(batch_src)
-        tgt_pad = pad_batch(batch_tgt)
+        src = pad_batch(batch_src)
+        tgt = pad_batch(batch_tgt)
 
         # return as ((input_enc, input_dec), target)
-        return (src_pad, tgt_pad), tgt_pad
+        return (src, tgt), tgt
