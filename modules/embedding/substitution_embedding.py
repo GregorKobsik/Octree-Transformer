@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 
-from masks import padding_mask
+from utils.masks import padding_mask
 
 
 class SubstitutionEmbedding(nn.Module):

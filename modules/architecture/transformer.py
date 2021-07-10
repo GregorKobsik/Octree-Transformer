@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from masks import look_ahead_mask, full_mask
+from utils.masks import look_ahead_mask, full_mask
 
 
 class Transformer(nn.Module):

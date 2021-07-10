@@ -1,7 +1,7 @@
 import math
 import torch.nn as nn
 
-from masks import padding_mask
+from utils.masks import padding_mask
 
 
 class HalfConvolutionalEmbeddingA(nn.Module):

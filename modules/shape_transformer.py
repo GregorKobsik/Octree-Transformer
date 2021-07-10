@@ -2,16 +2,14 @@ import math
 import torch
 from torch.optim import Adam
 import pytorch_lightning as pl
+
+from .embedding import create_embedding
+from .generative_head import create_head
+from .architecture import create_architecture
+
 from utils import nanmean
-
-from modules.embedding import create_embedding
-from modules.generative_head import create_head
-from modules.architecture import create_architecture
-from loss import create_loss
-
-from lr_scheduler import (
-    ConstantWithWarmup,
-)
+from utils.loss import create_loss
+from utils.lr_scheduler import ConstantWithWarmup
 
 
 class ShapeTransformer(pl.LightningModule):
