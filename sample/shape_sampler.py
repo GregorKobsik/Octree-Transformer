@@ -1,7 +1,7 @@
 import torch
 
 from modules import ShapeTransformer
-from sample.sampler import create_sampler
+from .layer_sampler import create_sampler
 
 
 class ShapeSampler:
@@ -44,7 +44,7 @@ class ShapeSampler:
             precondition_resolution: Initial resolution used for the precondition. The precondition should have at
                 least the `precondition_resolution` side length. Resolution values can be only power of 2.
             target_resolution: The target resolution for the up-sampling process. The resolution should be not bigger,
-                than the maximal trained model resolution. Resolution values can be only power of 2.
+                than the trained model resolution. Resolution values can be only power of 2.
             temperature: Defines the randomness of the samples. Lower temperatures make the model increasingly
                 confident in its top choices, while temperatures greater than 1 decrease confidence. 0 temperature is
                 equivalent to argmax/max likelihood, while infinite temperature corresponds to a uniform sampling.
@@ -57,7 +57,7 @@ class ShapeSampler:
         """
         if input is None:
             raise ValueError("ERROR: `input` cannot be `None`.")
-        precon_res = max(self.trained_resolution, precondition_resolution)
+        precon_res = min(self.trained_resolution, precondition_resolution)
         return self.sampler(precondition, precon_res, target_resolution, temperature)
 
     def sample_random(self, target_resolution=32, temperature=1.0):
