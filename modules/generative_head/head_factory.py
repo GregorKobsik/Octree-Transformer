@@ -6,6 +6,7 @@ from .split_head_B import SplitHeadB
 from .substitution_head import SubstitutionHead
 from .half_conv_head_A import HalfConvolutionalHeadA
 from .multi_conv_head_A import MultiConvolutionalHeadA
+from .composite_head_A import CompositeHeadA
 
 
 def _create_head(name, num_vocab, embed_dim, spatial_dim):
@@ -43,6 +44,8 @@ def _create_head(name, num_vocab, embed_dim, spatial_dim):
         return HalfConvolutionalHeadA(**kwargs)
     elif name == 'multi_conv_A':
         return MultiConvolutionalHeadA(**kwargs)
+    elif name in ('composite', 'composite_A'):
+        return CompositeHeadA(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")
 

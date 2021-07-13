@@ -5,6 +5,7 @@ from .half_conv_embedding_A import HalfConvolutionalEmbeddingA
 from .single_conv_embedding_A import SingleConvolutionalEmbeddingA
 from .multi_conv_embedding_A import MultiConvolutionalEmbeddingA
 from .substitution_embedding import SubstitutionEmbedding
+from .composite_embedding_A import CompositeEmbeddingA
 
 
 def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
@@ -42,6 +43,8 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
         return MultiConvolutionalEmbeddingA(**kwargs)
     elif name == 'substitution':
         return SubstitutionEmbedding(**kwargs)
+    elif name in ('composite', 'composite_A'):
+        return CompositeEmbeddingA(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")
 
