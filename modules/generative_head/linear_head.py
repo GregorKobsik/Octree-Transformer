@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 class LinearHead(nn.Module):
-    def __init__(self, num_vocab, embed_dim):
+    def __init__(self, num_vocab, embed_dim, spatial_dim):
         """ Performs a linear transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -10,6 +10,7 @@ class LinearHead(nn.Module):
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
+            spatial_dim: unused.
         """
         super(LinearHead, self).__init__()
 

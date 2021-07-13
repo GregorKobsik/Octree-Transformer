@@ -22,20 +22,27 @@ def _create_head(name, num_vocab, embed_dim, spatial_dim):
     Return:
         Generative head initialised with specified parameters.
     """
+    kwargs = {
+        "num_vocab": num_vocab,
+        "embed_dim": embed_dim,
+        "spatial_dim": spatial_dim,
+    }
+
     if name in ('generative_basic', 'linear', 'basic'):
-        return LinearHead(num_vocab, embed_dim)
+        return LinearHead(**kwargs)
     elif name in ('single_conv', 'single_conv_A'):
-        return SingleConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
+        return SingleConvolutionalHeadA(**kwargs)
     elif name == 'split_B':
-        return SplitHeadB(num_vocab, embed_dim, spatial_dim)
+        return SplitHeadB(**kwargs)
     elif name == 'substitution':
-        return SubstitutionHead(num_vocab, embed_dim, spatial_dim)
+        return SubstitutionHead(**kwargs)
     elif name == 'discrete_transformation':
-        return LinearHead(num_vocab**2**spatial_dim + 1, embed_dim)
+        kwargs["num_vocab"] = num_vocab**2**spatial_dim + 1
+        return LinearHead(**kwargs)
     elif name == 'half_conv_A':
-        return HalfConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
+        return HalfConvolutionalHeadA(**kwargs)
     elif name == 'multi_conv_A':
-        return MultiConvolutionalHeadA(num_vocab, embed_dim, spatial_dim)
+        return MultiConvolutionalHeadA(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")
 

@@ -22,18 +22,26 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
     Return:
         Token embedding initialised with specified parameters.
     """
+    kwargs = {
+        "num_vocab": num_vocab,
+        "embed_dim": embed_dim,
+        "resolution": resolution,
+        "spatial_dim": spatial_dim,
+    }
+
     if name in ('basic', 'basic_A'):
-        return BasicEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+        return BasicEmbeddingA(**kwargs)
     elif name == 'discrete_transformation':
-        return BasicEmbeddingA(num_vocab**2**spatial_dim + 1, embed_dim, resolution, spatial_dim)
+        kwargs['num_vocab'] = num_vocab**2**spatial_dim + 1
+        return BasicEmbeddingA(**kwargs)
     elif name == 'half_conv_A':
-        return HalfConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+        return HalfConvolutionalEmbeddingA(**kwargs)
     elif name in ('single_conv', 'single_conv_A'):
-        return SingleConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+        return SingleConvolutionalEmbeddingA(**kwargs)
     elif name == 'multi_conv_A':
-        return MultiConvolutionalEmbeddingA(num_vocab, embed_dim, resolution, spatial_dim)
+        return MultiConvolutionalEmbeddingA(**kwargs)
     elif name == 'substitution':
-        return SubstitutionEmbedding(num_vocab, embed_dim, resolution, spatial_dim)
+        return SubstitutionEmbedding(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")
 
