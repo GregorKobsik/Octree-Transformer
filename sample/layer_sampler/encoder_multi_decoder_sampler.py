@@ -64,10 +64,10 @@ class EncoderMultiDecoderSampler():
 
             # sample layer-wise
             for idx in tqdm(range(cur_layer, max_layer), initial=cur_layer, total=max_layer, leave=True, desc="Layers"):
-                layer_idx = max(0, idx - self.num_concat_layers)
+                layer_idx = max(0, idx - self.num_concat_layers + 1)
 
                 # sampling: encoder part
-                if idx < self.num_concat_layers:
+                if layer_idx == 0:
                     # get number of already sampld tokens
                     num_sampled = len(val)
                     # init sequences for next layer
@@ -102,9 +102,8 @@ class EncoderMultiDecoderSampler():
                     last_val, last_dep, last_pos = lay_val, lay_dep, lay_pos
 
                 # update memory / encode last sequence
-                if idx >= self.num_concat_layers:
-                    seq = self._to_sequence(last_val, last_dep, last_pos)
-                    memory = self.compute_memory(seq, memory=memory, idx=layer_idx, is_final=False)
+                seq = self._to_sequence(last_val, last_dep, last_pos)
+                memory = self.compute_memory(seq, memory=memory, idx=layer_idx, is_final=False)
 
         return postprocess(val, target_resolution, self.spatial_dim)
 
