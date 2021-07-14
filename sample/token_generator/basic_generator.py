@@ -1,6 +1,6 @@
 import torch
 
-from tqdm.auto import tqdm
+from tqdm.auto import trange
 
 
 class BasicGenerator():
@@ -32,9 +32,7 @@ class BasicGenerator():
         stop_idx = len(val)
 
         # sample tokens autoregressively
-        for token_idx in tqdm(
-            range(start_idx, stop_idx, self.num_tokens), initial=start_idx, total=stop_idx, leave=False, desc="Tokens"
-        ):
+        for token_idx in trange(start_idx, stop_idx, self.num_tokens, leave=False, desc="Tokens"):
 
             # compute logits for last tokens
             seq = (

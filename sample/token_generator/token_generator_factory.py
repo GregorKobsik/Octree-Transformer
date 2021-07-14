@@ -1,4 +1,5 @@
 from .basic_generator import BasicGenerator
+from .composite_generator import CompositeGenerator
 
 
 def _create_token_generator(head, model, spatial_dim):
@@ -14,8 +15,14 @@ def _create_token_generator(head, model, spatial_dim):
     Return:
         Token generator initialised with specified parameters.
     """
-    if head == "basic":
+    if head in ('generative_basic', 'basic', 'linear'):
         return BasicGenerator(model.compute_logits)
+    if head in ('half_conv', 'halv_conv_A'):
+        return BasicGenerator(model.compute_logits, 2**(spatial_dim - 1))
+    if head in ('single_conv', 'single_conv_A'):
+        return BasicGenerator(model.compute_logits, 2**spatial_dim)
+    if head in ('composite', 'composite_A'):
+        return CompositeGenerator(model.compute_logits, [1, 1, 1, 2**(spatial_dim - 1), 2**spatial_dim])
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 
