@@ -22,7 +22,7 @@ class EncoderMultiDecoderSampler():
             max_resolution: Maximum resolution the model is trained on.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         """
-        self.generators = create_token_generator(head, model)
+        self.generators = create_token_generator(head, model, spatial_dim)
         self.compute_memory = model.compute_memory
 
         self.spatial_dim = spatial_dim

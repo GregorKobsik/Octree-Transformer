@@ -1,7 +1,7 @@
 from .basic_generator import BasicGenerator
 
 
-def _create_token_generator(head, model):
+def _create_token_generator(head, model, spatial_dim):
     """ Creates a token generator.
 
     If the module specified in `head` does not exist raises a value error.
@@ -9,6 +9,7 @@ def _create_token_generator(head, model):
     Args:
         head: Generative head type used in `model`.
         model: Model which is used for sampling.
+        spatial_dim: Spatial dimensionality of input data.
 
     Return:
         Token generator initialised with specified parameters.
@@ -18,7 +19,7 @@ def _create_token_generator(head, model):
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 
-def create_token_generator(head, model):
+def create_token_generator(head, model, spatial_dim):
     """ Creates a token generator or a list of token generators.
 
     If `head` is a list, creates a list of embeddings for each element of the list, otherwise a single one. If the
@@ -27,11 +28,12 @@ def create_token_generator(head, model):
     Args:
         head: Generative head type used in `model`.
         model: Model which is used for sampling.
+        spatial_dim: Spatial dimensionality of input data.
 
     Return:
         Token generator or a list of generators initialised with specified parameters.
     """
     if type(head) == list:
-        return [_create_token_generator(n, model) for n in head]
+        return [_create_token_generator(n, model, spatial_dim) for n in head]
     else:
-        return _create_token_generator(head, model)
+        return _create_token_generator(head, model, spatial_dim)
