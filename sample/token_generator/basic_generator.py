@@ -31,8 +31,6 @@ class BasicGenerator():
         """
         stop_idx = len(val)
 
-        print(f"start_idx: {start_idx}, stop_idx: {stop_idx}")
-
         # sample tokens autoregressively
         for token_idx in tqdm(
             range(start_idx, stop_idx, self.num_tokens), initial=start_idx, total=stop_idx, leave=False, desc="Tokens"
@@ -49,7 +47,6 @@ class BasicGenerator():
 
             # check transformer token capacity
             if len(logits) <= token_idx:
-                print("Reached max num of tokens (generator):", f"logits: {len(logits)}", f"token_idx: {token_idx}")
                 return val[:token_idx]  # reached maximum number of tokens
 
             # compute token probabilities from logits
