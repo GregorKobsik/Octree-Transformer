@@ -40,7 +40,7 @@ def _create_head(name, num_vocab, embed_dim, spatial_dim):
     elif name == 'discrete_transformation':
         kwargs["num_vocab"] = num_vocab**2**spatial_dim + 1
         return LinearHead(**kwargs)
-    elif name == 'half_conv_A':
+    elif name in ('half_conv', 'half_conv_A'):
         return HalfConvolutionalHeadA(**kwargs)
     elif name == 'multi_conv_A':
         return MultiConvolutionalHeadA(**kwargs)

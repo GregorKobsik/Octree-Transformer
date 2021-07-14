@@ -35,7 +35,7 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim):
     elif name == 'discrete_transformation':
         kwargs['num_vocab'] = num_vocab**2**spatial_dim + 1
         return BasicEmbeddingA(**kwargs)
-    elif name == 'half_conv_A':
+    elif name in ('half_conv', 'half_conv_A'):
         return HalfConvolutionalEmbeddingA(**kwargs)
     elif name in ('single_conv', 'single_conv_A'):
         return SingleConvolutionalEmbeddingA(**kwargs)
