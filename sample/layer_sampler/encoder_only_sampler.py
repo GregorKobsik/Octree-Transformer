@@ -47,8 +47,6 @@ class EncoderOnlySampler():
         cur_layer = 0 if len(dep) == 0 else int(max(dep))
         max_layer = int(math.log2(min(target_resolution, self.max_resolution)))
 
-        print(f"cur_layer {cur_layer}, max_layer {max_layer}")
-
         with torch.no_grad():
 
             # sample layer-wise
@@ -71,7 +69,6 @@ class EncoderOnlySampler():
                 val = self.generators[0](val, dep, pos, start_idx=num_sampled, temperature=temperature)
 
                 if len(val) != len(dep):
-                    print("Reached max num of tokens (sampler):", f"val: {len(val)}", f"dep: {len(dep)}")
                     break  # reached maximum number of tokens which can be generated
 
         return postprocess(val, target_resolution, self.spatial_dim)
