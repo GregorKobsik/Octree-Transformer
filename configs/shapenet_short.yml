@@ -1,18 +1,21 @@
-name: shapenet_xs
+name: shapenet_short
 
 # data
 dataset: shapenet
 subclass: chair
+position_encoding: centered
 resolution: 32
 spatial_dim: 3
 num_vocab: 3
 
 # architecture
-embedding: basic_B
-head: linear
-architecture: encoder_decoder
+architecture: encoder_multi_decoder
+embedding: [basic, half_conv, single_conv]
+head: [basic, half_conv, single_conv]
+
+# attention
 attention: basic
-num_positions: 2048
+num_positions: 4096
 embed_dim: 64
 num_layers: 8
 num_heads: 4
