@@ -48,7 +48,7 @@ class CompositeHeadA(nn.Module):
             3: 1,
             4: 2**(spatial_dim - 1),
             5: 2**spatial_dim,
-            # 6: 2**spatial_dim**2,
+            6: 2**spatial_dim**2,
         }
 
     def forward(self, x, value, depth, position):

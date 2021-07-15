@@ -1,3 +1,4 @@
+import math
 from random import randint
 
 from .collate_utils import (
@@ -7,30 +8,45 @@ from .collate_utils import (
 
 
 class EncoderMultiDecoderCollate():
-    def __init__(self, num_concat_layers):
+    def __init__(self, embeddings, resolution):
         """ Creates a collate module, which pads batched sequences to equal length with the padding token '0'.
 
         Args:
-            num_concat_layers: Defines number of layers which will be concatinated for the encoder.
+            embeddings: Defines the used token embeddings in the shape transformer.
+            resolution: Maximum side length of input data.
         """
-        self.num_concat_layers = num_concat_layers
+        self.embeddings = embeddings
+        # Defines number of layers which will be concatinated for the encoder.
+        self.num_concat_layers = 1 + int(math.log2(resolution)) - len(embeddings)
 
     def __call__(self, batch):
         """ Packs a list of samples for the 'encoder_multi_decoder' architecture. """
-        max_depth = get_min_batch_depth(batch)
-        num_concat = self.num_concat_layers
-
-        # concat the first `num_concat` layers
-        batch_layer = [(v[d <= num_concat], d[d <= num_concat], p[d <= num_concat]) for v, d, p in batch]
-        seq = [pad_batch(batch_layer)]
-
         # select a random depth limit for this batch
-        lim_depth = randint(num_concat, max_depth)
+        max_depth = get_min_batch_depth(batch)
+        limit = randint(0, max_depth - self.num_concat_layers)
 
-        # extract further layers separatly up to the depth limit
-        for i in range(num_concat + 1, lim_depth + 1):
-            batch_layer = [(v[d == i], d[d == i], p[d == i]) for v, d, p in batch]
-            seq += [pad_batch(batch_layer)]
+        seq = []
+        for embedding_idx, embedding in enumerate(self.embeddings):
+            # select the lower (lo) and upper (up) layer depth bounds for the current embedding
+            if embedding_idx == 0:
+                # concat the first `num_concat` layers for the encoder
+                lo = 1
+                up = self.num_concat_layers
+            elif embedding in ('substitution'):
+                # select penulatimate and last layer for 'substitution' embedding
+                lo = embedding_idx + self.num_concat_layers - 1
+                up = embedding_idx + self.num_concat_layers
+            else:
+                # get only a single depth layer
+                lo = embedding_idx + self.num_concat_layers
+                up = lo
+
+            # extract value, depth and position sequences for each sample in batch
+            batch_layer = [(v[lo <= d <= up], d[lo <= d <= up], p[lo <= d <= up]) for v, d, p in batch]
+            seq = [pad_batch(batch_layer)]
+
+            if embedding_idx >= limit:
+                break  # reached embedding/layer depth limit
 
         # return as (sequence, target)
         return seq, seq[-1]

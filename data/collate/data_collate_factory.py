@@ -1,5 +1,3 @@
-import math
-
 from .autoencoder_collate import AutoencoderCollate
 from .encoder_only_collate import EncoderOnlyCollate
 from .encoder_decoder_collate import EncoderDecoderCollate
@@ -11,7 +9,7 @@ def create_data_collate(architecture, embeddings, resolution):
 
     Args:
         architecture: Transformer architecture defines which data transformation function will be created.
-        embedding: Defines the used token embedding of the shape transformer.
+        embeddings: Defines the used token embeddings in the shape transformer.
         resolution: Maximum side length of input data.
 
     Return:
@@ -24,6 +22,6 @@ def create_data_collate(architecture, embeddings, resolution):
     if architecture == "encoder_decoder":
         return EncoderDecoderCollate()
     if architecture == "encoder_multi_decoder":
-        return EncoderMultiDecoderCollate(1 + int(math.log2(resolution)) - len(embeddings))
+        return EncoderMultiDecoderCollate(embeddings, resolution)
     else:
         raise ValueError(f"ERROR: No data collate for {architecture} available.")

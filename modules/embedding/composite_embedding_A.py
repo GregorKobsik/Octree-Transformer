@@ -5,7 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 from .basic_embedding_A import BasicEmbeddingA
 from .half_conv_embedding_A import HalfConvolutionalEmbeddingA
 from .single_conv_embedding_A import SingleConvolutionalEmbeddingA
-# from .substitution_embedding import SubstitutionEmbedding
+from .substitution_embedding import SubstitutionEmbedding
 
 
 class CompositeEmbeddingA(nn.Module):
@@ -38,7 +38,7 @@ class CompositeEmbeddingA(nn.Module):
                 BasicEmbeddingA(**kwargs),
                 HalfConvolutionalEmbeddingA(**kwargs),
                 SingleConvolutionalEmbeddingA(**kwargs),
-                # SubstitutionEmbedding(**kwargs),
+                SubstitutionEmbedding(**kwargs),
             ]
         )
 
@@ -71,12 +71,21 @@ class CompositeEmbeddingA(nn.Module):
                 if layer_depth > batch_depth:
                     break  # reached max depth layer
 
-                # TODO: add penult layer for substitution!
+                # filter layers for embeddings
+                if layer_depth < 6:  # only last layer
+                    val_seq = val[dep == layer_depth]
+                    dep_seq = dep[dep == layer_depth]
+                    pos_seq = pos[dep == layer_depth]
+                else:  # penultimate and last layer
+                    val_seq = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
+                    dep_seq = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
+                    pos_seq = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
+
                 # compute layer embedding
                 layer_emb = embedding(
-                    val[dep == layer_depth].unsqueeze(0),
-                    dep[dep == layer_depth].unsqueeze(0),
-                    pos[dep == layer_depth].unsqueeze(0),
+                    val_seq.unsqueeze(0),
+                    dep_seq.unsqueeze(0),
+                    pos_seq.unsqueeze(0),
                 )[0]
                 emb = torch.cat([emb, layer_emb])
 
