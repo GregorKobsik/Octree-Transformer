@@ -66,7 +66,7 @@ class EncoderOnlySampler():
                 pos = torch.cat([pos, layer_pos])
 
                 # predict value tokens for current layer
-                val = self.generators[0](val, dep, pos, start_idx=num_sampled, temperature=temperature)
+                val = self.generators[0]([val], [dep], [pos], start_idx=num_sampled, temperature=temperature)
 
                 if len(val) != len(dep):
                     break  # reached maximum number of tokens which can be generated

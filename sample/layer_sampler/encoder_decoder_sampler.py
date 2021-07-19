@@ -67,8 +67,8 @@ class EncoderDecoderSampler():
                 )
 
                 # predict value tokens for current layer / decode sequence
-                layer_val = self.generators[0](  # TODO: check if 0 or 1!
-                    layer_val, layer_dep, layer_pos, memory=memory, layer_idx=1, temperature=temperature
+                layer_val = self.generators[0](
+                    [layer_val], [layer_dep], [layer_pos], memory=memory, layer_idx=1, temperature=temperature
                 )
 
                 if len(layer_val) != len(layer_dep):
