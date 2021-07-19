@@ -31,9 +31,9 @@ class SubstitutionHead(nn.Module):
 
         Args:
             x: Output of the transformer, the latent vector [N, T'', E].
-            value: Target value token sequence [N, T].
-            depth: Target depth token sequence [N, T].
-            pos: Target position token sequence [N, T, A].
+            value: Value token sequence, with penultimate and last layer.
+            depth: Depth token sequence, with penultimate and last layer.
+            pos: Position token sequence, with penultimate and last layer.
 
         Return
             Logits of target value sequence.
@@ -57,6 +57,8 @@ class SubstitutionHead(nn.Module):
 
         # select only latent vectors, which correspond to mixed tokens in the penultimate layer
         for i in range(batch_size):
+            # TODO: Check for value overflow
+            # TODO: Handle overflow/clipped values in the embedding ...
             y[i, :penult_len[i]] = x[i, penult_val[i] == 2]  # [N, T', C]
 
         # deconvolute the intermediate latent space - create new tokens in latent space for each mixed token
