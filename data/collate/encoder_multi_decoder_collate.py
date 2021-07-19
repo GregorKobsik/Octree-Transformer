@@ -42,7 +42,9 @@ class EncoderMultiDecoderCollate():
                 up = lo
 
             # extract value, depth and position sequences for each sample in batch
-            batch_layer = [(v[lo <= d <= up], d[lo <= d <= up], p[lo <= d <= up]) for v, d, p in batch]
+            batch_layer = [
+                (v[(lo <= d) & (d <= up)], d[(lo <= d) & (d <= up)], p[(lo <= d) & (d <= up)]) for v, d, p in batch
+            ]
             seq = [pad_batch(batch_layer)]
 
             if embedding_idx >= limit:
