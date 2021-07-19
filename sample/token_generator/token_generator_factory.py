@@ -17,7 +17,7 @@ def _create_token_generator(head, model, spatial_dim):
     """
     if head in ('generative_basic', 'basic', 'linear'):
         return BasicGenerator(model.compute_logits)
-    if head in ('half_conv', 'halv_conv_A'):
+    if head in ('half_conv', 'half_conv_A'):
         return BasicGenerator(model.compute_logits, 2**(spatial_dim - 1))
     if head in ('single_conv', 'single_conv_A'):
         return BasicGenerator(model.compute_logits, 2**spatial_dim)
