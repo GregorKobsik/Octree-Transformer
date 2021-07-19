@@ -43,7 +43,7 @@ class SubstitutionEmbedding(nn.Module):
         self.conv_1 = nn.Conv1d(conv_depth, embed_dim, kernel_size=self.chunck_size, stride=self.chunck_size)
         self.conv_2 = nn.Conv1d(conv_depth, conv_depth, kernel_size=self.chunck_size, stride=self.chunck_size)
 
-    def forward(self, value, depth, pos):
+    def forward(self, value, depth, position):
         """ Transform sequences into embedding space for the encoder.
 
         Uses a convolutional operation to pack multiple tokens of the last layer into one token in higher dimension.
@@ -53,9 +53,9 @@ class SubstitutionEmbedding(nn.Module):
         might be discarded.
 
         Args:
-            value: Value token sequence for the encoder input, with penultimate and last layer.
-            depth: Depth token sequence for the encoder input, with penultimate and last layer.
-            pos: Position token sequence for the encoder input, with penultimate and last layer.
+            value: Value token sequence, with penultimate and last layer.
+            depth: Depth token sequence, with penultimate and last layer.
+            position: Position token sequence, with penultimate and last layer.
 
         Return:
             Token sequence in the embedding space.
@@ -94,11 +94,20 @@ class SubstitutionEmbedding(nn.Module):
         Uses only every n-th value token as input, where n is the convolution kernel size.
 
         Args:
-            value: Value token sequence.
-            depth: Depth token sequence.
-            position: Position token sequence.
+            value: Value token sequence, with penultimate and last layer.
+            depth: Depth token sequence, with penultimate and last layer.
+            position: Position token sequence, with penultimate and last layer.
 
         Return:
             Padding mask, where padding tokens '0' of the value sequence are masked out.
         """
-        return padding_mask(value[:, ::self.chunk_size**2], device=value.device)
+        batch_size = value.shape[0]
+        max_depth = torch.max(depth)
+        penult_len = torch.sum(depth == (max_depth - 1), dim=1)
+
+        # create intermediate list to hold values
+        penult_val = torch.zeros((batch_size, torch.max(penult_len)), dtype=torch.long, device=value.device)
+        for i in range(batch_size):
+            penult_val[i, :penult_len[i]] = value[i, :penult_len[i]]
+
+        return padding_mask(penult_val[:, ::self.chunck_size], device=value.device)
