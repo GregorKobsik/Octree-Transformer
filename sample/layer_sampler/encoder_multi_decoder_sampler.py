@@ -25,6 +25,7 @@ class EncoderMultiDecoderSampler():
         self.generators = create_token_generator(head, model, spatial_dim)
         self.compute_memory = model.compute_memory
 
+        self.head = head
         self.spatial_dim = spatial_dim
         self.max_resolution = max_resolution
         self.num_concat_layers = 1 + int(math.log2(max_resolution)) - len(embedding)
@@ -77,10 +78,16 @@ class EncoderMultiDecoderSampler():
                     dep = torch.cat([dep, lay_dep])
                     pos = torch.cat([pos, lay_pos])
                     # predict value tokens for current layer
-                    val = self.generators[layer_idx](val, dep, pos, start_idx=num_sampled, temperature=temperature)
+                    val = self.generators[layer_idx](
+                        val=[val],
+                        dep=[dep],
+                        pos=[pos],
+                        start_idx=num_sampled,
+                        temperature=temperature,
+                    )
                     if len(val) != len(dep):
                         break  # reached maximum number of tokens which can be generated
-                    # remember last 'full' sequence
+                    # remember last sequence
                     last_val, last_dep, last_pos = val, dep, pos
 
                 # sampling: decoder part
@@ -89,7 +96,12 @@ class EncoderMultiDecoderSampler():
                     lay_val, lay_dep, lay_pos = next_layer_tokens(val, dep, pos, self.spatial_dim, self.max_resolution)
                     # predict value tokens for current layer
                     lay_val = self.generators[layer_idx](
-                        lay_val, lay_dep, lay_pos, memory=memory, layer_idx=layer_idx, temperature=temperature
+                        val=[val[dep == idx], lay_val],
+                        dep=[dep[dep == idx], lay_dep],
+                        pos=[pos[dep == idx], lay_pos],
+                        memory=memory,
+                        layer_idx=layer_idx,
+                        temperature=temperature,
                     )
                     # append sampled tokens to sequence
                     val = torch.cat([val, lay_val[:len(lay_val)]])
@@ -102,7 +114,14 @@ class EncoderMultiDecoderSampler():
                     last_val, last_dep, last_pos = lay_val, lay_dep, lay_pos
 
                 # update memory / encode last sequence
-                seq = self._to_sequence(last_val, last_dep, last_pos)
+                if self.head[layer_idx] == 'substitution':
+                    seq = self._to_sequence(
+                        torch.cat([val[dep == idx], last_val]),
+                        torch.cat([dep[dep == idx], last_dep]),
+                        torch.cat([pos[dep == idx], last_pos]),
+                    )
+                else:
+                    seq = self._to_sequence(last_val, last_dep, last_pos)
                 memory = self.compute_memory(seq, memory=memory, idx=layer_idx, is_final=False)
 
         return postprocess(val, target_resolution, self.spatial_dim)

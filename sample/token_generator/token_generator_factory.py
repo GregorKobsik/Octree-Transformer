@@ -1,5 +1,6 @@
 from .basic_generator import BasicGenerator
 from .composite_generator import CompositeGenerator
+from .substitution_generator import SubstitutionGenerator
 
 
 def _create_token_generator(head, model, spatial_dim):
@@ -21,6 +22,8 @@ def _create_token_generator(head, model, spatial_dim):
         return BasicGenerator(model.compute_logits, 2**(spatial_dim - 1))
     if head in ('single_conv', 'single_conv_A'):
         return BasicGenerator(model.compute_logits, 2**spatial_dim)
+    if head in ('substitution'):
+        return SubstitutionGenerator(model.compute_logits, (2**spatial_dim)**2)
     if head in ('composite', 'composite_A'):
         return CompositeGenerator(
             model.compute_logits, [1, 1, 1, 2**(spatial_dim - 1), 2**spatial_dim, (2**spatial_dim)**2]
