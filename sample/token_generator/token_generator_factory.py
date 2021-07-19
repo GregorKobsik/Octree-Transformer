@@ -22,7 +22,9 @@ def _create_token_generator(head, model, spatial_dim):
     if head in ('single_conv', 'single_conv_A'):
         return BasicGenerator(model.compute_logits, 2**spatial_dim)
     if head in ('composite', 'composite_A'):
-        return CompositeGenerator(model.compute_logits, [1, 1, 1, 2**(spatial_dim - 1), 2**spatial_dim])
+        return CompositeGenerator(
+            model.compute_logits, [1, 1, 1, 2**(spatial_dim - 1), 2**spatial_dim, (2**spatial_dim)**2]
+        )
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 

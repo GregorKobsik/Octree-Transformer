@@ -14,7 +14,7 @@ class CompositeGenerator(BasicGenerator):
         super(CompositeGenerator, self).__init__(compute_logits_fn, num_tokens[0])
         self.num_tokens_list = num_tokens
 
-    def __call__(self, val, dep, pos, memory=None, layer_idx=0, start_idx=0, temperature=1.0):
+    def __call__(self, val, dep, pos, memory=None, layer_idx=0, start_idx=0, temperature=1.0, **_):
         """ Sample autoregressively current value token sequence and return updated value sequence.
 
         Args:
@@ -30,8 +30,17 @@ class CompositeGenerator(BasicGenerator):
             Sampled token sequence with values of the current layer.
         """
         # get the currently sampled depth
-        cur_depth = torch.max(dep)
+        cur_depth = torch.max(dep[-1])
         # assign number of sampled tokens accordingly to depth
         self.num_tokens = self.num_tokens_list[cur_depth - 1]
         # call the parent class sampler
-        return super(CompositeGenerator, self).__call__(val, dep, pos, memory, layer_idx, start_idx, temperature)
+        return super(CompositeGenerator, self).__call__(
+            val,
+            dep,
+            pos,
+            memory,
+            layer_idx,
+            start_idx,
+            temperature,
+            cur_depth < 6,  # check for substitution
+        )
