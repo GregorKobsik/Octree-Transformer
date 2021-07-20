@@ -20,7 +20,13 @@ class EncoderMultiDecoderCollate():
         self.num_concat_layers = 1 + int(math.log2(resolution)) - len(embeddings)
 
     def __call__(self, batch):
-        """ Packs a list of samples for the 'encoder_multi_decoder' architecture. """
+        """ Packs a list of samples for the 'encoder_multi_decoder' architecture.
+
+            Extract each layer of value, depth and position individually as layer sequence for each sample. Concat the
+            first `num_concat_layers`. For 'substitution' embedding prepend additionally the previous layer to the
+            current layer. Use the last layer sequence as target. For 'substitution' embedding, use only the current
+            layer as target.
+        """
         # select a random depth limit for this batch
         max_depth = get_min_batch_depth(batch)
         limit = randint(0, max_depth - self.num_concat_layers)
@@ -33,7 +39,7 @@ class EncoderMultiDecoderCollate():
                 lo = 1
                 up = self.num_concat_layers
             elif embedding in ('substitution'):
-                # select penulatimate and last layer for 'substitution' embedding
+                # select previous and last layer for 'substitution' embedding
                 lo = embedding_idx + self.num_concat_layers - 1
                 up = embedding_idx + self.num_concat_layers
             else:
@@ -45,10 +51,20 @@ class EncoderMultiDecoderCollate():
             batch_layer = [
                 (v[(lo <= d) & (d <= up)], d[(lo <= d) & (d <= up)], p[(lo <= d) & (d <= up)]) for v, d, p in batch
             ]
-            seq += [pad_batch(batch_layer)]
+            seq += [batch_layer]
+
+            # filter sequence for target value, depth and position
+            if embedding in ('substitution'):
+                tgt = [(v[d == up], d[d == up], p[d == up]) for v, d, p in batch_layer]
+            else:
+                tgt = batch_layer
 
             if embedding_idx >= limit:
                 break  # reached embedding/layer depth limit
 
+        # pad each sequence layer
+        seq = [pad_batch(batch_layer) for batch_layer in seq]
+        tgt = pad_batch(tgt)
+
         # return as (sequence, target)
-        return seq, seq[-1]
+        return seq, tgt
