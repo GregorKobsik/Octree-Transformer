@@ -20,7 +20,7 @@ def create_data_collate(architecture, embeddings, resolution):
     if architecture == "encoder_only":
         return EncoderOnlyCollate()
     if architecture == "encoder_decoder":
-        return EncoderDecoderCollate()
+        return EncoderDecoderCollate(embeddings)
     if architecture == "encoder_multi_decoder":
         return EncoderMultiDecoderCollate(embeddings, resolution)
     else:
