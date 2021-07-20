@@ -44,7 +44,7 @@ class EncoderOnlySampler():
         val, dep, pos = preprocess(precondition, precondition_resolution, self.spatial_dim, self.device)
 
         # compute the number of finished (current) layers and the maximum sampleable layer
-        cur_layer = 0 if len(dep) == 0 else int(max(dep))
+        cur_layer = len(val)
         max_layer = int(math.log2(min(target_resolution, self.max_resolution)))
 
         with torch.no_grad():
@@ -52,23 +52,24 @@ class EncoderOnlySampler():
             # sample layer-wise
             for _ in tqdm(range(cur_layer, max_layer), initial=cur_layer, total=max_layer, leave=True, desc="Layers"):
 
-                # get number of already sampld tokens
-                num_sampled = len(val)
-
                 # init sequences for next layer
-                layer_val, layer_dep, layer_pos = next_layer_tokens(
-                    val, dep, pos, self.spatial_dim, self.max_resolution
-                )
-
-                # append future tokens to current sequence
-                val = torch.cat([val, layer_val])
-                dep = torch.cat([dep, layer_dep])
-                pos = torch.cat([pos, layer_pos])
+                next_val, next_dep, next_pos = next_layer_tokens(val, dep, pos, self.spatial_dim, self.max_resolution)
 
                 # predict value tokens for current layer
-                val = self.generators[0]([val], [dep], [pos], start_idx=num_sampled, temperature=temperature)
+                next_val = self.generators[0](
+                    val=val + [next_val],
+                    dep=dep + [next_dep],
+                    pos=pos + [next_pos],
+                    memory=None,
+                    temperature=temperature,
+                )
 
-                if len(val) != len(dep):
+                # append sampled tokens to current sequence
+                val += [next_val[:len(next_val)]]
+                dep += [next_dep[:len(next_val)]]
+                pos += [next_pos[:len(next_val)]]
+
+                if len(next_val) != len(next_dep):
                     break  # reached maximum number of tokens which can be generated
 
         return postprocess(val, target_resolution, self.spatial_dim)
