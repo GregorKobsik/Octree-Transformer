@@ -16,7 +16,7 @@ def create_data_collate(architecture, embeddings, resolution):
         data transformation function initialised with specified parameters.
     """
     if architecture == "autoencoder":
-        return AutoencoderCollate()
+        return AutoencoderCollate(embeddings)
     if architecture == "encoder_only":
         return EncoderOnlyCollate()
     if architecture == "encoder_decoder":
