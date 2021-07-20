@@ -45,7 +45,7 @@ class EncoderMultiDecoderCollate():
             batch_layer = [
                 (v[(lo <= d) & (d <= up)], d[(lo <= d) & (d <= up)], p[(lo <= d) & (d <= up)]) for v, d, p in batch
             ]
-            seq = [pad_batch(batch_layer)]
+            seq += [pad_batch(batch_layer)]
 
             if embedding_idx >= limit:
                 break  # reached embedding/layer depth limit
