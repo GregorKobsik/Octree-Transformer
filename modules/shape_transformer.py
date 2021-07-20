@@ -158,15 +158,17 @@ class ShapeTransformer(pl.LightningModule):
         sequence, target = batch
 
         logits = self.forward(sequence)
-        self.compute_and_log_loss(logits, target, self.loss_function, prefix='validation/train_')
-        loss = self.compute_and_log_loss(logits, target, self.val_loss_function, prefix='validation/val_')
+        self.compute_and_log_loss(logits, target, self.loss_function, prefix='validation/train_', log_per_layer=True)
+        loss = self.compute_and_log_loss(
+            logits, target, self.val_loss_function, prefix='validation/val_', log_per_layer=True
+        )
 
         # log allocated memory
         self.log('mem_alloc', torch.cuda.max_memory_allocated() / 1024**2, sync_dist=True)
 
         return loss
 
-    def compute_and_log_loss(self, logits, target, loss_fx, prefix=""):
+    def compute_and_log_loss(self, logits, target, loss_fx, prefix="", log_per_layer=False):
         """ Compute mean loss and per layer loss and log it. Return mean loss. """
         tgt_val, tgt_dep, tgt_pos = target
 
@@ -187,7 +189,8 @@ class ShapeTransformer(pl.LightningModule):
         for i in range(2, int(math.log2(self.resolution) + 1)):
             layer_loss = torch.mean(loss[tgt_dep == i])
             loss_per_layer += [layer_loss]
-            #self.log(prefix + f'loss_layer_{i}', layer_loss, sync_dist=True, reduce_fx=nanmean)
+            if log_per_layer:
+                self.log('per_layer_loss/' + prefix + f'loss_layer_{i}', layer_loss, sync_dist=True, reduce_fx=nanmean)
         mean_loss_per_layer = nanmean(torch.tensor(loss_per_layer, device=loss.device))
         self.log(prefix + 'loss_layer_mean', mean_loss_per_layer, sync_dist=True, reduce_fx=nanmean)
 
