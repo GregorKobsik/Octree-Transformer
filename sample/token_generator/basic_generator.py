@@ -31,7 +31,7 @@ class BasicGenerator():
         # compute indices
         start_idx = 0
         stop_idx = len(val[-1])
-        sampled_idx = len(torch.cat(val[:-1]))
+        sampled_idx = len(torch.cat(val[:-1])) if len(val) > 1 else 0
 
         # sample tokens autoregressively
         for token_idx in trange(start_idx, stop_idx, self.num_tokens, leave=False, desc="Tokens"):
