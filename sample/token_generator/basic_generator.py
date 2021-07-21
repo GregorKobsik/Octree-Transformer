@@ -14,7 +14,7 @@ class BasicGenerator():
         self.compute_logits = compute_logits_fn
         self.num_tokens = num_tokens
 
-    def __call__(self, val, dep, pos, memory=None, layer_idx=0, temperature=1.0, slice_sequence=True, **_):
+    def __call__(self, val, dep, pos, memory=None, idx=0, temperature=1.0, slice_sequence=True, **_):
         """ Sample autoregressively current value token sequence and return updated value sequence.
 
         Args:
@@ -22,7 +22,7 @@ class BasicGenerator():
             dep: Depth token sequence of current layer.
             pos: Position token sequence of current layer.
             memory: Latent sequence vector of the previous layer.
-            layer_idx: Currently sampled layer index.
+            idx: Currently sampled transformer layer index.
             temperature: Defines the randomness of the samples.
 
         Return:
@@ -44,7 +44,7 @@ class BasicGenerator():
             )
 
             # compute logits
-            logits = self.compute_logits(seq, memory, layer_idx)[0]
+            logits = self.compute_logits(seq, memory, idx)[0]
 
             # retrive only logits for for current index
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + self.num_tokens]

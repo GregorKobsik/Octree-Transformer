@@ -15,7 +15,7 @@ class SubstitutionGenerator():
         self.num_tokens = num_tokens
         self.kernel_size = num_tokens
 
-    def __call__(self, val, dep, pos, memory=None, layer_idx=0, temperature=1.0, **_):
+    def __call__(self, val, dep, pos, memory=None, idx=0, temperature=1.0, **_):
         """ Sample autoregressively current value token sequence and return updated value sequence.
 
         Args:
@@ -23,7 +23,7 @@ class SubstitutionGenerator():
             dep: Depth token sequence of currently sampled layer.
             pos: Position token sequence of currently sampled layer.
             memory: Latent sequence vector of the previous layer.
-            layer_idx: Currently sampled layer index.
+            idx: Currently sampled transformer layer index.
             temperature: Defines the randomness of the samples.
 
         Return:
@@ -41,7 +41,7 @@ class SubstitutionGenerator():
             seq = (torch.cat(val).unsqueeze(0), torch.cat(dep).unsqueeze(0), torch.cat(pos).unsqueeze(0))
 
             # compute logits
-            logits = self.compute_logits(seq, memory, layer_idx)[0]
+            logits = self.compute_logits(seq, memory, idx)[0]
 
             # compute number of sampled tokens
             num_sampled = torch.sum(val[-2][prev_idx:prev_idx + self.kernel_size] == 2) * self.num_tokens
