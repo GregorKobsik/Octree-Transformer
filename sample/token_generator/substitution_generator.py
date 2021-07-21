@@ -36,7 +36,7 @@ class SubstitutionGenerator():
         sampled_idx = len(torch.cat(val[:-1])) if len(val) > 2 else 0
 
         # sample tokens autoregressively
-        for prev_idx in trange(start_idx, stop_idx, self.kernel_size, leave=True, desc="Tokens"):
+        for prev_idx in trange(start_idx, stop_idx, self.kernel_size, leave=False, desc="Tokens"):
             # concat and pack token sequences
             seq = (torch.cat(val).unsqueeze(0), torch.cat(dep).unsqueeze(0), torch.cat(pos).unsqueeze(0))
 
