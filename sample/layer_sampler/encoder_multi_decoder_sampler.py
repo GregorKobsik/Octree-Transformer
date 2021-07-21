@@ -47,82 +47,73 @@ class EncoderMultiDecoderSampler():
         # transform voxel data into sequences
         val, dep, pos = preprocess(precondition, precondition_resolution, self.spatial_dim, self.device)
 
-        # compute the number of finished layers and the maximum sampleable layer
-        cur_layer = 0 if len(dep) == 0 else int(max(dep))
+        # compute the number of sampled layers and the maximum sampleable layer
+        sampled_layers = len(val)
         max_layer = int(math.log2(min(target_resolution, self.max_resolution)))
 
         with torch.no_grad():
             memory = None
 
-            # compute memory for finished layers
-            if cur_layer >= self.num_concat_layers:
-                for depth in range(self.num_concat_layers, cur_layer):
-                    # filter sequence
-                    mask = dep <= depth if depth == self.num_concat_layers else dep == depth
-                    seq = self._to_sequence(val[mask], dep[mask], pos[mask])
+            # compute memory for already sampled layers (precondition)
+            if sampled_layers >= self.num_concat_layers:
+                for depth in range(self.num_concat_layers, sampled_layers + 1):
+                    idx = max(0, depth - self.num_concat_layers)
+                    # prepare sequence to update memory
+                    if depth == self.num_concat_layers:
+                        seq = self._to_sequence(torch.cat(val), torch.cat(dep), torch.cat(pos))
+                    else:
+                        seq = self._to_sequence(val[depth - 1], dep[depth - 1], pos[depth - 1])
                     # compute memory
-                    memory = self.compute_memory(seq, memory=memory, idx=0, is_final=False)
+                    memory = self.compute_memory(seq, memory=memory, idx=idx, is_final=False)
 
-            # sample layer-wise
-            for idx in tqdm(range(cur_layer, max_layer), initial=cur_layer, total=max_layer, leave=True, desc="Layers"):
-                layer_idx = max(0, idx - self.num_concat_layers + 1)
+            # sample new tokens layer-wise
+            for layer_idx in tqdm(
+                range(sampled_layers + 1, max_layer + 1),
+                initial=sampled_layers,
+                total=max_layer,
+                leave=True,
+                desc="Layers",
+            ):
+                idx = max(0, layer_idx - self.num_concat_layers)
 
-                # sampling: encoder part
-                if layer_idx == 0:
-                    # get number of already sampld tokens
-                    num_sampled = len(val)
-                    # init sequences for next layer
-                    lay_val, lay_dep, lay_pos = next_layer_tokens(val, dep, pos, self.spatial_dim, self.max_resolution)
-                    # append future tokens to current sequence
-                    val = torch.cat([val, lay_val])
-                    dep = torch.cat([dep, lay_dep])
-                    pos = torch.cat([pos, lay_pos])
-                    # predict value tokens for current layer
-                    val = self.generators[layer_idx](
-                        val=[val],
-                        dep=[dep],
-                        pos=[pos],
-                        start_idx=num_sampled,
-                        temperature=temperature,
-                    )
-                    if len(val) != len(dep):
-                        break  # reached maximum number of tokens which can be generated
-                    # remember last sequence
-                    last_val, last_dep, last_pos = val, dep, pos
+                kwargs = {
+                    "memory": memory,
+                    "idx": idx,
+                    "temperature": temperature,
+                }
 
-                # sampling: decoder part
+                # init sequences for next layer
+                nxt_val, nxt_dep, nxt_pos = next_layer_tokens(val, dep, pos, self.spatial_dim, self.max_resolution)
+
+                # predict value tokens for current layer
+                if idx == 0:
+                    # sampling: encoder part
+                    nxt_val = self.generators[0](val + [nxt_val], dep + [nxt_dep], pos + [nxt_pos], **kwargs)
+                elif self.head[idx] == 'substitution':
+                    # sampling: decoder part - 'substitution'
+                    nxt_val = self.generators[idx]([val[-1], nxt_val], [dep[-1], nxt_dep], [pos[-1], nxt_pos], **kwargs)
                 else:
-                    # init sequences for next layer
-                    lay_val, lay_dep, lay_pos = next_layer_tokens(val, dep, pos, self.spatial_dim, self.max_resolution)
-                    # predict value tokens for current layer
-                    lay_val = self.generators[layer_idx](
-                        val=[val[dep == idx], lay_val],
-                        dep=[dep[dep == idx], lay_dep],
-                        pos=[pos[dep == idx], lay_pos],
-                        memory=memory,
-                        layer_idx=layer_idx,
-                        temperature=temperature,
-                    )
-                    # append sampled tokens to sequence
-                    val = torch.cat([val, lay_val[:len(lay_val)]])
-                    dep = torch.cat([dep, lay_dep[:len(lay_val)]])
-                    pos = torch.cat([pos, lay_pos[:len(lay_val)]])
-                    # check maximal number of positions in transformer
-                    if len(lay_val) != len(lay_dep):
-                        break  # reached maximum number of tokens which can be generated
-                    # remember last sequence
-                    last_val, last_dep, last_pos = lay_val, lay_dep, lay_pos
+                    # sampling: decoder part - 'basic'
+                    nxt_val = self.generators[idx]([nxt_val], [nxt_dep], [nxt_pos], **kwargs)
 
-                # update memory / encode last sequence
-                if self.head[layer_idx] == 'substitution':
-                    seq = self._to_sequence(
-                        torch.cat([val[dep == idx], last_val]),
-                        torch.cat([dep[dep == idx], last_dep]),
-                        torch.cat([pos[dep == idx], last_pos]),
-                    )
-                else:
-                    seq = self._to_sequence(last_val, last_dep, last_pos)
-                memory = self.compute_memory(seq, memory=memory, idx=layer_idx, is_final=False)
+                # append sampled tokens to sequence
+                val += [nxt_val[:len(nxt_val)]]
+                dep += [nxt_dep[:len(nxt_val)]]
+                pos += [nxt_pos[:len(nxt_val)]]
+
+                if len(nxt_val) != len(nxt_dep):
+                    break  # reached maximum number of tokens which can be generated
+
+                # prepare sequence to update memory
+                if self.head[idx] == 'substitution':
+                    seq = self._to_sequence(torch.cat(val[-2:]), torch.cat(dep[-2:]), torch.cat(pos[-2:]))
+                elif layer_idx == self.num_concat_layers:
+                    seq = self._to_sequence(torch.cat(val), torch.cat(dep), torch.cat(pos))
+                elif layer_idx > self.num_concat_layers:
+                    seq = self._to_sequence(val[-1], dep[-1], pos[-1])
+                # update memory
+                if layer_idx >= self.num_concat_layers:
+                    memory = self.compute_memory(seq, memory=memory, idx=idx, is_final=False)
 
         return postprocess(val, target_resolution, self.spatial_dim)
 
