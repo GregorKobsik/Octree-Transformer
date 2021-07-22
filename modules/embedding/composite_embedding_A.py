@@ -30,17 +30,24 @@ class CompositeEmbeddingA(nn.Module):
             "spatial_dim": spatial_dim,
         }
 
+        modules = []
+        if resolution >= 2:
+            modules += [BasicEmbeddingA(**kwargs)]
+        if resolution >= 4:
+            modules += [BasicEmbeddingA(**kwargs)]
+        if resolution >= 8:
+            modules += [BasicEmbeddingA(**kwargs)]
+        if resolution >= 16:
+            modules += [HalfConvolutionalEmbeddingA(**kwargs)]
+        if resolution >= 32:
+            modules += [SingleConvolutionalEmbeddingA(**kwargs)]
+        if resolution >= 64:
+            modules += [SubstitutionEmbedding(**kwargs)]
+        if resolution >= 128:
+            modules += [SubstitutionEmbedding(**kwargs)]
+
         # embeddings
-        self.embeddings = nn.ModuleList(
-            [
-                BasicEmbeddingA(**kwargs),
-                BasicEmbeddingA(**kwargs),
-                BasicEmbeddingA(**kwargs),
-                HalfConvolutionalEmbeddingA(**kwargs),
-                SingleConvolutionalEmbeddingA(**kwargs),
-                SubstitutionEmbedding(**kwargs),
-            ]
-        )
+        self.embeddings = nn.ModuleList(modules)
 
     def forward(self, value, depth, position):
         """ Transform sequences of token into an embedding space.
