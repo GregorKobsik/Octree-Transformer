@@ -1,0 +1,24 @@
+import torch.nn as nn
+
+
+class Convolution(nn.Conv1d):
+    def __init__(self, conv_size, source_dim, target_dim):
+        """ Performs a convolution operation on a input sequence.
+
+        Args:
+            conv_size: Defines the size of the convolution kernel and stride.
+            source_dim: Defines the embedding dimension of the input sequence.
+            target_dim: Defines the embedding dimension of the output sequence.
+        """
+        super(self, Convolution).__init__(source_dim, target_dim, kernel_size=conv_size, stride=conv_size)
+
+    def forward(self, seq_vector):
+        """ Convolute tokens to reduce sequence length
+
+        Args:
+            seq_vector: Sequence vector with elements of the shape [N, S, E].
+
+        Return:
+            Sequence vector with reduced length and target embedding dimension [N, T, E']
+        """
+        return super().forward(seq_vector.transpose(1, 2)).transpose(1, 2)
