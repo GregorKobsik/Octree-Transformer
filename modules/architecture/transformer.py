@@ -172,7 +172,20 @@ class Transformer(nn.Module):
                 return self.compute_logits(seq_layer, memory, idx)  # [N, T, V]
 
     def compute_memory(self, seq_layer, memory, idx, is_final):
-        """ """
+        """ Computes the output of the corresponding transformer layer, without processing the corresponding head.
+
+        Args:
+            seq_layer: Token sequence of a single layer as a tuple of (value, depth, position), with the shapes
+                ([N, L], [N, L], [N, L, A]).
+            memory: Memory sequence of the previous transformer layer, with the shape [N, T]. Should be 'None' iff
+                `idx` is 0.
+            idx: Index of the transformer layer.
+            is_final: Defines the used mask. True - uses an autoregressive mask, False - each token can access each
+                other token.
+
+        Return:
+            Memory latent vector of the selecter transformer layer with the shape [N, L, E].
+        """
         # embed sequence tokens
         emb = self.embedding[idx](*seq_layer)  # [N, L, E]
         seq_mask = self.embedding[idx].padding_mask(*seq_layer)  # [N, L]
@@ -181,7 +194,21 @@ class Transformer(nn.Module):
         return self.process(emb, memory, seq_mask, idx, is_final)  # [N, L, E]
 
     def compute_logits(self, seq_layer, memory, idx):
-        """ """
+        """ Performs a full pass of a single transformer layer to computes the logits of given sequence.
+
+        Each token can access previous tokens in `seq_layer` only autoregressivelly. All tokens of the `memory`
+            sequence can be accessed be each token of `seq_layer`.
+
+        Args:
+            seq_layer: Token sequence of a single layer as a tuple of (value, depth, position), with the shapes
+                ([N, L], [N, L], [N, L, A]).
+            memory: Memory sequence of the previous transformer layer, with the shape [N, T]. Should be 'None' iff
+                `idx` is 0.
+            idx: Index of the transformer layer.
+
+        Return
+            Logits of the given layer token sequence with the shape [N, L, V]
+        """
         # compute memory
         memory = self.compute_memory(seq_layer, memory, idx, True)  # [N, L, E]
 
