@@ -79,6 +79,7 @@ class ShapeTransformer(pl.LightningModule):
             name=head,
             num_vocab=num_vocab,
             embed_dim=embed_dim,
+            resolution=resolution,
             spatial_dim=spatial_dim,
         )
 

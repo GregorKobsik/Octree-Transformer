@@ -3,13 +3,12 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 
 from .linear_head import LinearHead
-from .half_conv_head_A import HalfConvolutionalHeadA
-from .single_conv_head_A import SingleConvolutionalHeadA
+from .convolution_head_A import ConvolutionHeadA
 from .substitution_head import SubstitutionHead
 
 
 class CompositeHeadA(nn.Module):
-    def __init__(self, num_vocab, embed_dim, spatial_dim):
+    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim, **_):
         """ Performs a transformation from transformer latent space into target value logits.
 
         Uses a different heads for each depth layer, possibly increasing the overall sequence lenght.
@@ -18,6 +17,7 @@ class CompositeHeadA(nn.Module):
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
+            resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
         """
         super(CompositeHeadA, self).__init__()
@@ -28,17 +28,24 @@ class CompositeHeadA(nn.Module):
             "spatial_dim": spatial_dim,
         }
 
+        modules = []
+        if resolution >= 2:
+            modules += [LinearHead(**kwargs)]
+        if resolution >= 4:
+            modules += [LinearHead(**kwargs)]
+        if resolution >= 8:
+            modules += [LinearHead(**kwargs)]
+        if resolution >= 16:
+            modules += [ConvolutionHeadA(**kwargs, conv_size=2**(spatial_dim - 1))]
+        if resolution >= 32:
+            modules += [ConvolutionHeadA(**kwargs, conv_size=2**spatial_dim)]
+        if resolution >= 64:
+            modules += [SubstitutionHead(**kwargs, conv_size=2**spatial_dim)]
+        if resolution >= 128:
+            modules += [SubstitutionHead(**kwargs, conv_size=2**spatial_dim)]
+
         # embeddings
-        self.heads = nn.ModuleList(
-            [
-                LinearHead(**kwargs),
-                LinearHead(**kwargs),
-                LinearHead(**kwargs),
-                HalfConvolutionalHeadA(**kwargs),
-                SingleConvolutionalHeadA(**kwargs),
-                SubstitutionHead(**kwargs),
-            ]
-        )
+        self.heads = nn.ModuleList(modules)
 
         self.reduction_factor = {
             1: 1,

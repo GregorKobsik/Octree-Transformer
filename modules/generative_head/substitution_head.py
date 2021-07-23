@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 
+from ..utils import Deconvolution, Linear
+
 
 class SubstitutionHead(nn.Module):
-    def __init__(self, num_vocab, embed_dim, spatial_dim):
+    def __init__(self, num_vocab, embed_dim, spatial_dim, conv_size, **_):
         """ Performs a concolutional transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -12,14 +14,14 @@ class SubstitutionHead(nn.Module):
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
+            conv_size: Convolution kernel size and stride.
         """
         super(SubstitutionHead, self).__init__()
-        s = 2**spatial_dim
-        self.conv_depth = embed_dim // s
+        self.embed_dim = embed_dim
 
-        self.deconv_1 = nn.ConvTranspose1d(embed_dim, self.conv_depth, kernel_size=s, stride=s)
-        self.deconv_2 = nn.ConvTranspose1d(self.conv_depth, self.conv_depth, kernel_size=s, stride=s)
-        self.linear = nn.Linear(self.conv_depth, num_vocab + 1, bias=False)
+        self.deconvolution_1 = Deconvolution(embed_dim, embed_dim // 2, conv_size)
+        self.deconvolution_0 = Deconvolution(embed_dim // 2, embed_dim // 4, conv_size)
+        self.linear = Linear(embed_dim // 4, num_vocab)
 
     def forward(self, x, value, depth, pos):
         """ Transforms the output of the transformer target value logits.
@@ -40,29 +42,29 @@ class SubstitutionHead(nn.Module):
         """
         batch_size = value.shape[0]
 
-        # create intermediate tensor to hold values of penultimate layer
-        penult_idx = torch.argmax(depth, dim=1)
-        penult_val = torch.zeros((batch_size, torch.max(penult_idx)), device=x.device)  # [N, T'']
+        # create intermediate tensor to hold values of second-last layer
+        idx_1 = torch.argmax(depth, dim=1)
+        val_1 = torch.zeros((batch_size, torch.max(idx_1)), device=x.device)  # [N, T'']
 
-        # get values of penultimate layer - discard last layer of value tokens
+        # discard last layer of value tokens
         for i in range(batch_size):
-            penult_val[i, :penult_idx[i]] = value[i, :penult_idx[i]]
+            val_1[i, :idx_1[i]] = value[i, :idx_1[i]]
 
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
-        x = self.deconv_1(x.transpose(1, 2)).transpose(1, 2)  # [N, T'', C]
+        y_1 = self.deconvolution_1(x)
 
         # create intermediate tensor to hold mixed tokens
-        penult_len = torch.sum(penult_val == 2, dim=1)
-        y = torch.zeros((batch_size, int(torch.max(penult_len)), self.conv_depth), device=x.device)  # [N, T', C]
+        len_1 = torch.sum(val_1 == 2, dim=1)
+        x_0 = torch.zeros((batch_size, int(torch.max(len_1)), self.embed_dim // 2), device=x.device)  # [N, T', C]
 
         # select only latent vectors, which correspond to mixed tokens in the penultimate layer
         for i in range(batch_size):
             # TODO: Check for value overflow
             # TODO: Handle overflow/clipped values in the embedding ...
-            y[i, :penult_len[i]] = x[i, penult_val[i] == 2]  # [N, T', C]
+            x_0[i, :len_1[i]] = y_1[i, val_1[i] == 2]  # [N, T', C]
 
         # deconvolute the intermediate latent space - create new tokens in latent space for each mixed token
-        y = self.deconv_2(y.transpose(1, 2)).transpose(1, 2)  # [N, T, C]
+        y_0 = self.deconvolution_0(x_0)  # [N, T, C]
 
         # compute logits of generated tokens
-        return self.linear(y)  # [N, T, V]
+        return self.linear(y_0)  # [N, T, V]

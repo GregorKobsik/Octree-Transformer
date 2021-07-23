@@ -1,8 +1,10 @@
 import torch.nn as nn
 
+from ..utils import Deconvolution, Linear
 
-class SingleConvolutionalHeadA(nn.Module):
-    def __init__(self, num_vocab, embed_dim, spatial_dim):
+
+class ConvolutionHeadA(nn.Module):
+    def __init__(self, num_vocab, embed_dim, spatial_dim, conv_size, **_):
         """ Performs a convolutional transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -11,12 +13,12 @@ class SingleConvolutionalHeadA(nn.Module):
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
+            conv_size: Convolution kernel size and stride.
         """
-        super(SingleConvolutionalHeadA, self).__init__()
-        s = 2**spatial_dim
+        super(ConvolutionHeadA, self).__init__()
 
-        self.deconv = nn.ConvTranspose1d(embed_dim, embed_dim, kernel_size=s, stride=s)
-        self.linear = nn.Linear(embed_dim, num_vocab + 1, bias=False)
+        self.devoncolution = Deconvolution(embed_dim, embed_dim, conv_size)
+        self.linear = Linear(embed_dim, num_vocab)
 
     def forward(self, x, value, depth, pos):
         """ Transforms the output of the transformer target value logits.
@@ -31,7 +33,7 @@ class SingleConvolutionalHeadA(nn.Module):
             Logits of target value sequence.
         """
         # deconvolute the latent space - create new tokens
-        x = self.deconv(x.transpose(1, 2)).transpose(1, 2)  # [N, T, E]
+        x = self.devoncolution(x)  # [N, T, E]
 
         # compute logits for each token
         return self.linear(x)  # [N, T, V]
