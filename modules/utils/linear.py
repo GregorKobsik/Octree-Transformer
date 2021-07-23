@@ -9,4 +9,4 @@ class Linear(nn.Linear):
             embed_dim: Dimension of returned embedding space.
             num_vocab: Number of different token values (exclusive padding token '0').
         """
-        super(self, Linear).__init__(embed_dim, num_vocab + 1, bias=False)
+        super(Linear, self).__init__(embed_dim, num_vocab + 1, bias=False)
