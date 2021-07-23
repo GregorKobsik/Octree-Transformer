@@ -28,16 +28,16 @@ class Embedding(nn.Module):
         """ Transform sequences of token into an embedding space.
 
         Args:
-            value: Value token sequence.
-            depth: Depth token sequence.
-            position: Position token sequence.
+            value: Value token sequence with the shape [N, S].
+            depth: Depth token sequence with the shape [N, S].
+            position: Position token sequence with the shape [N, S, A].
 
         Return:
-            Token sequence in the embedding space.
+            Token sequence in the embedding space with the shape [N, S, E].
         """
-        x = self.value_embedding(value)
+        x = self.value_embedding(value)  # [N, S, E]
         if depth is not None:
-            x = x + self.depth_embedding(depth)
+            x = x + self.depth_embedding(depth)  # [N, S, E]
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            x = x + spatial_embedding(position[:, :, axis])
-        return x
+            x = x + spatial_embedding(position[:, :, axis])  # [N, S, E]
+        return x  # [N, S, E]
