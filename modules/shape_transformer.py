@@ -3,7 +3,7 @@ import torch
 from torch.optim import Adam
 import pytorch_lightning as pl
 
-from .embedding import create_embedding
+from .token_embedding import create_embedding
 from .generative_head import create_head
 from .architecture import create_architecture
 
