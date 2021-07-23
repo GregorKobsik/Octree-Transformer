@@ -1,11 +1,11 @@
-import math
 import torch.nn as nn
 
+from modules.utils import Embedding, Convolution
 from utils.masks import padding_mask
 
 
-class MultiConvolutionalEmbeddingA(nn.Module):
-    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
+class MultiConvolutionEmbeddingA(nn.Module):
+    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim, conv_size, **_):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Uses a convolution to reduce the number of tokens with 's' as the kernel size and stride, where 's' is
@@ -18,22 +18,15 @@ class MultiConvolutionalEmbeddingA(nn.Module):
             embded_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
+            conv_size: Convolution kernel size and stride.
         """
-        super(MultiConvolutionalEmbeddingA, self).__init__()
-        tree_depth = int(math.log2(resolution))
-        conv_dim = embed_dim // 2
+        super(MultiConvolutionEmbeddingA, self).__init__()
+        self.chunk_size = conv_size
 
         # embeddings
-        self.value_embedding = nn.Embedding(num_vocab + 1, conv_dim, padding_idx=0)
-        self.depth_embedding = nn.Embedding(tree_depth + 1, conv_dim, padding_idx=0)
-        self.spatial_embeddings = nn.ModuleList(
-            [nn.Embedding(2 * resolution, conv_dim, padding_idx=0) for _ in range(spatial_dim)]
-        )
-
-        # convolutions
-        self.chunk_size = 2**(spatial_dim)
-        self.convolution = nn.Conv1d(conv_dim, conv_dim, kernel_size=self.chunk_size, stride=self.chunk_size)
-        self.multi_convolution = nn.Conv1d(conv_dim, embed_dim, kernel_size=self.chunk_size, stride=self.chunk_size)
+        self.embedding = Embedding(embed_dim // 4, num_vocab, resolution, spatial_dim)
+        self.convolution_1 = Convolution(embed_dim // 4, embed_dim // 2, conv_size)
+        self.convolution_2 = Convolution(embed_dim // 2, embed_dim, conv_size)
 
     def forward(self, value, depth, position):
         """ Transform sequences into embedding space for the encoder and reduce number of tokens.
@@ -47,16 +40,13 @@ class MultiConvolutionalEmbeddingA(nn.Module):
             Reduced token sequence in the embedding space.
         """
         # embed tokens into higher dimension
-        x = self.value_embedding(value)  # [N, S, C]
-        x = x + self.depth_embedding(depth)  # [N, S, C]
-        for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            x = x + spatial_embedding(position[:, :, axis])  # [N, S, C]
+        x = self.embedding(value, depth, position)  # [N, S, C]
 
         # convolute tokens to reduce sequence length
-        y = self.convolution(x.transpose(1, 2)).transpose(1, 2)  # [N, S', C]
+        y = self.convolution_1(x)  # [N, S', C]
 
         # convolute tokens to reduce sequence length even more
-        return self.multi_convolution(y.transpose(1, 2)).transpose(1, 2)  # [N, S'', E]
+        return self.convolution_2(y)  # [N, S'', E]
 
     def padding_mask(self, value, depth, position):
         """ Creates a token padding mask, based on the value and depth sequence token.

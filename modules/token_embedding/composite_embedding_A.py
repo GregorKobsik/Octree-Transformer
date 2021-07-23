@@ -3,13 +3,12 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 
 from .basic_embedding_A import BasicEmbeddingA
-from .half_conv_embedding_A import HalfConvolutionalEmbeddingA
-from .single_conv_embedding_A import SingleConvolutionalEmbeddingA
+from .convolution_embedding_A import ConvolutionEmbeddingA
 from .substitution_embedding import SubstitutionEmbedding
 
 
 class CompositeEmbeddingA(nn.Module):
-    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
+    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim, **_):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Uses a different embedding for each depth layer, possibly reducing the overall sequence lenght.
@@ -38,13 +37,13 @@ class CompositeEmbeddingA(nn.Module):
         if resolution >= 8:
             modules += [BasicEmbeddingA(**kwargs)]
         if resolution >= 16:
-            modules += [HalfConvolutionalEmbeddingA(**kwargs)]
+            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=2**(spatial_dim - 1))]
         if resolution >= 32:
-            modules += [SingleConvolutionalEmbeddingA(**kwargs)]
+            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=2**spatial_dim)]
         if resolution >= 64:
-            modules += [SubstitutionEmbedding(**kwargs)]
+            modules += [SubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
         if resolution >= 128:
-            modules += [SubstitutionEmbedding(**kwargs)]
+            modules += [SubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
 
         # embeddings
         self.embeddings = nn.ModuleList(modules)

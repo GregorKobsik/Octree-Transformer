@@ -1,12 +1,12 @@
-import math
 import torch
 import torch.nn as nn
 
+from ..utils import Embedding, Convolution
 from utils.masks import padding_mask
 
 
 class SubstitutionEmbedding(nn.Module):
-    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
+    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim, conv_size, **_):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         The embedding packs multiple tokens of the last sequence into one token embedded in higher dimension using
@@ -20,28 +20,20 @@ class SubstitutionEmbedding(nn.Module):
             embded_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
+            conv_size: Convolution kernel size and stride.
         """
         super(SubstitutionEmbedding, self).__init__()
-        tree_depth = int(math.log2(resolution))
-        self.chunck_size = 2**spatial_dim
-        conv_depth = embed_dim // self.chunck_size
+        self.chunck_size = conv_size
+        self.spatial_dim = spatial_dim
+        self.mask = None
 
         # embeddings
-        self.value_embedding_1 = nn.Embedding(num_vocab + 1, conv_depth, padding_idx=0)
-        self.depth_embedding_1 = nn.Embedding(tree_depth + 1, conv_depth, padding_idx=0)
-        self.spatial_embeddings_1 = nn.ModuleList(
-            [nn.Embedding(2 * resolution, conv_depth, padding_idx=0) for _ in range(spatial_dim)]
-        )
-
-        self.value_embedding_2 = nn.Embedding(num_vocab + 1, conv_depth, padding_idx=0)
-        self.depth_embedding_2 = nn.Embedding(tree_depth + 1, conv_depth, padding_idx=0)
-        self.spatial_embeddings_2 = nn.ModuleList(
-            [nn.Embedding(2 * resolution, conv_depth, padding_idx=0) for _ in range(spatial_dim)]
-        )
+        self.embedding_0 = Embedding(embed_dim // 4, num_vocab, resolution, spatial_dim)
+        self.embedding_1 = Embedding(embed_dim // 2, num_vocab, resolution, spatial_dim)
 
         # convolutions
-        self.conv_1 = nn.Conv1d(conv_depth, embed_dim, kernel_size=self.chunck_size, stride=self.chunck_size)
-        self.conv_2 = nn.Conv1d(conv_depth, conv_depth, kernel_size=self.chunck_size, stride=self.chunck_size)
+        self.convolution_0 = Convolution(embed_dim // 4, embed_dim // 2, conv_size)
+        self.convolution_1 = Convolution(embed_dim // 2, embed_dim, conv_size)
 
     def forward(self, value, depth, position):
         """ Transform sequences into embedding space for the encoder.
@@ -62,31 +54,42 @@ class SubstitutionEmbedding(nn.Module):
         """
         batch_size = value.shape[0]
         max_depth = torch.max(depth)
+        len_0 = torch.sum(depth == max_depth, dim=1)
         len_1 = torch.sum(depth == (max_depth - 1), dim=1)
-        len_2 = torch.sum(depth == max_depth, dim=1)
 
         # create intermediate list to hold values
-        val_1 = torch.zeros((batch_size, torch.max(len_1)), dtype=torch.long, device=value.device)
-        val_2 = torch.zeros((batch_size, torch.max(len_2)), dtype=torch.long, device=value.device)
+        val_0 = torch.zeros((batch_size, torch.max(len_0)), dtype=torch.long, device=value.device)
+        dep_0 = torch.zeros((batch_size, torch.max(len_0)), dtype=torch.long, device=value.device)
+        pos_0 = torch.zeros((batch_size, torch.max(len_0), self.spatial_dim), dtype=torch.long, device=value.device)
 
-        # splitt input in penultimate (1) and last (2) layer
+        val_1 = torch.zeros((batch_size, torch.max(len_1)), dtype=torch.long, device=value.device)
+        dep_1 = torch.zeros((batch_size, torch.max(len_1)), dtype=torch.long, device=value.device)
+        pos_1 = torch.zeros((batch_size, torch.max(len_1), self.spatial_dim), dtype=torch.long, device=value.device)
+
+        # splitt input in penultimate (1) and last (0) layer
         for i in range(batch_size):
             val_1[i, :len_1[i]] = value[i, :len_1[i]]
-            val_2[i, :len_2[i]] = value[i, len_1[i]:len_1[i] + len_2[i]]
+            dep_1[i, :len_1[i]] = depth[i, :len_1[i]]
+            pos_1[i, :len_1[i]] = position[i, :len_1[i]]
+            val_0[i, :len_0[i]] = value[i, len_1[i]:len_1[i] + len_0[i]]
+            dep_0[i, :len_0[i]] = depth[i, len_1[i]:len_1[i] + len_0[i]]
+            pos_0[i, :len_0[i]] = position[i, len_1[i]:len_1[i] + len_0[i]]
+
+        # precompute padding mask
+        self.mask = padding_mask(val_1[:, ::self.chunck_size], device=value.device)
 
         # compute embeddings
-        x = self.value_embedding_1(val_1)  # [N, T1] -> [N, T1, C]
-        y = self.value_embedding_2(val_2)  # [N, T2] -> [N, T2, C]
+        x_0 = self.embedding_0(val_0, dep_0, pos_0)
+        x_1 = self.embedding_1(val_1, dep_1, pos_1)
 
         # convolute embedded tokens of last layer
-        y = self.conv_2(y.transpose(1, 2)).transpose(1, 2)  # [N, T2', C]
+        y_0 = self.convolution_0(x_0)  # [N, T2', C]
 
         # substitite all mixed token embeddings of penultimate layer, with token embeddings of last layer
-        x[val_1 == 2] = y[val_2[:, ::self.chunck_size] != 0]  # [N, T1, C]
-        x = x.contiguous()
+        x_1[val_1 == 2] = y_0[val_0[:, ::self.chunck_size] != 0]  # [N, T1, C]
 
         # convolute substituted tokens of penultimate layer
-        return self.conv_1(x.transpose(1, 2)).transpose(1, 2)  # [N, T1', E]
+        return self.convolution_1(x_1.contiguous())  # [N, T1', E]
 
     def padding_mask(self, value, depth, position):
         """ Creates a token padding mask, based on the value and depth sequence token.
@@ -101,13 +104,4 @@ class SubstitutionEmbedding(nn.Module):
         Return:
             Padding mask, where padding tokens '0' of the value sequence are masked out.
         """
-        batch_size = value.shape[0]
-        max_depth = torch.max(depth)
-        penult_len = torch.sum(depth == (max_depth - 1), dim=1)
-
-        # create intermediate list to hold values
-        penult_val = torch.zeros((batch_size, torch.max(penult_len)), dtype=torch.long, device=value.device)
-        for i in range(batch_size):
-            penult_val[i, :penult_len[i]] = value[i, :penult_len[i]]
-
-        return padding_mask(penult_val[:, ::self.chunck_size], device=value.device)
+        return self.mask

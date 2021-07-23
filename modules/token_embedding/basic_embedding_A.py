@@ -1,11 +1,11 @@
-import math
 import torch.nn as nn
 
+from modules.utils import Embedding
 from utils.masks import padding_mask
 
 
 class BasicEmbeddingA(nn.Module):
-    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
+    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim, **_):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -17,14 +17,9 @@ class BasicEmbeddingA(nn.Module):
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
         super(BasicEmbeddingA, self).__init__()
-        tree_depth = int(math.log2(resolution))
 
         # embeddings
-        self.value_embedding = nn.Embedding(num_vocab + 1, embed_dim, padding_idx=0)
-        self.depth_embedding = nn.Embedding(tree_depth + 1, embed_dim, padding_idx=0)
-        self.spatial_embeddings = nn.ModuleList(
-            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
-        )
+        self.embedding = Embedding(embed_dim, num_vocab, resolution, spatial_dim)
 
     def forward(self, value, depth, position):
         """ Transform sequences of token into an embedding space.
@@ -37,11 +32,7 @@ class BasicEmbeddingA(nn.Module):
         Return:
             Token sequence in the embedding space.
         """
-        x = self.value_embedding(value)
-        x = x + self.depth_embedding(depth)
-        for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            x = x + spatial_embedding(position[:, :, axis])
-        return x
+        return self.embedding(value, depth, position)
 
     def padding_mask(self, value, depth, position):
         """ Creates a token padding mask based on sequence tokens.
