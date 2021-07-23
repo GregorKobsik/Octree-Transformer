@@ -3,14 +3,14 @@ import torch.nn as nn
 
 
 class Embedding(nn.Module):
-    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim):
+    def __init__(self, embed_dim, num_vocab, resolution, spatial_dim):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
 
         Args:
-            num_vocab: Number of different token values (exclusive padding token '0').
             embded_dim: Dimension of returned embedding space.
+            num_vocab: Number of different token values (exclusive padding token '0').
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """

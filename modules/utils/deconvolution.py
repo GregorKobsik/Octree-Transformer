@@ -1,19 +1,19 @@
 import torch.nn as nn
 
 
-class Convolution(nn.Conv1d):
+class Deconvolution(nn.ConvTranspose1d):
     def __init__(self, source_dim, target_dim, conv_size):
-        """ Performs a convolution operation on a input sequence.
+        """ Performs a de-convolution operation on a input sequence.
 
         Args:
             source_dim: Defines the embedding dimension of the input sequence.
             target_dim: Defines the embedding dimension of the output sequence.
             conv_size: Defines the size of the convolution kernel and stride.
         """
-        super(self, Convolution).__init__(source_dim, target_dim, kernel_size=conv_size, stride=conv_size)
+        super(self, Deconvolution).__init__(source_dim, target_dim, kernel_size=conv_size, stride=conv_size)
 
     def forward(self, seq_vector):
-        """ Convolute tokens to reduce sequence length
+        """ Deconvolute tokens to reduce sequence length
 
         Args:
             seq_vector: Sequence vector with elements of the shape [N, S, E].

@@ -3,13 +3,13 @@ from . import Convolution
 
 
 class Substitution(nn.Module):
-    def __init__(self, conv_size, source_dim, target_dim):
+    def __init__(self, source_dim, target_dim, conv_size):
         """ Performs a substitution operation on the input sequence vectors and convolutes them afterwards.
 
         Args:
-            conv_size: Defines the size of the convolution kernel and stride.
             source_dim: Defines the embedding dimension of the input sequence.
             target_dim: Defines the embedding dimension of the output sequence.
+            conv_size: Defines the size of the convolution kernel and stride.
         """
         super(self, Substitution).__init__()
         self.convolution = Convolution(conv_size, source_dim, target_dim)
