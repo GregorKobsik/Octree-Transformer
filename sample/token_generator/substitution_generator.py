@@ -37,14 +37,14 @@ class SubstitutionGenerator():
 
         # sample tokens autoregressively
         for prev_idx in trange(start_idx, stop_idx, self.kernel_size, leave=False, desc="Tokens"):
-            # concat and pack token sequences
-            seq = (torch.cat(val).unsqueeze(0), torch.cat(dep).unsqueeze(0), torch.cat(pos).unsqueeze(0))
-
-            # compute logits
-            logits = self.compute_logits(seq, memory, idx)[0]
-
-            # compute number of sampled tokens
+            # compute number of tokens which can be sampled
             num_sampled = torch.sum(val[-2][prev_idx:prev_idx + self.kernel_size] == 2) * self.num_tokens
+            if num_sampled == 0:
+                continue  # 'skip' if no tokens will be sampled - speed up
+
+            # concat and pack token sequences to compute logits
+            seq = (torch.cat(val).unsqueeze(0), torch.cat(dep).unsqueeze(0), torch.cat(pos).unsqueeze(0))
+            logits = self.compute_logits(seq, memory, idx)[0]
 
             # retrive only logits for tokens which were actually sampled
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + num_sampled]
