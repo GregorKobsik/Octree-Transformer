@@ -37,7 +37,7 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim, **_):
         kwargs['num_vocab'] = num_vocab**2**spatial_dim
         return BasicEmbeddingA(**kwargs)
     elif name in ('half_conv', 'half_conv_A'):
-        kwargs['conv_size'] == 2**(spatial_dim - 1)
+        kwargs['conv_size'] = 2**(spatial_dim - 1)
         return ConvolutionEmbeddingA(**kwargs)
     elif name in ('single_conv', 'single_conv_A'):
         return ConvolutionEmbeddingA(**kwargs)
