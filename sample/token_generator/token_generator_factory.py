@@ -1,6 +1,7 @@
 from .basic_generator import BasicGenerator
-from .composite_generator import CompositeGenerator
 from .substitution_generator import SubstitutionGenerator
+from .double_substitution_generator import DoubleSubstitutionGenerator
+from .composite_generator import CompositeGenerator
 
 
 def _create_token_generator(head, model, spatial_dim):
@@ -24,8 +25,11 @@ def _create_token_generator(head, model, spatial_dim):
         return BasicGenerator(model.compute_logits, 2**spatial_dim)
     if head in ('substitution'):
         return SubstitutionGenerator(model.compute_logits, 2**spatial_dim)
+    if head in ('double_substitution'):
+        return DoubleSubstitutionGenerator(model.compute_logits, 2**spatial_dim)
     if head in ('composite', 'composite_A'):
-        return CompositeGenerator(model.compute_logits, [1, 1, 1, 2**(spatial_dim - 1), 2**spatial_dim, 2**spatial_dim])
+        size = 2**spatial_dim
+        return CompositeGenerator(model.compute_logits, [1, 1, 1, size // 2, size, size, size])
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 

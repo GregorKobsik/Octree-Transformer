@@ -2,6 +2,7 @@ import torch
 
 from .basic_generator import BasicGenerator
 from .substitution_generator import SubstitutionGenerator
+from .double_substitution_generator import DoubleSubstitutionGenerator
 
 
 class CompositeGenerator():
@@ -36,7 +37,9 @@ class CompositeGenerator():
         # create a generator according to layer depth
         if cur_depth < 6:
             generator = BasicGenerator(self.compute_logits_fn, num_tokens)
-        else:  # 'substitution'
+        elif cur_depth == 6:  # 'substitution'
             generator = SubstitutionGenerator(self.compute_logits_fn, num_tokens)
+        else:  # 'double_substitution'
+            generator = DoubleSubstitutionGenerator(self.compute_logits_fn, num_tokens)
         # sample a single layer
         return generator(val, dep, pos, memory, layer_idx, temperature)

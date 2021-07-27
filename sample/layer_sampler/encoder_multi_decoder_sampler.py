@@ -61,6 +61,18 @@ class EncoderMultiDecoderSampler():
                     # prepare sequence to update memory
                     if depth == self.num_concat_layers:
                         seq = self._to_sequence(torch.cat(val), torch.cat(dep), torch.cat(pos))
+                    elif self.head[idx] == 'substitution':
+                        seq = self._to_sequence(
+                            torch.cat(val[depth - 2:depth - 1]),
+                            torch.cat(dep[depth - 2:depth - 1]),
+                            torch.cat(pos[depth - 2:depth - 1]),
+                        )
+                    elif self.head[idx] == 'double_substitution':
+                        seq = self._to_sequence(
+                            torch.cat(val[depth - 2:depth - 1]),
+                            torch.cat(dep[depth - 2:depth - 1]),
+                            torch.cat(pos[depth - 2:depth - 1]),
+                        )
                     else:
                         seq = self._to_sequence(val[depth - 1], dep[depth - 1], pos[depth - 1])
                     # compute memory
@@ -92,6 +104,11 @@ class EncoderMultiDecoderSampler():
                 elif self.head[idx] == 'substitution':
                     # sampling: decoder part - 'substitution'
                     nxt_val = self.generators[idx]([val[-1], nxt_val], [dep[-1], nxt_dep], [pos[-1], nxt_pos], **kwargs)
+                elif self.head[idx] == 'double_substitution':
+                    # sampling: decoder part - 'substitution'
+                    nxt_val = self.generators[idx](
+                        [val[-2], val[-1], nxt_val], [dep[-2], dep[-1], nxt_dep], [pos[-2], pos[-1], nxt_pos], **kwargs
+                    )
                 else:
                     # sampling: decoder part - 'basic'
                     nxt_val = self.generators[idx]([nxt_val], [nxt_dep], [nxt_pos], **kwargs)
@@ -107,6 +124,8 @@ class EncoderMultiDecoderSampler():
                 # prepare sequence to update memory
                 if self.head[idx] == 'substitution':
                     seq = self._to_sequence(torch.cat(val[-2:]), torch.cat(dep[-2:]), torch.cat(pos[-2:]))
+                elif self.head[idx] == 'double_substitution':
+                    seq = self._to_sequence(torch.cat(val[-3:]), torch.cat(dep[-3:]), torch.cat(pos[-3:]))
                 elif layer_idx == self.num_concat_layers:
                     seq = self._to_sequence(torch.cat(val), torch.cat(dep), torch.cat(pos))
                 elif layer_idx > self.num_concat_layers:
