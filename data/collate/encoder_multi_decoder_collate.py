@@ -42,6 +42,10 @@ class EncoderMultiDecoderCollate():
                 # select previous and last layer for 'substitution' embedding
                 lo = embedding_idx + self.num_concat_layers - 1
                 up = embedding_idx + self.num_concat_layers
+            elif embedding in ('double_substitution'):
+                # select previous and last layer for 'substitution' embedding
+                lo = embedding_idx + self.num_concat_layers - 2
+                up = embedding_idx + self.num_concat_layers
             else:
                 # get only a single depth layer
                 lo = embedding_idx + self.num_concat_layers

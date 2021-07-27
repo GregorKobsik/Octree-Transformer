@@ -4,6 +4,7 @@ from .basic_embedding_A import BasicEmbeddingA
 from .convolution_embedding_A import ConvolutionEmbeddingA
 from .multi_conv_embedding_A import MultiConvolutionEmbeddingA
 from .substitution_embedding import SubstitutionEmbedding
+from .double_substitution_embedding import DoubleSubstitutionEmbedding
 from .composite_embedding_A import CompositeEmbeddingA
 
 
@@ -44,6 +45,8 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim, **_):
         return MultiConvolutionEmbeddingA(**kwargs)
     elif name == 'substitution':
         return SubstitutionEmbedding(**kwargs)
+    elif name == 'double_substitution':
+        return DoubleSubstitutionEmbedding(**kwargs)
     elif name in ('composite', 'composite_A'):
         return CompositeEmbeddingA(**kwargs)
     else:

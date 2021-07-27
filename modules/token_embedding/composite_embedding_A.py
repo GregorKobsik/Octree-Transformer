@@ -5,6 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 from .basic_embedding_A import BasicEmbeddingA
 from .convolution_embedding_A import ConvolutionEmbeddingA
 from .substitution_embedding import SubstitutionEmbedding
+from .double_substitution_embedding import DoubleSubstitutionEmbedding
 
 
 class CompositeEmbeddingA(nn.Module):
@@ -43,7 +44,7 @@ class CompositeEmbeddingA(nn.Module):
         if resolution >= 64:
             modules += [SubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
         if resolution >= 128:
-            modules += [SubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
+            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
 
         # embeddings
         self.embeddings = nn.ModuleList(modules)
@@ -82,10 +83,20 @@ class CompositeEmbeddingA(nn.Module):
                     val_seq = val[dep == layer_depth]
                     dep_seq = dep[dep == layer_depth]
                     pos_seq = pos[dep == layer_depth]
-                else:  # penultimate and last layer
+                elif layer_depth == 6:  # penultimate and last layer
                     val_seq = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
                     dep_seq = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
                     pos_seq = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
+                elif layer_depth == 7:  # third-, second- and last layer
+                    val_seq = torch.cat(
+                        [val[dep == (layer_depth - 2)], val[dep == (layer_depth - 1)], val[dep == layer_depth]]
+                    )
+                    dep_seq = torch.cat(
+                        [dep[dep == (layer_depth - 2)], dep[dep == (layer_depth - 1)], dep[dep == layer_depth]]
+                    )
+                    pos_seq = torch.cat(
+                        [pos[dep == (layer_depth - 2)], pos[dep == (layer_depth - 1)], pos[dep == layer_depth]]
+                    )
 
                 # compute layer embedding
                 layer_emb = embedding(

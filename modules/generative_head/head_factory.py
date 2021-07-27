@@ -4,6 +4,7 @@ from .linear_head import LinearHead
 from .convolution_head_A import ConvolutionHeadA
 from .multi_conv_head_A import MultiConvolutionHeadA
 from .substitution_head import SubstitutionHead
+from .double_substitution_head import DoubleSubstitutionHead
 from .composite_head_A import CompositeHeadA
 
 
@@ -44,6 +45,8 @@ def _create_head(name, num_vocab, embed_dim, resolution, spatial_dim):
         return MultiConvolutionHeadA(**kwargs)
     elif name == 'substitution':
         return SubstitutionHead(**kwargs)
+    elif name == 'double_substitution':
+        return DoubleSubstitutionHead(**kwargs)
     elif name in ('composite', 'composite_A'):
         return CompositeHeadA(**kwargs)
     else:

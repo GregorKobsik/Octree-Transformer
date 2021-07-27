@@ -39,6 +39,16 @@ class EncoderDecoderCollate():
                 ) for v, d, p in batch
             ]
             batch_tgt = [(v[d == lim_depth], d[d == lim_depth], p[d == lim_depth]) for v, d, p in batch]
+        elif self.embeddings[1] in ('double_substitution'):
+            # extract third-, second-, and last layer as input for the decoder & target
+            batch_dec = [
+                (
+                    v[(lim_depth - 2 <= d) & (d <= lim_depth)],
+                    d[(lim_depth - 2 <= d) & (d <= lim_depth)],
+                    p[(lim_depth - 2 <= d) & (d <= lim_depth)],
+                ) for v, d, p in batch
+            ]
+            batch_tgt = [(v[d == lim_depth], d[d == lim_depth], p[d == lim_depth]) for v, d, p in batch]
         else:
             # extract last layer as input for the decoder & target
             batch_dec = [(v[d == lim_depth], d[d == lim_depth], p[d == lim_depth]) for v, d, p in batch]
