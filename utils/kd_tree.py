@@ -20,7 +20,7 @@ class kdTree():
     token sequences can be transformed into kd-trees. This allows to seamlessly transform arrays of spatial data into
     token sequences and vice versa.
     """
-    def __init__(self, spatial_dim: int, pos_encoding: str):
+    def __init__(self, spatial_dim: int, pos_encoding: str = "centered"):
         """ Initializes the kd-tree for the right spatial dimensionality.
 
         Args:

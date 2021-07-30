@@ -106,13 +106,14 @@ def preprocess(precondition, precondition_resolution, spatial_dim, pos_encoding,
     return val, dep, pos
 
 
-def postprocess(value, target_resolution, spatial_dim):
+def postprocess(value, target_resolution, spatial_dim, pos_encoding="centered"):
     """ Transform sequence of value tokens into an array of elements (voxels/pixels).
 
     Args:
         value: List of value token sequences for each layer as pytorch tensors.
         target_resolution: Resolution up to which an object should be sampled.
         spatial_dim: The spatial dimensionality of the array of elements.
+        pos_encoding: Defines the positional encoding of the data.
 
     Return:
         An array of elements as a numpy array.
@@ -126,7 +127,7 @@ def postprocess(value, target_resolution, spatial_dim):
     # TODO: define trinary transformation based on list of embeddings
 
     # insert the sequence into a kd-tree
-    tree = kdTree(spatial_dim).insert_token_sequence(
+    tree = kdTree(spatial_dim, pos_encoding).insert_token_sequence(
         value,
         resolution=target_resolution,
         autorepair_errors=True,
