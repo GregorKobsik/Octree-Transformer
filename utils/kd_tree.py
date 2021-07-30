@@ -20,20 +20,21 @@ class kdTree():
     token sequences can be transformed into kd-trees. This allows to seamlessly transform arrays of spatial data into
     token sequences and vice versa.
     """
-    def __init__(self, spatial_dim: int, intertwined_positions=False):
+    def __init__(self, spatial_dim: int, pos_encoding: str):
         """ Initializes the kd-tree for the right spatial dimensionality.
 
         Args:
             spatial_dim: Defines the spatial dimensionality of the kd-tree, e.g. '2' for images/pixels and '3' for
                 volumes/voxels.
-            intertwined_positions: Defines the positional encoding of positions. It uses either a centered position,
+            pos_encoding: Defines the positional encoding of positions. It uses either a centered position,
                 where each position relates to the center of all pixels/voxels or an intertwined encoding, where each
                 layer uses an ascending, axis aligned enumeration, thus the position values are intertwined.
         """
         super().__init__()
         self.spatial_dim = spatial_dim
-        self.intertwined_positions = intertwined_positions
-        self.dirs = _directions(spatial_dim, intertwined_positions)
+        self.intertwined_positions = pos_encoding == 'intertwined'
+        self.pos_encoding = pos_encoding
+        self.dirs = _directions(spatial_dim, pos_encoding)
 
     def _split(self, elements):
         """ Splits the given element array along each axis in half.
@@ -107,7 +108,7 @@ class kdTree():
 
             # create child nodes
             self.child_nodes = [
-                kdTree(self.spatial_dim, self.intertwined_positions).insert_element_array(e, max_depth, depth + 1, p)
+                kdTree(self.spatial_dim, self.pos_encoding).insert_element_array(e, max_depth, depth + 1, p)
                 for e, p in zip(sub_elements, new_pos)
             ]
 
@@ -189,7 +190,7 @@ class kdTree():
 
         # initialize first nodes
         open_set = []
-        self.child_nodes = [kdTree(self.spatial_dim, self.intertwined_positions) for _ in range(2**self.spatial_dim)]
+        self.child_nodes = [kdTree(self.spatial_dim, self.pos_encoding) for _ in range(2**self.spatial_dim)]
         open_set.extend(self.child_nodes)
         node_counter = len(open_set)
 
@@ -222,9 +223,7 @@ class kdTree():
             # - we are in the last depth layer, thus all nodes are final
             node.final = head in (1, 3) or np.array_equal(resolution, [1]) or final_layer
             if not node.final:
-                node.child_nodes = [
-                    kdTree(self.spatial_dim, self.intertwined_positions) for _ in range(2**self.spatial_dim)
-                ]
+                node.child_nodes = [kdTree(self.spatial_dim, self.pos_encoding) for _ in range(2**self.spatial_dim)]
                 open_set.extend(node.child_nodes)
 
                 # compute new positions for future nodes - center of all pixels
