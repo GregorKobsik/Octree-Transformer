@@ -11,7 +11,7 @@ from ..sample_utils import (
 
 
 class EncoderMultiDecoderSampler():
-    def __init__(self, model, embedding, head, spatial_dim, max_resolution, device, **_):
+    def __init__(self, model, embedding, head, spatial_dim, max_resolution, position_encoding, device, **_):
         """ Provides a basic implementation of the sampler for the 'encoder_only' architecture.
 
         Args:
@@ -20,6 +20,7 @@ class EncoderMultiDecoderSampler():
             head: Generative head type used in the model.
             spatial_dim: The spatial dimensionality of the array of elements.
             max_resolution: Maximum resolution the model is trained on.
+            position_encoding: Defines the positional encoding of the data.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         """
         self.generators = create_token_generator(head, model, spatial_dim)
@@ -28,6 +29,7 @@ class EncoderMultiDecoderSampler():
         self.head = head
         self.spatial_dim = spatial_dim
         self.max_resolution = max_resolution
+        self.pos_encoding = position_encoding
         self.num_concat_layers = 1 + int(math.log2(max_resolution)) - len(embedding)
         self.device = device
 
@@ -45,7 +47,9 @@ class EncoderMultiDecoderSampler():
             A token sequence with values, encoding the final sample.
         """
         # transform voxel data into sequences
-        val, dep, pos = preprocess(precondition, precondition_resolution, self.spatial_dim, self.device)
+        val, dep, pos = preprocess(
+            precondition, precondition_resolution, self.spatial_dim, self.pos_encoding, self.device
+        )
 
         # compute the number of sampled layers and the maximum sampleable layer
         sampled_layers = len(val)
@@ -95,7 +99,9 @@ class EncoderMultiDecoderSampler():
                 }
 
                 # init sequences for next layer
-                nxt_val, nxt_dep, nxt_pos = next_layer_tokens(val, dep, pos, self.spatial_dim, self.max_resolution)
+                nxt_val, nxt_dep, nxt_pos = next_layer_tokens(
+                    val, dep, pos, self.spatial_dim, self.max_resolution, self.pos_encoding
+                )
 
                 # predict value tokens for current layer
                 if idx == 0:

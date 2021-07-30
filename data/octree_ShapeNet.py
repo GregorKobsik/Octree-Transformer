@@ -162,7 +162,7 @@ class OctreeShapeNet(Dataset):
     def _transform_voxels(self, data_path: str):
         # TODO: catch and model resolutions below 16
         voxels = load_hsp(data_path, max(self.resolution, 16))
-        octree = kdTree(3, self.position_encoding == 'intertwined').insert_element_array(voxels)
+        octree = kdTree(3, self.position_encoding).insert_element_array(voxels)
         return octree.get_token_sequence(return_depth=True, return_pos=True)
 
     def octree_transform(self) -> None:

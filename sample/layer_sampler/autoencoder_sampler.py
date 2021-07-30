@@ -3,7 +3,7 @@ from ..sample_utils import preprocess, postprocess
 
 
 class AutoencoderSampler():
-    def __init__(self, model, embedding, head, spatial_dim, max_resolution, device, **_):
+    def __init__(self, model, embedding, head, spatial_dim, max_resolution, position_encoding, device, **_):
         """ Provides a basic implementation of the sampler for the 'autoencoder' architecture.
 
         Args:
@@ -12,6 +12,7 @@ class AutoencoderSampler():
             head: Generative head type used in the model.
             spatial_dim: The spatial dimensionality of the array of elements.
             max_resolution: Maximum resolution the model is trained on.
+            position_encoding: Defines the positional encoding of the data.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         """
         self.model = model
@@ -19,6 +20,7 @@ class AutoencoderSampler():
         self.head = head
         self.spatial_dim = spatial_dim
         self.max_resolution = max_resolution
+        self.pos_encoding = position_encoding
         self.device = device
 
     def __call__(self, precondition, precondition_resolution, target_resolution, temperature):
@@ -34,7 +36,9 @@ class AutoencoderSampler():
             A token sequence with values, encoding the final sample.
         """
         # transform voxel data into sequences
-        val, dep, pos = preprocess(precondition, precondition_resolution, self.spatial_dim, self.device)
+        val, dep, pos = preprocess(
+            precondition, precondition_resolution, self.spatial_dim, self.device, self.pos_encoding
+        )
         max_dep = max(dep)
 
         # process only the last layer of the sequence

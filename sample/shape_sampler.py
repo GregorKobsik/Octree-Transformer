@@ -32,6 +32,7 @@ class ShapeSampler:
             hparams['spatial_dim'],
             hparams["num_positions"],
             hparams["resolution"],
+            hparams["position_encoding"],
             device,
         )
 

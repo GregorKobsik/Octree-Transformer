@@ -4,7 +4,9 @@ from .encoder_decoder_sampler import EncoderDecoderSampler
 from .encoder_multi_decoder_sampler import EncoderMultiDecoderSampler
 
 
-def create_sampler(architecture, embedding, head, model, spatial_dim, max_tokens, max_resolution, device):
+def create_sampler(
+    architecture, embedding, head, model, spatial_dim, max_tokens, max_resolution, position_encoding, device
+):
     """ Creates a sampler model.
 
     If the module does not exist raises a value error.
@@ -18,6 +20,7 @@ def create_sampler(architecture, embedding, head, model, spatial_dim, max_tokens
         device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         max_tokens: Maximum number of tokens a sequence can have.
         max_resolution: Maximum resolution the model is trained on.
+        position_encoding: Defines the positional encoding of the data.
     """
 
     kwargs = {
@@ -28,6 +31,7 @@ def create_sampler(architecture, embedding, head, model, spatial_dim, max_tokens
         "device": device,
         "max_tokens": max_tokens,
         "max_resolution": max_resolution,
+        "position_encoding": position_encoding,
     }
 
     if architecture == "autoencoder":

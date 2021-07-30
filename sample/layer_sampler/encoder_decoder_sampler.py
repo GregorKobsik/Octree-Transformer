@@ -11,7 +11,7 @@ from ..sample_utils import (
 
 
 class EncoderDecoderSampler():
-    def __init__(self, model, head, spatial_dim, max_resolution, device, **_):
+    def __init__(self, model, head, spatial_dim, max_resolution, position_encoding, device, **_):
         """ Provides a basic implementation of the sampler for the 'encoder_only' architecture.
 
         Args:
@@ -19,6 +19,7 @@ class EncoderDecoderSampler():
             head: Generative head type used in the model.
             spatial_dim: The spatial dimensionality of the array of elements.
             max_resolution: Maximum resolution the model is trained on.
+            position_encoding: Defines the positional encoding of the data.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         """
         self.generators = create_token_generator(head, model, spatial_dim)
@@ -26,6 +27,7 @@ class EncoderDecoderSampler():
 
         self.spatial_dim = spatial_dim
         self.max_resolution = max_resolution
+        self.pos_encoding = position_encoding
         self.device = device
 
     def __call__(self, precondition, precondition_resolution, target_resolution, temperature):
@@ -42,7 +44,9 @@ class EncoderDecoderSampler():
             A token sequence with values, encoding the final sample.
         """
         # transform voxel data into sequences
-        val, dep, pos = preprocess(precondition, precondition_resolution, self.spatial_dim, self.device)
+        val, dep, pos = preprocess(
+            precondition, precondition_resolution, self.spatial_dim, self.pos_encoding, self.device
+        )
 
         # compute the number of finished (current) layers and the maximum sampleable layer
         cur_layer = 0 if len(dep) == 0 else int(max(dep))
@@ -63,7 +67,7 @@ class EncoderDecoderSampler():
 
                 # init sequences for next layer
                 layer_val, layer_dep, layer_pos = next_layer_tokens(
-                    val, dep, pos, self.spatial_dim, self.max_resolution
+                    val, dep, pos, self.spatial_dim, self.max_resolution, self.pos_encoding
                 )
 
                 # predict value tokens for current layer / decode sequence

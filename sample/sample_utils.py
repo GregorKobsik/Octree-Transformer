@@ -17,12 +17,13 @@ def next_layer_tokens(value, depth, position, spatial_dim, max_resolution, pos_e
         position: List of position token sequences for each layer as pytorch tensors.
         spatial_dim: The spatial dimensionality of the value sequence.
         max_resolution: The maximal resolution the corresponding model is trained for.
+        pos_encoding: Defines the positional encoding of the data.
 
     Return:
         Pre-initialised next layer sequence (value, depth, position).
     """
     cur_device = value[0].device
-    dirs = _directions(spatial_dim)
+    dirs = _directions(spatial_dim, pos_encoding)
     num_children = 2**spatial_dim
 
     # got an empty input - initialize with default values and return
@@ -33,6 +34,18 @@ def next_layer_tokens(value, depth, position, spatial_dim, max_resolution, pos_e
             max_resolution * torch.ones(num_children, spatial_dim, device=cur_device, dtype=torch.long) +
             (max_resolution // 2) * torch.tensor(dirs, device=cur_device)
         )
+        if pos_encoding == 'centered':
+            pos = (
+                max_resolution * torch.ones(num_children, spatial_dim, device=cur_device, dtype=torch.long) +
+                (max_resolution // 2) * torch.tensor(dirs, device=cur_device)
+            )
+        elif pos_encoding == 'intertwined':
+            pos = (
+                torch.ones(num_children, spatial_dim, device=cur_device, dtype=torch.long) *
+                torch.tensor(dirs, device=cur_device)
+            )
+        else:
+            raise ValueError(f"ERROR: Unknown position encoding: {pos_encoding}.")
         return value, depth, pos
 
     # compute next layer depth and number of future tokens
@@ -50,29 +63,30 @@ def next_layer_tokens(value, depth, position, spatial_dim, max_resolution, pos_e
     # compute position difference and add it to future positions with respect to predefined pattern
     if pos_encoding == 'centered':
         pos_step = position[0][0][0] // 2**cur_depth  # assume same resolution for each dimension
+        nl_pos = nl_pos + pos_step * torch.tensor(dirs, device=cur_device).repeat(pos_token.shape[0], 1)
     elif pos_encoding == 'intertwined':
-        pos_step = 2**cur_depth  # assume same resolution for each dimension
+        nl_pos = 2 * nl_pos + torch.tensor(dirs, device=cur_device).repeat(pos_token.shape[0], 1)
     else:
         raise ValueError(f"ERROR: Unknown position encoding: {pos_encoding}.")
-    nl_pos = nl_pos + pos_step * torch.tensor(dirs, device=cur_device).repeat(pos_token.shape[0], 1)
 
     return nl_value, nl_depth, nl_pos
 
 
-def preprocess(precondition, precondition_resolution, spatial_dim, device):
+def preprocess(precondition, precondition_resolution, spatial_dim, pos_encoding, device):
     """ Transform input array elements into token sequences.
 
     Args:
         precondition: An array of elements (pixels/voxels) as an numpy array.
         precondition_resolution: Resolution, to which the input array will be downscaled and used as a precondition.
         spatial_dim: The spatial dimensionality of the array of elements.
+        pos_encoding: Defines the positional encoding of the data.
         device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
 
     Return:
         List of pytorch tensor consisting of token sequences (value, depth, position) for each depth layer.
     """
     # convert input array into token sequence
-    tree = kdTree(spatial_dim)
+    tree = kdTree(spatial_dim, pos_encoding)
     tree = tree.insert_element_array(precondition, max_depth=math.log2(precondition_resolution) + 1)
     value, depth, position = tree.get_token_sequence(
         depth=math.log2(precondition_resolution), return_depth=True, return_pos=True
