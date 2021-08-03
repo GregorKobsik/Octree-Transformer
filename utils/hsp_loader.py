@@ -3,6 +3,7 @@ from scipy.io import loadmat
 
 
 def load_hsp(file_path, resolution=None):
+    resolution = max(resolution, 16)
     file = loadmat(file_path)
 
     boundary = (file["bi"] > 2).nonzero()
