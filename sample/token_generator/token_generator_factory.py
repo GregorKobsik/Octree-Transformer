@@ -27,7 +27,7 @@ def _create_token_generator(head, model, spatial_dim):
         return SubstitutionGenerator(model.compute_logits, 2**spatial_dim)
     if head in ('double_substitution'):
         return DoubleSubstitutionGenerator(model.compute_logits, 2**spatial_dim)
-    if head in ('composite', 'composite_A'):
+    if head in ('composite', 'composite_A', 'composite_B'):
         size = 2**spatial_dim
         return CompositeGenerator(model.compute_logits, [1, 1, 1, size // 2, size, size, size])
     raise ValueError(f"ERROR: {head} token generator not implemented.")
