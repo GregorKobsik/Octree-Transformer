@@ -50,24 +50,27 @@ def datasets(
 
     """
     # select data transform function
-    transform_fn = create_data_transform(embedding, spatial_dim[dataset])
+    transform_fn = create_data_transform(
+        name=embedding,
+        spatial_dim=spatial_dim[dataset],
+        resolution=resolution,
+        position_encoding=position_encoding,
+    )
 
     # initialize arguments
     kwargs = {
         "root": datapath,
         "download": True,
-        "num_workers": mp.cpu_count(),
         "subclass": subclass,
         "resolution": resolution,
         "transform": transform_fn,
-        "position_encoding": position_encoding,
     }
 
     # load train and test datasets
     train_ds = DATASETS[dataset](train=True, **kwargs)
     test_ds = DATASETS[dataset](train=False, **kwargs)
 
-    # 90/10 splitt for training and validation data
+    # 95/5 splitt for training and validation data
     train_size = int(0.95 * len(train_ds))
 
     # reproducable split

@@ -1,13 +1,10 @@
 import os
-import torch
-import numpy as np
+import random
 
 from glob import glob
 from torch.utils.data import Dataset
 from typing import Tuple, Any, Callable
-from tqdm.contrib.concurrent import process_map
-
-from utils import load_hsp, kdTree
+from utils import load_hsp
 
 _class_folder_map = {
     "": "all",
@@ -75,123 +72,61 @@ _class_folder_map = {
 
 class OctreeShapeNet(Dataset):
     """ Voxelized ShapeNet Dataset. """
-
-    training_file = 'training.pt'
-    test_file = 'test.pt'
-    subfolders = ["value", "depth"]
-
     def __init__(
         self,
         root: str,
         train: bool = True,
         download: bool = False,
-        num_workers: int = None,
         subclass: str = "all",
         resolution: int = 32,
-        position_encoding='centered',
         transform: Callable = None,
         **kwargs,
     ) -> None:
         """ Initializes the voxelized ShapeNet dataset.
 
-        Loads the data from memory or performs an octree transformation to precompute them and save to memory.
-
         Args:
-            root: Root directory where the dataset can be found or will be saved to.
+            root: Unused - needed for consistent API with other downloadable datasets.
             train: Defines whether to load the train or test dataset.
             download: Unused - needed for consistent API with other downloadable datasets.
-            num_workers: Defines the number of workers used to preprocess the data.
             subclass: Defines which subclass of the dataset should be loaded. Select 'all' for all subclasses.
             resolution: Defines the used resolution of the dataset.
-            position_encoding: Defines which positional encoding is used.
-            transform: Holds a transform module, which is used to transform raw sequences into sequence samples.
+            transform: Holds a transform module, which can be used for data augmentation.
         """
-        self.root = root
-        self.train = train  # training or test set
-        self.num_workers = num_workers
         self.class_folder = _class_folder_map[subclass]
         self.resolution = resolution
-        self.position_encoding = position_encoding
-        assert position_encoding in ('centered', 'intertwined')
-        self.subfolders += ["pos_" + position_encoding]
+
+        # data transformation & augmentation
         self.transform = transform
 
-        # check if data already exists, otherwise create it accordingly
-        self.octree_transform()
-
-        # load requested data into memory
-        data_file = self.training_file if self.train else self.training_file  # TODO: add train-test splitt
-        self.load_data(data_file)
+        # load requested data paths into memory
+        self.fetch_data_paths(train)
 
     def __getitem__(self, index: int) -> Tuple[Any, Any, Tuple]:
         """ Returns a single sample from the dataset. """
-        value = self.value[index]
-        depth = self.depth[index]
-        pos = self.pos[index]
+        voxels = load_hsp(self.data_paths[index], self.resolution)
 
         if self.transform is not None:
-            return self.transform(value, depth, pos)
+            return self.transform(voxels)
         else:
-            return value, depth, pos
+            return voxels
 
     def __len__(self) -> int:
-        return len(self.value)
+        return len(self.data_paths)
 
     @property
     def dataset_path(self) -> str:
         return os.path.join('/clusterarchive/ShapeNet/voxelization')
 
-    @property
-    def octree_path(self) -> str:
-        return os.path.join(self.root, self.__class__.__name__)
+    def _load_voxels(self, data_path: str):
+        return
 
-    @property
-    def resolution_path(self) -> str:
-        return os.path.join(self.octree_path, self.class_folder, str(self.resolution))
-
-    def _check_exists_octree(self) -> bool:
-        return np.all(
-            [
-                # TODO: add train-test splitt
-                # os.path.exists(os.path.join(dir, subfolder, self.test_file)) and
-                os.path.exists(os.path.join(self.resolution_path, subfolder, self.training_file))
-                for subfolder in self.subfolders
-            ]
-        )
-
-    def _transform_voxels(self, data_path: str):
-        # TODO: catch and model resolutions below 16
-        voxels = load_hsp(data_path, max(self.resolution, 16))
-        octree = kdTree(3, self.position_encoding).insert_element_array(voxels)
-        return octree.get_token_sequence(return_depth=True, return_pos=True)
-
-    def octree_transform(self) -> None:
-        """Transform the ShapeNet data if it doesn't exist already."""
-
-        if self._check_exists_octree():
-            return
-
-        print('Transforming... this might take some minutes.')
-
+    def fetch_data_paths(self, train: bool) -> None:
+        """ Find and store data paths of input data files. """
         # fetch paths with raw voxel data
         subdir = "*" if self.class_folder == "all" else self.class_folder
         data_paths = glob(self.dataset_path + '/' + subdir + '/*.mat')
 
-        # transform voxels into octree representation
-        training_transformed = np.asarray(
-            process_map(self._transform_voxels, data_paths, max_workers=self.num_workers, chunksize=1), dtype=object
-        )
-
-        # save data
-        for i, subfolder in enumerate(self.subfolders):
-            os.makedirs(os.path.join(self.resolution_path, subfolder), exist_ok=True)
-            with open(os.path.join(self.resolution_path, subfolder, self.training_file), 'wb') as f:
-                torch.save(training_transformed[:, i], f)
-
-        print('Done!')
-
-    def load_data(self, data_file: str) -> None:
-        """ Load octree data files into memory. """
-        self.value = torch.load(os.path.join(self.resolution_path, self.subfolders[0], data_file))
-        self.depth = torch.load(os.path.join(self.resolution_path, self.subfolders[1], data_file))
-        self.pos = torch.load(os.path.join(self.resolution_path, self.subfolders[2], data_file))
+        # repeatable train-test split (90-10)
+        random.Random(4).shuffle(data_paths)
+        train_idx = int(0.9 * len(data_paths))
+        self.data_paths = data_paths[:train_idx] if train else data_paths[train_idx:]
