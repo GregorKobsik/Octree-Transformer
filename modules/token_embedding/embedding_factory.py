@@ -6,6 +6,7 @@ from .multi_conv_embedding_A import MultiConvolutionEmbeddingA
 from .substitution_embedding import SubstitutionEmbedding
 from .double_substitution_embedding import DoubleSubstitutionEmbedding
 from .composite_embedding_A import CompositeEmbeddingA
+from .composite_embedding_B import CompositeEmbeddingB
 
 
 def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim, **_):
@@ -49,6 +50,8 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim, **_):
         return DoubleSubstitutionEmbedding(**kwargs)
     elif name in ('composite', 'composite_A'):
         return CompositeEmbeddingA(**kwargs)
+    elif name in ('composite_B'):
+        return CompositeEmbeddingB(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")
 

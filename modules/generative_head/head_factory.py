@@ -6,6 +6,7 @@ from .multi_conv_head_A import MultiConvolutionHeadA
 from .substitution_head import SubstitutionHead
 from .double_substitution_head import DoubleSubstitutionHead
 from .composite_head_A import CompositeHeadA
+from .composite_head_B import CompositeHeadB
 
 
 def _create_head(name, num_vocab, embed_dim, resolution, spatial_dim):
@@ -49,6 +50,8 @@ def _create_head(name, num_vocab, embed_dim, resolution, spatial_dim):
         return DoubleSubstitutionHead(**kwargs)
     elif name in ('composite', 'composite_A'):
         return CompositeHeadA(**kwargs)
+    elif name in ('composite_B'):
+        return CompositeHeadB(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")
 
