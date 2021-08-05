@@ -1,6 +1,8 @@
 import numpy as np
 import itertools
 import torch
+import math
+
 from utils.functions import split
 from typing import Tuple
 
@@ -12,12 +14,15 @@ def _directions(spatial_dim, pos_encoding):
         return np.array(list(itertools.product([-1, 1], repeat=spatial_dim)))
 
 
-def quick_linearise(array: np.ndarray, pos_encoding: str = "centered") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def quick_linearise(array: np.ndarray,
+                    pos_encoding: str = "centered",
+                    max_resolution: int = 8096) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """ Performs a quick linearisation of given voxel array into value, depth and position sequences.
 
     Args:
         array (np.ndarray): Numpy array holding pixels/voxels of a discretized shape.
         pos_encoding (optional, str): Defines position encoding. Defaults to "centered".
+        max_resolution (optional, int): Parses voxels only until 'max_resolution'.
 
     Returns:
         tuple(np.ndarray, np.ndarray, np.ndarray): Linearised value, depth and position sequences.
@@ -54,7 +59,7 @@ def quick_linearise(array: np.ndarray, pos_encoding: str = "centered") -> Tuple[
         # process each subarray recursivelly
         for idx, sub in enumerate(subarrays):
             cur_idx = -num_subarrays + idx
-            if value[dep][cur_idx] == 2:
+            if value[dep][cur_idx] == 2 and dep < max_dep:
                 recursive_linearise(sub, position[dep][cur_idx], dep + 1)
 
     # initialise memory
@@ -63,6 +68,7 @@ def quick_linearise(array: np.ndarray, pos_encoding: str = "centered") -> Tuple[
     position = {}
     dirs = _directions(array.ndim, pos_encoding)
     init_pos = array.shape if pos_encoding == "centered" else np.array(array.ndim * [0])
+    max_dep = int(math.log2(max_resolution))
 
     # call function recursivelly
     recursive_linearise(array, init_pos)
