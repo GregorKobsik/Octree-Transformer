@@ -1,5 +1,13 @@
-from utils.hsp_loader import load_hsp, load_chair, load_airplane
-from utils.kd_tree_utils import TrinaryRepresentation, _directions
+from utils.hsp_loader import (
+    load_hsp,
+    load_chair,
+    load_airplane,
+)
+from utils.kd_tree_utils import (
+    TrinaryRepresentation,
+    _directions,
+    quick_linearise,
+)
 from utils.kd_tree import kdTree
 from utils.functions import (
     nanmean,
@@ -17,4 +25,5 @@ __all__ = [
     "nanmean",
     "axis_scaling",
     "piecewise_linear_warping",
+    "quick_linearise",
 ]

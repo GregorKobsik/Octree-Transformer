@@ -1,6 +1,8 @@
 import numpy as np
 import itertools
 import torch
+from utils.functions import split
+from typing import Tuple
 
 
 def _directions(spatial_dim, pos_encoding):
@@ -8,6 +10,69 @@ def _directions(spatial_dim, pos_encoding):
         return np.array(list(itertools.product([1, 2], repeat=spatial_dim)))
     else:
         return np.array(list(itertools.product([-1, 1], repeat=spatial_dim)))
+
+
+def quick_linearise(array: np.ndarray, pos_encoding: str = "centered") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """ Performs a quick linearisation of given voxel array into value, depth and position sequences.
+
+    Args:
+        array (np.ndarray): Numpy array holding pixels/voxels of a discretized shape.
+        pos_encoding (optional, str): Defines position encoding. Defaults to "centered".
+
+    Returns:
+        tuple(np.ndarray, np.ndarray, np.ndarray): Linearised value, depth and position sequences.
+    """
+    def recursive_linearise(array: np.ndarray, pos: np.ndarray, dep: int = 1):
+        """ Recursive internal function to linearise given voxel array.
+
+        Note: Uses variables of parent function to store values.
+
+        Args:
+            array (np.ndarray): Numpy array (or subarray) holding pixels/voxels of a discretized shape.
+            pos (np.ndarray): Position of parent array
+            dep (int, optional): Current recursion depth. Defaults to 0.
+        """
+        # split input into an octree/quadtree
+        subarrays = split(array)
+        num_subarrays = len(subarrays)
+
+        # initialize dictionary only on first pass
+        if dep not in value:
+            value[dep] = []
+            depth[dep] = []
+            position[dep] = []
+
+        # compute values for each subarray
+        for idx, sub in enumerate(subarrays):
+            value[dep] += [1] if np.max(sub) == 0 else [3] if np.min(sub) > 0 else [2]
+            depth[dep] += [dep]
+            if pos_encoding == "centered":
+                position[dep] += [pos + sub.shape * dirs[idx]]
+            else:
+                position[dep] += [2 * pos + dirs[idx]]
+
+        # process each subarray recursivelly
+        for idx, sub in enumerate(subarrays):
+            cur_idx = -num_subarrays + idx
+            if value[dep][cur_idx] == 2:
+                recursive_linearise(sub, position[dep][cur_idx], dep + 1)
+
+    # initialise memory
+    value = {}
+    depth = {}
+    position = {}
+    dirs = _directions(array.ndim, pos_encoding)
+    init_pos = array.shape if pos_encoding == "centered" else np.array(array.ndim * [0])
+
+    # call function recursivelly
+    recursive_linearise(array, init_pos)
+
+    # flatten dictionaries
+    value = np.array(list(itertools.chain(*value.values())))
+    depth = np.array(list(itertools.chain(*depth.values())))
+    position = np.array(list(itertools.chain(*position.values())))
+
+    return value, depth, position
 
 
 class TrinaryRepresentation():
