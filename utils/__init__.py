@@ -3,6 +3,8 @@ from utils.kd_tree_utils import TrinaryRepresentation, _directions
 from utils.kd_tree import kdTree
 from utils.functions import (
     nanmean,
+    axis_scaling,
+    piecewise_linear_warping,
     concat,
     split,
 )
@@ -15,6 +17,8 @@ __all__ = [
     "TrinaryRepresentation",
     "kdTree",
     "nanmean",
+    "axis_scaling",
+    "piecewise_linear_warping",
     "concat",
     "split",
 ]

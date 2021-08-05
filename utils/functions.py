@@ -5,8 +5,16 @@ from random import random
 
 
 def nanmean(v: torch.Tensor, *args, **kwargs) -> torch.Tensor:
-    """ based on: https://github.com/pytorch/pytorch/issues/21987#issuecomment-813859270 """
+    """ Compute the mean value for each element of tensor. Ignore all NaN values in the computation.
 
+    Based on: https://github.com/pytorch/pytorch/issues/21987#issuecomment-813859270
+
+    Args:
+        v (torch.Tensor):
+
+    Returns:
+        torch.Tensor: One dimensional tensor with the mean value of the input tensor.
+    """
     is_nan = torch.isnan(v)
     sum_nonnan = v.nansum(*args, **kwargs)
     n_nonnan = (is_nan == 0).sum(*args, **kwargs)
@@ -42,13 +50,14 @@ def concat(array: np.ndarray) -> np.ndarray:
     return np.squeeze(array, axis=0)
 
 
+def axis_scaling(array: np.ndarray) -> np.array:
     """Performs a linear scaling of each array axis in the range of [0.75 .. 1.25] for each axis independently.
 
     Args:
         array (np.ndarray): Input array containing pixels/voxels.
 
     Returns:
-        nd.array: Scaled array of values with the same shape as input.
+        np.array: Scaled array of values with the same shape as input.
     """
     # get resolution and dimension of input
     res = array.shape
@@ -72,7 +81,7 @@ def concat(array: np.ndarray) -> np.ndarray:
     return nd.affine_transform(array, matrix=inv_matrix, cval=0, order=0)
 
 
-def piecewise_linear_warping(array: np.ndarray, axis: int = 0, symmetric: bool = True) -> nd.array:
+def piecewise_linear_warping(array: np.ndarray, axis: int = 0, symmetric: bool = True) -> np.array:
     """Performs a piecewise linear scaling of input array given an axis.
 
     The array is subdivided in 5 equal segments, of which each one is scaled in the range of [0.75 .. 1.25].False
@@ -84,7 +93,7 @@ def piecewise_linear_warping(array: np.ndarray, axis: int = 0, symmetric: bool =
             are scaled independently. Defaults to True.
 
     Returns:
-        nd.array: Scaled array of values with the same shape as input.
+        np.array: Scaled array of values with the same shape as input.
     """
     # get resolution and dimension of input
     res = array.shape[axis]
