@@ -30,8 +30,9 @@ def split(array: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: Array of splited elements with an additional dimension along the first axis.
     """
+    ndim = array.ndim
     array = np.expand_dims(array, axis=0)
-    for i in range(array.ndim, 0, -1):
+    for i in range(ndim, 0, -1):
         array = np.concatenate(np.split(array, indices_or_sections=2, axis=i), axis=0)
     return array
 
@@ -45,7 +46,8 @@ def concat(array: np.ndarray) -> np.ndarray:
     Return:
         np.ndarray: Array of elements with concatenated subarrays along each axis.
     """
-    for i in range(1, array.ndim + 1):
+    ndim = array.ndim
+    for i in range(1, ndim + 1):
         array = np.concatenate(np.split(array, indices_or_sections=2, axis=0), axis=i)
     return np.squeeze(array, axis=0)
 

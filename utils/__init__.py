@@ -5,8 +5,6 @@ from utils.functions import (
     nanmean,
     axis_scaling,
     piecewise_linear_warping,
-    concat,
-    split,
 )
 
 __all__ = [
@@ -19,6 +17,4 @@ __all__ = [
     "nanmean",
     "axis_scaling",
     "piecewise_linear_warping",
-    "concat",
-    "split",
 ]

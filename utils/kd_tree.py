@@ -1,5 +1,6 @@
 import numpy as np
-from utils import _directions, concat, split
+from utils import _directions
+from utils.functions import concat, split
 
 _cmap = {
     0: 0,  # - padding value, show as empty
