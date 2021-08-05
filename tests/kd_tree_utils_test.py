@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import numpy.testing as np_test
 
-from utils import TrinaryRepresentation
+from utils import (TrinaryRepresentation, load_chair, load_airplane, quick_linearise, kdTree)
 
 
 class TestConversionBasicTrinaryToken(unittest.TestCase):
@@ -225,3 +225,48 @@ class TestConversionBasicTrinarySequence(unittest.TestCase):
         np_test.assert_array_equal(out_value, tgt_value)
         np_test.assert_array_equal(out_depth, tgt_depth)
         np_test.assert_array_equal(out_pos, tgt_pos)
+
+
+class TestQuickLinearise(unittest.TestCase):
+    """ Tests the 'quick_linearise' function, iff the computed results are equal to the kdTree class.
+    """
+
+    def quick_linearisation(self, voxels: np.ndarray, pos_encoding: str):
+        """ Provides a unified test setup function for different arguments.
+
+        Args:
+            voxels (np.ndarray): Numpy array holding a binarized shape.
+            pos_encoding (str): Defines the position encoding.
+        """
+        sequence = quick_linearise(voxels, pos_encoding=pos_encoding)
+        target = kdTree(spatial_dim=3, pos_encoding=pos_encoding).insert_element_array(voxels).get_token_sequence(
+            return_depth=True, return_pos=True
+        )
+
+        np_test.assert_array_equal(sequence[0], target[0])
+        np_test.assert_array_equal(sequence[1], target[1])
+        np_test.assert_array_equal(sequence[2], target[2])
+
+    def test_chair_centered(self):
+        """ Tests 'quick_linearise' with a chair input and centered encoding.
+        """
+        voxels = load_chair("/clusterarchive/ShapeNet/voxelization", 16)
+        self.quick_linearisation(voxels, pos_encoding="centered")
+
+    def test_chair_intertwined(self):
+        """ Tests 'quick_linearise' with a chair input and intertwined encoding.
+        """
+        voxels = load_chair("/clusterarchive/ShapeNet/voxelization", 16)
+        self.quick_linearisation(voxels, pos_encoding="intertwined")
+
+    def test_airplane_centered(self):
+        """ Tests 'quick_linearise' with a airplane input and centered encoding.
+        """
+        voxels = load_airplane("/clusterarchive/ShapeNet/voxelization", 16)
+        self.quick_linearisation(voxels, pos_encoding="centered")
+
+    def test_airplane_intertwined(self):
+        """ Tests 'quick_linearise' with a airplane input and intertwined encoding.
+        """
+        voxels = load_airplane("/clusterarchive/ShapeNet/voxelization", 16)
+        self.quick_linearisation(voxels, pos_encoding="intertwined")
