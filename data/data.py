@@ -27,7 +27,7 @@ def datasets(
     dataset,
     subclass="all",
     resolution=32,
-    embedding='basic',
+    transform='basic',
     position_encoding='centered',
     datapath="datasets",
 ):
@@ -37,7 +37,7 @@ def datasets(
         dataset: Select a dataset. Currently only 'mnist' and 'shapenet' available.
         subclass: Select a subclass of a dataset, if available.
         resolution: Select the underlying resolution of the selected dataset, if available.
-        embedding: Defines the used token embedding of the shape transformer.
+        transform: Defines data transformation and augmentation functions.
         batch_size: Defines the batch size for the data loader.
         position_encoding: Defines the positional encoding of the data.
         datapath: Path to the dataset. If the dataset is not found then
@@ -51,7 +51,7 @@ def datasets(
     """
     # select data transform function
     transform_fn = create_data_transform(
-        name=embedding,
+        name=transform,
         spatial_dim=spatial_dim[dataset],
         resolution=resolution,
         position_encoding=position_encoding,
@@ -87,6 +87,7 @@ def dataloaders(
     dataset,
     subclass,
     resolution,
+    transform,
     embedding,
     architecture,
     batch_size,
@@ -99,6 +100,7 @@ def dataloaders(
         dataset: Select a dataset. Currently only 'mnist' and 'shapenet' available.
         subclass: Select a subclass of a dataset, if available.
         resolution: Select the underlying resolution of the selected dataset, if available.
+        transform: Defines data transformation and augmentation functions.
         embedding: Defines the used token embedding of the shape transformer.
         architecture: Defines the architecture of the transformer.
         batch_size: Defines the batch size for the data loader
@@ -113,7 +115,7 @@ def dataloaders(
     """
 
     # load datasets
-    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, embedding, position_encoding, datapath)
+    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, transform, position_encoding, datapath)
 
     # select padding function
     collate_fn = create_data_collate(architecture, embedding, resolution)

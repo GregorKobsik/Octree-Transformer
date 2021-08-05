@@ -40,6 +40,7 @@ def train(config):
         dataset=config['dataset'],
         subclass=config['subclass'],
         resolution=config['resolution'],
+        transform=config['transform'],
         embedding=config['embedding'],
         architecture=config['architecture'],
         batch_size=config['batch_size'],
