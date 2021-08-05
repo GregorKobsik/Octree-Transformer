@@ -13,7 +13,35 @@ def nanmean(v: torch.Tensor, *args, **kwargs) -> torch.Tensor:
     return sum_nonnan / n_nonnan
 
 
-def axis_scaling(array: np.ndarray) -> nd.array:
+def split(array: np.ndarray) -> np.ndarray:
+    """ Splits the given array along each axis in half.
+
+    Args:
+        elements (np.ndarray): Numpy array of arbitary dimension.
+
+    Returns:
+        np.ndarray: Array of splited elements with an additional dimension along the first axis.
+    """
+    array = np.expand_dims(array, axis=0)
+    for i in range(array.ndim, 0, -1):
+        array = np.concatenate(np.split(array, indices_or_sections=2, axis=i), axis=0)
+    return array
+
+
+def concat(array: np.ndarray) -> np.ndarray:
+    """ Concats elements of the array along each dimension, where each subarray is given in the first axis.
+
+    Args:
+        array (np.ndarray): Numpy array, holding subarrays in the first axis.
+
+    Return:
+        np.ndarray: Array of elements with concatenated subarrays along each axis.
+    """
+    for i in range(1, array.ndim + 1):
+        array = np.concatenate(np.split(array, indices_or_sections=2, axis=0), axis=i)
+    return np.squeeze(array, axis=0)
+
+
     """Performs a linear scaling of each array axis in the range of [0.75 .. 1.25] for each axis independently.
 
     Args:

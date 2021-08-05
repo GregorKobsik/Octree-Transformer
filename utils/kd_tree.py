@@ -1,5 +1,5 @@
 import numpy as np
-from utils import _directions
+from utils import _directions, concat, split
 
 _cmap = {
     0: 0,  # - padding value, show as empty
@@ -36,33 +36,6 @@ class kdTree():
         self.pos_encoding = pos_encoding
         self.dirs = _directions(spatial_dim, pos_encoding)
 
-    def _split(self, elements):
-        """ Splits the given element array along each axis in half.
-
-        Args:
-            elements: A numpy array with dimensionality of the kd-tree. Each dimension should be divisible by 2.
-
-        Return:
-            An array of elements with an additional dimension along the first axis, which holds the splitted subarrays.
-        """
-        elements = np.expand_dims(elements, axis=0)
-        for i in range(self.spatial_dim, 0, -1):
-            elements = np.concatenate(np.split(elements, indices_or_sections=2, axis=i), axis=0)
-        return elements
-
-    def _concat(self, elements):
-        """ Concats the element array along each dimension, where each subarray is contained in the first axis.
-
-        Args:
-            elements: A numpy array, where the first axis consists of subarrays with the dimensionality of the kd-tree.
-
-        Return:
-            An array of elements with concatinated subarrays along each axis.
-        """
-        for i in range(1, self.spatial_dim + 1):
-            elements = np.concatenate(np.split(elements, indices_or_sections=2, axis=0), axis=i)
-        return np.squeeze(elements, axis=0)
-
     def insert_element_array(self, elements, max_depth=float('Inf'), depth=0, pos=None):
         """ Inserts an array of element values which is converted into a kd-tree.
 
@@ -96,7 +69,7 @@ class kdTree():
             self.final = False
 
             # split elements into subarrays
-            sub_elements = self._split(elements)
+            sub_elements = split(elements)
 
             # compute new positions for future nodes
             if self.intertwined_positions:
@@ -147,7 +120,7 @@ class kdTree():
             elif mode == 'random':
                 return np.tile((np.random.rand(1) * 20) % 20, res)
 
-        return self._concat(np.array([node.get_element_array(depth, mode) for node in self.child_nodes]))
+        return concat(np.array([node.get_element_array(depth, mode) for node in self.child_nodes]))
 
     def insert_token_sequence(self, value, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
         """ Inserts a token sequence which is parsed into a kd-tree.
