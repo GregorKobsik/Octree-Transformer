@@ -59,6 +59,7 @@ class ShapeTransformer(pl.LightningModule):
         attention='basic_full',
         embedding='basic',
         head='generative_basic',
+        transform='linear_max_res',
         **kwargs,
     ):
         super(ShapeTransformer, self).__init__()
