@@ -127,6 +127,10 @@ class CompositeHeadA(nn.Module):
                 # filter latent vector of current layer
                 layer_vec = latent_vec[vector_idx:vector_idx + num_vectors]
 
+                # handle clipped values in transformer
+                if len(layer_vec) == 0:
+                    continue
+
                 # compute layer logits
                 layer_logits = head(
                     layer_vec.unsqueeze(0),
