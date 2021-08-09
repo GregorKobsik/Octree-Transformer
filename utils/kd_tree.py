@@ -1,6 +1,6 @@
 import numpy as np
 from utils import _directions
-from utils.functions import concat, split
+from utils.functions import split
 
 _cmap = {
     0: 0,  # - padding value, show as empty
@@ -36,6 +36,19 @@ class kdTree():
         self.intertwined_positions = pos_encoding == 'intertwined'
         self.pos_encoding = pos_encoding
         self.dirs = _directions(spatial_dim, pos_encoding)
+
+    def concat(self, array: np.ndarray) -> np.ndarray:
+        """ Concats elements of the array along each dimension, where each subarray is given in the first axis.
+
+        Args:
+            array (np.ndarray): Numpy array, holding subarrays in the first axis.
+
+        Return:
+            np.ndarray: Array of elements with concatenated subarrays along each axis.
+        """
+        for i in range(1, self.spatial_dim + 1):
+            array = np.concatenate(np.split(array, indices_or_sections=2, axis=0), axis=i)
+        return np.squeeze(array, axis=0)
 
     def insert_element_array(self, elements, max_depth=float('Inf'), depth=0, pos=None):
         """ Inserts an array of element values which is converted into a kd-tree.
@@ -121,7 +134,7 @@ class kdTree():
             elif mode == 'random':
                 return np.tile((np.random.rand(1) * 20) % 20, res)
 
-        return concat(np.array([node.get_element_array(depth, mode) for node in self.child_nodes]))
+        return self.concat(np.array([node.get_element_array(depth, mode) for node in self.child_nodes]))
 
     def insert_token_sequence(self, value, resolution, max_depth=float('Inf'), autorepair_errors=False, silent=False):
         """ Inserts a token sequence which is parsed into a kd-tree.
@@ -200,6 +213,7 @@ class kdTree():
                 node.child_nodes = [kdTree(self.spatial_dim, self.pos_encoding) for _ in range(2**self.spatial_dim)]
                 open_set.extend(node.child_nodes)
 
+                # TODO: add 'intertwined' position encoding
                 # compute new positions for future nodes - center of all pixels
                 pos_set.extend([node.pos + node.resolution // 2 * d for d in self.dirs])
 
