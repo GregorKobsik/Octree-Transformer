@@ -69,14 +69,16 @@ class DoubleSubstitutionHead(nn.Module):
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
         y_2 = self.deconvolution_2(x)
         # select only latent vectors, which correspond to mixed tokens in third-last layer
-        for i in range(batch_size):  # TODO: Handle overflow/clipped values in the embedding
-            x_1[i, :mix_2[i]] = y_2[i, val_2[i] == 2]  # [N, T', C]
+        for i in range(batch_size):
+            mix_2_mask_i = (val_2[i] == 2)[:len(y_2[i])]  # handle overflow/clipped values in the embedding
+            x_1[i, :torch.sum(mix_2_mask_i)] = y_2[i, mix_2_mask_i]  # [N, T', C]
 
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
         y_1 = self.deconvolution_1(x_1)
         # select only latent vectors, which correspond to mixed tokens in third-last layer
-        for i in range(batch_size):  # TODO: Handle overflow/clipped values in the embedding
-            x_0[i, :mix_1[i]] = y_1[i, val_1[i] == 2]  # [N, T', C]
+        for i in range(batch_size):
+            mix_1_mask_i = (val_1[i] == 2)[:len(y_1[i])]  # handle overflow/clipped values in the embedding
+            x_0[i, :torch.sum(mix_1_mask_i)] = y_1[i, mix_1_mask_i]  # [N, T', C]
 
         # deconvolute the intermediate latent space - create new tokens in latent space for each mixed token
         y_0 = self.deconvolution_0(x_0)  # [N, T, C]
