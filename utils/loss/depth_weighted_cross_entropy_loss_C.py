@@ -56,7 +56,7 @@ class DepthWeightedCrossEntropyLossC(CrossEntropyLoss):
         )  # [N*T]
 
         # compute expotentially growing inverse depth weighting
-        d_weight = self.spatial_dim**(self.max_depth - tgt_dep)  # [N, T]
+        d_weight = 0.4**tgt_dep  # [N, T]
 
         # scale loss
         d_weight = torch.where(tgt_dep != 0, d_weight, torch.zeros_like(d_weight))  # [N, T]

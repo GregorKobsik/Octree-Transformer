@@ -51,8 +51,8 @@ class DepthWeightedCrossEntropyLossA(_WeightedLoss):
             input, target, weight=self.weight, ignore_index=self.ignore_index, reduction=self.reduction
         )  # [N*T]
 
-        # compute linearily growing inverse depth weighting
-        d_weight = 1 + self.max_depth - tgt_dep  # [N, T]
+        # compute expotentially decreasing weighting
+        d_weight = 0.8**tgt_dep  # [N, T]
 
         # scale loss
         d_weight = torch.where(tgt_dep != 0, d_weight, torch.zeros_like(d_weight))  # [N, T]

@@ -2,9 +2,6 @@ from .cross_entropy_loss import CrossEntropyLoss
 from .depth_weighted_cross_entropy_loss_A import DepthWeightedCrossEntropyLossA
 from .depth_weighted_cross_entropy_loss_B import DepthWeightedCrossEntropyLossB
 from .depth_weighted_cross_entropy_loss_C import DepthWeightedCrossEntropyLossC
-from .depth_weighted_cross_entropy_loss_D import DepthWeightedCrossEntropyLossD
-from .depth_weighted_cross_entropy_loss_E import DepthWeightedCrossEntropyLossE
-from .depth_weighted_cross_entropy_loss_F import DepthWeightedCrossEntropyLossF
 
 
 def create_loss(name, ignore_index, max_depth, spatial_dim):
@@ -35,11 +32,5 @@ def create_loss(name, ignore_index, max_depth, spatial_dim):
         return DepthWeightedCrossEntropyLossB(**kwargs)
     elif name == 'depth_cross_entropy_C':
         return DepthWeightedCrossEntropyLossC(**kwargs)
-    elif name == 'depth_cross_entropy_D':
-        return DepthWeightedCrossEntropyLossD(**kwargs)
-    elif name == 'depth_cross_entropy_E':
-        return DepthWeightedCrossEntropyLossE(**kwargs)
-    elif name == 'depth_cross_entropy_F':
-        return DepthWeightedCrossEntropyLossF(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} loss not implemented.")
