@@ -58,7 +58,7 @@ class EncoderMultiDecoderCollate():
             seq += [batch_layer]
 
             # filter sequence for target value, depth and position
-            if embedding in ('substitution'):
+            if embedding in ('substitution', 'double_substitution'):
                 tgt = [(v[d == up], d[d == up], p[d == up]) for v, d, p in batch_layer]
             else:
                 tgt = batch_layer
