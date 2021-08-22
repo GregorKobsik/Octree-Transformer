@@ -7,9 +7,6 @@ from typing import Tuple, Any, Callable
 from utils import load_hsp
 
 _class_folder_map = {
-    "": "all",
-    "full": "all",
-    "all": "all",
     "airplane": "02691156",
     "bin": "02747177",
     "bag": "02773838",
@@ -92,7 +89,7 @@ class OctreeShapeNet(Dataset):
             resolution: Defines the used resolution of the dataset.
             transform: Holds a transform module, which can be used for data augmentation.
         """
-        self.class_folder = _class_folder_map[subclass]
+        self.subclass = subclass
         self.resolution = resolution
 
         # data transformation & augmentation
@@ -123,10 +120,20 @@ class OctreeShapeNet(Dataset):
     def fetch_data_paths(self, train: bool) -> None:
         """ Find and store data paths of input data files. """
         # fetch paths with raw voxel data
-        subdir = "*" if self.class_folder == "all" else self.class_folder
-        data_paths = glob(self.dataset_path + '/' + subdir + '/*.mat')
+        paths = []
+        if self.subclass is list:
+            for subclass in self.subclass:
+                subdir = _class_folder_map[subclass]
+                paths += [sorted(glob(self.dataset_path + '/' + subdir  + '/*.mat'))]
+        elif self.subclass == "all":
+            for subdir in _class_folder_map.items():
+                paths += [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
+        else:
+            subdir = _class_folder_map[self.subclass]
+            paths = [sorted(glob(self.dataset_path + '/' + subdir  + '/*.mat'))]
 
-        # repeatable train-test split (90-10)
-        random.Random(4).shuffle(data_paths)
-        train_idx = int(0.9 * len(data_paths))
-        self.data_paths = data_paths[:train_idx] if train else data_paths[train_idx:]
+        # repeatable train-test split (80-20)
+        self.data_paths = []
+        for p in paths:
+            idx = int(0.8*len(p))
+            self.data_paths += p[:idx] if train else p[idx:]
