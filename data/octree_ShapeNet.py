@@ -1,5 +1,4 @@
 import os
-import random
 
 from glob import glob
 from torch.utils.data import Dataset
@@ -124,16 +123,16 @@ class OctreeShapeNet(Dataset):
         if self.subclass is list:
             for subclass in self.subclass:
                 subdir = _class_folder_map[subclass]
-                paths += [sorted(glob(self.dataset_path + '/' + subdir  + '/*.mat'))]
+                paths += [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
         elif self.subclass == "all":
             for subdir in _class_folder_map.items():
                 paths += [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
         else:
             subdir = _class_folder_map[self.subclass]
-            paths = [sorted(glob(self.dataset_path + '/' + subdir  + '/*.mat'))]
+            paths = [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
 
         # repeatable train-test split (80-20)
         self.data_paths = []
         for p in paths:
-            idx = int(0.8*len(p))
+            idx = int(0.8 * len(p))
             self.data_paths += p[:idx] if train else p[idx:]
