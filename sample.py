@@ -1,0 +1,56 @@
+from argparse import ArgumentParser
+from sample import ShapeSampler
+from skimage import measure
+from tqdm.auto import tqdm
+from glob import glob
+import os
+
+
+def save_obj(sample, path="", file_name="chair_mesh"):
+    """ Use marching cubes to obtain the surface mesh and save it to an *.obj file """
+    # convert volume to mesh
+    verts, faces, normals, values = measure.marching_cubes(sample, 0)
+    # scale to normalized cube [-1.0, 1.0]^3
+    verts /= sample.shape
+    verts -= [0.5, 0.0, 0.5]
+    verts *= 2.0
+    # fix .obj indexing
+    faces += 1
+
+    # Save output as obj-file
+    file_path = os.path.join(path, f'{file_name}.obj')
+    with open(file_path, 'w') as f:
+        for item in verts:
+            f.write("v {0} {1} {2}\n".format(item[0], item[1], item[2]))
+        for item in normals:
+            f.write("vn {0} {1} {2}\n".format(item[0], item[1], item[2]))
+        for item in faces:
+            f.write("f {0}//{0} {1}//{1} {2}//{2}\n".format(item[0], item[1], item[2]))
+
+
+if __name__ == "__main__":
+
+    # parse arguments
+    parser = ArgumentParser()
+    parser.add_argument("logdir", type=str)
+    parser.add_argument("--num_samples", type=int, default=5)
+    parser.add_argument("--gpus", type=int, default=1)
+    parser.add_argument("--outdir", type=str, default="samples/sampled_shapes")
+    parser.add_argument("--resolution", type=int, default=1024)
+    parser.add_argument("--temperature", type=float, default=1.0)
+    args = parser.parse_args()
+
+    # load model
+    checkpoint = os.path.join(args.logdir, 'checkpoints/last.ckpt')
+    sampler = ShapeSampler(checkpoint_path=checkpoint, device="cuda")
+
+    # create path & check number of existing shapes
+    path = os.path.normpath(args.outdir)
+    print("Save shapes to:", path)
+    os.makedirs(path, exist_ok=True)
+    num_objs = len(glob(path + '*.obj'))
+
+    # sample shapes and save mesh as OBJ-file (marching cubes)
+    for i in tqdm(range(args.num_samples), leave=True, desc="Samples"):
+        output = sampler.sample_random(args.resolution, args.temperature)
+        save_obj(output, path, f"shape_{num_objs + i}")
