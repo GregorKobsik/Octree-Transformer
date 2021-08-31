@@ -3,6 +3,7 @@ logs/
 samples/
 out/
 ray_results/
+evaluation/distances/
 
 # compiled / optimized files
 __pycache__/
