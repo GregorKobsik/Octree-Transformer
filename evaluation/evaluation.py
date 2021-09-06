@@ -74,7 +74,7 @@ def two_sample_test(dist_AB, dist_AA, dist_BB, k):
 
 
 def variance_two_sample(dist_AB, dist_AA, dist_BB, k, iters):
-    n_B, n_A = dist_AB.shape[0], dist_AB.shape[1]
+    n_A, n_B = dist_AB.shape[0], dist_AB.shape[1]
     min_points = min(n_A, n_B)
 
     scores = []
@@ -82,7 +82,7 @@ def variance_two_sample(dist_AB, dist_AA, dist_BB, k, iters):
         perm_A = torch.randperm(n_A)[:min_points]
         perm_B = torch.randperm(n_B)[:min_points]
         score = two_sample_test(
-            dist_AB[perm_B, :][:, perm_A], dist_AA[perm_A, :][:, perm_A], dist_BB[perm_B, :][:, perm_B], k
+            dist_AB[perm_A, :][:, perm_B], dist_AA[perm_A, :][:, perm_A], dist_BB[perm_B, :][:, perm_B], k
         )
         scores.append(score)
 
