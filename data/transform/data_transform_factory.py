@@ -47,7 +47,9 @@ def create_data_transform(name, spatial_dim, resolution, position_encoding):
     Return:
         data transformation function initialised with specified parameters.
     """
-    if type(name) == list:
+    if name is None:
+        return None
+    elif type(name) == list:
         return CompositeTransform([_create_data_transform(x, spatial_dim, resolution, position_encoding) for x in name])
     else:
         return _create_data_transform(name, spatial_dim, resolution, position_encoding)
