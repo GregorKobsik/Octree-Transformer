@@ -1,37 +1,32 @@
 import torch
 import torch.nn.functional as F
 
-from torch.nn.modules.loss import CrossEntropyLoss
+from torch.nn.modules.loss import _WeightedLoss
 
 from torch import Tensor
 from typing import Optional
 
 
-class DepthWeightedCrossEntropyLossB(CrossEntropyLoss):
+class DepthWeightedCrossEntropyLoss(_WeightedLoss):
     def __init__(
         self,
         weight: Optional[Tensor] = None,
-        size_average=None,
         ignore_index: int = 0,
-        spatial_dim: int = 1,
-        max_depth: int = 5,
+        basis=1.0,
         **_,
     ) -> None:
         """ Defines a weighted cross entropy loss function based on the depth of each layer.
 
-        This criterion combines LogSoftmax and NLLLoss in one single class. The weighting of the loss is done
-        expotentially based on the depth of the token: fx(d) = (2^`spatial_dim`)^(`max_depth` - d).
+        This criterion combines LogSoftmax and NLLLoss in one single class. Each token is scaled with basis^depth.
 
         Args:
             weight: Manual rescaling weight given to each class. If given, has to be a Tensor of size V.
             ignore_index: Specifies a target value that is ignored and does not contribute to the input gradient.
-            spatial_dim: Defines the spatial dimension of the data used in the model.
-            max_depth: Defines the maximum depth value used in the model.
+            basis: Defines the basis of the weighting function
         """
-        super(DepthWeightedCrossEntropyLossB, self).__init__(weight, size_average, ignore_index, None, 'none')
+        super(DepthWeightedCrossEntropyLoss, self).__init__(weight, None, None, 'none')
         self.ignore_index = ignore_index
-        self.max_depth = max_depth
-        self.spatial_dim = spatial_dim
+        self.basis = basis
 
     def forward(self, logits: Tensor, target: Tensor) -> Tensor:
         """ Computes the weighted cross entropy loss given logits and targets.
@@ -44,7 +39,7 @@ class DepthWeightedCrossEntropyLossB(CrossEntropyLoss):
             Loss for each token with the shape [N, T].
         """
         # unpack target sequence
-        tgt_val, tgt_dep, _ = target  # [N, T]
+        tgt_val, tgt_dep, _ = target
 
         # flatten tensors
         input = logits.view(-1, logits.size(-1))  # [N*T, V]
@@ -55,8 +50,9 @@ class DepthWeightedCrossEntropyLossB(CrossEntropyLoss):
             input, target, weight=self.weight, ignore_index=self.ignore_index, reduction=self.reduction
         )  # [N*T]
 
-        # compute expotentially growing inverse depth weighting
-        d_weight = 0.6**tgt_dep  # [N, T]
+        # compute expotentially decreasing weighting
+        d_weight = self.basis**tgt_dep  # [N, T]
+        d_weight /= torch.mean(d_weight)
 
         # scale loss
         d_weight = torch.where(tgt_dep != 0, d_weight, torch.zeros_like(d_weight))  # [N, T]
