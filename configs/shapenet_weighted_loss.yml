@@ -1,30 +1,35 @@
 name: shapenet_weighted_loss
+# pretrained: None
 
 # data
 dataset: shapenet
 subclass: chair
-resolution: 32
+transform: [linear_max_res]
+position_encoding: centered
+resolution: 64
 spatial_dim: 3
 num_vocab: 3
 
 # architecture
-embedding: concat_B
-head: split_B
-architecture: encoder_decoder
+architecture: encoder_only
+embedding: [composite_C]
+head: [composite_C]
+
+# attention
 attention: basic
-num_positions: 1024
+num_positions: 4096
 embed_dim: 256
 num_layers: 8
 num_heads: 4
 
 # training
-loss_function: depth_cross_entropy_A
+loss_function: cross_entropy
 val_loss_function: cross_entropy
 epochs: 100
 warmup_steps: 0.1
-batch_size: 16
+batch_size: 1
 accumulate_grad_batches: 1
-learning_rate: 0.0003
+learning_rate: 0.00003
 
 # hardware
 gpus: 8
@@ -32,7 +37,7 @@ precision: 32
 
 # logging
 log_gpu: 'min_max'
-log_learning_rate: True
 log_gradient: False
 log_weights_and_biases: False
+log_learning_rate: True
 parameter_search: False

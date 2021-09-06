@@ -1,4 +1,4 @@
-name: shapenet_debug
+name: shapenet_weighted_loss
 # pretrained: None
 
 # data
@@ -6,7 +6,7 @@ dataset: shapenet
 subclass: chair
 transform: [scaling, warping, linear_max_res]
 position_encoding: intertwined
-resolution: 64
+resolution: 128
 spatial_dim: 3
 num_vocab: 3
 
@@ -23,7 +23,7 @@ num_layers: 8
 num_heads: 4
 
 # training
-loss_function: depth_cross_entropy_D
+loss_function: depth_cross_entropy_A
 val_loss_function: cross_entropy
 epochs: 500
 warmup_steps: 0.1
@@ -32,7 +32,7 @@ accumulate_grad_batches: 1
 learning_rate: 0.00003
 
 # hardware
-gpus: 1
+gpus: 8
 precision: 32
 
 # logging

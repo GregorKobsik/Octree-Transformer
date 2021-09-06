@@ -1,38 +1,38 @@
-name: shapenet_debug
-# pretrained: None
+name: shapenet_layerwise
+pretrained: logs/shapenet_layerwise/version_2/checkpoints/last.ckpt
 
 # data
 dataset: shapenet
 subclass: chair
-transform: [scaling, warping, linear_max_res]
-position_encoding: intertwined
-resolution: 64
+transform: [scaling, warping, linear_max_128]
+position_encoding: centered
+resolution: 128
 spatial_dim: 3
 num_vocab: 3
 
 # architecture
-architecture: encoder_multi_decoder
-embedding: [composite, single_conv, substitution]
-head: [composite, single_conv, substitution]
+architecture: encoder_only
+embedding: [composite]
+head: [composite]
 
 # attention
 attention: basic
-num_positions: 2500
+num_positions: 4096
 embed_dim: 256
 num_layers: 8
 num_heads: 4
 
 # training
-loss_function: depth_cross_entropy_D
+loss_function: cross_entropy
 val_loss_function: cross_entropy
-epochs: 500
+epochs: 100
 warmup_steps: 0.1
 batch_size: 1
 accumulate_grad_batches: 1
 learning_rate: 0.00003
 
 # hardware
-gpus: 1
+gpus: 8
 precision: 32
 
 # logging

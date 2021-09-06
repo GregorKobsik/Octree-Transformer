@@ -3,13 +3,15 @@ name: shapenet_autoencoder
 # data
 dataset: shapenet
 subclass: chair
+position_encoding: intertwined
+transform: [linear_max_res]
 resolution: 32
 spatial_dim: 3
 num_vocab: 3
 
 # architecture
-embedding: substitution
-head: substitution
+embedding: double_substitution
+head: double_substitution
 architecture: autoencoder
 attention: none
 num_positions: 0
@@ -22,7 +24,7 @@ loss_function: cross_entropy
 val_loss_function: cross_entropy
 epochs: 10
 warmup_steps: 0.1
-batch_size: 8
+batch_size: 1
 accumulate_grad_batches: 1
 learning_rate: 0.001
 

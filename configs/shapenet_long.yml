@@ -3,31 +3,32 @@ name: shapenet_long
 # data
 dataset: shapenet
 subclass: chair
-position_encoding: centered
-resolution: 32
+position_encoding: intertwined
+transform: [scaling, warping, linear_max_res]
+resolution: 256
 spatial_dim: 3
 num_vocab: 3
 
 # architecture
-architecture: encoder_only
-embedding: [basic]
-head: [basic]
+architecture: encoder_multi_decoder
+embedding: [composite, single_conv, substitution, double_substitution]
+head: [composite, single_conv, substitution, double_substitution]
 
 # attention
 attention: basic
-num_positions: 4096
-embed_dim: 64
-num_layers: 8
+num_positions: 2500
+embed_dim: 256
+num_layers: 4
 num_heads: 4
 
 # training
 loss_function: cross_entropy
 val_loss_function: cross_entropy
-epochs: 400
+epochs: 500
 warmup_steps: 0.1
 batch_size: 1
 accumulate_grad_batches: 1
-learning_rate: 0.0003
+learning_rate: 0.00003
 
 # hardware
 gpus: 8
