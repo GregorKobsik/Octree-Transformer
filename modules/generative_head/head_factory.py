@@ -7,6 +7,7 @@ from .substitution_head import SubstitutionHead
 from .double_substitution_head import DoubleSubstitutionHead
 from .composite_head_A import CompositeHeadA
 from .composite_head_B import CompositeHeadB
+from .composite_head_C import CompositeHeadC
 
 
 def _create_head(name, num_vocab, embed_dim, resolution, spatial_dim):
@@ -52,6 +53,8 @@ def _create_head(name, num_vocab, embed_dim, resolution, spatial_dim):
         return CompositeHeadA(**kwargs)
     elif name in ('composite_B'):
         return CompositeHeadB(**kwargs)
+    elif name in ('composite_C'):
+        return CompositeHeadC(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")
 

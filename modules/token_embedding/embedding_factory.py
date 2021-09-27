@@ -7,6 +7,7 @@ from .substitution_embedding import SubstitutionEmbedding
 from .double_substitution_embedding import DoubleSubstitutionEmbedding
 from .composite_embedding_A import CompositeEmbeddingA
 from .composite_embedding_B import CompositeEmbeddingB
+from .composite_embedding_C import CompositeEmbeddingC
 
 
 def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim, **_):
@@ -52,6 +53,8 @@ def _create_embedding(name, num_vocab, embed_dim, resolution, spatial_dim, **_):
         return CompositeEmbeddingA(**kwargs)
     elif name in ('composite_B'):
         return CompositeEmbeddingB(**kwargs)
+    elif name in ('composite_C'):
+        return CompositeEmbeddingC(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")
 
