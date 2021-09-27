@@ -1,4 +1,4 @@
-name: shapenet_weighted_loss
+name: shapenet_dropout
 # pretrained: None
 
 # data
@@ -17,7 +17,7 @@ head: [composite, single_conv, substitution]
 
 # attention
 attention: basic
-num_positions: 2500
+num_positions: 2048
 embed_dim: 256
 num_layers: 8
 num_heads: 4
@@ -30,6 +30,7 @@ warmup_steps: 0.1
 batch_size: 1
 accumulate_grad_batches: 1
 learning_rate: 0.00003
+dropout: 0.1
 
 # hardware
 gpus: 8

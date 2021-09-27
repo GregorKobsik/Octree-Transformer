@@ -1,4 +1,4 @@
-name: shapenet_short
+name: shapenet_architectures_small
 # pretrained: None
 
 # data
@@ -6,18 +6,18 @@ dataset: shapenet
 subclass: chair
 transform: [scaling, warping, linear_max_res]
 position_encoding: intertwined
-resolution: 128
+resolution: 64
 spatial_dim: 3
 num_vocab: 3
 
 # architecture
 architecture: encoder_multi_decoder
-embedding: [composite, single_conv, substitution]
-head: [composite, single_conv, substitution]
+embedding: [composite_C, single_conv, substitution, double_substitution]
+head: [composite_C, single_conv, substitution, double_substitution]
 
 # attention
 attention: basic
-num_positions: 4096
+num_positions: 2048
 embed_dim: 256
 num_layers: 8
 num_heads: 4
@@ -25,15 +25,15 @@ num_heads: 4
 # training
 loss_function: cross_entropy
 val_loss_function: cross_entropy
-epochs: 100
+epochs: 369
 warmup_steps: 0.1
-batch_size: 1
+batch_size: 4
 accumulate_grad_batches: 1
 learning_rate: 0.00003
-dropout: 0.0
+dropout: 0.1
 
 # hardware
-gpus: 8
+gpus: 1
 precision: 32
 
 # logging

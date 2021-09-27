@@ -29,6 +29,7 @@ warmup_steps: 0.1
 batch_size: 1
 accumulate_grad_batches: 1
 learning_rate: 0.00003
+dropout: 0.0
 
 # hardware
 gpus: 8
