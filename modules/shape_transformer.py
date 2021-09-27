@@ -170,6 +170,7 @@ class ShapeTransformer(pl.LightningModule):
 
         # log allocated memory
         self.log('mem_alloc', torch.cuda.max_memory_allocated() / 1024**2, sync_dist=True)
+        torch.cuda.reset_max_memory_allocated()
 
         return loss
 
