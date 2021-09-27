@@ -30,6 +30,7 @@ class ShapeTransformer(pl.LightningModule):
         resolution: Maximum side length of input data.
         spatial_dim: Spatial dimensionality of input data.
         learning_rate: Maximum learning rate used durring the training process.
+        dropout: The dropout rate.
         warmup_steps: Number of steps used for a warmup, where the learning rate is increasing linearily. It can be
             defined as an integer to define an absolute number of training steps or as a floating point number to
             define a relative number or used warmup steps in the range [0 .. 1].
@@ -51,6 +52,7 @@ class ShapeTransformer(pl.LightningModule):
         resolution=32,
         spatial_dim=2,
         learning_rate=3e-3,
+        dropout=0.1,
         warmup_steps=500,
         train_steps=10_000,
         loss_function='cross_entropy',
@@ -94,6 +96,7 @@ class ShapeTransformer(pl.LightningModule):
             num_heads=num_heads,
             num_layers=num_layers,
             num_positions=num_positions,
+            dropout=dropout,
         )
 
         # training loss function
