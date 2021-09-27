@@ -14,6 +14,7 @@ class Transformer(nn.Module):
         num_decoders,
         token_embedding,
         generative_head,
+        dropout,
         **_,
     ):
         """ Creates an instance of a transformer module.
@@ -42,6 +43,7 @@ class Transformer(nn.Module):
             token_embedding: Instance of an embedding layer, which embedds given sequences of tokens into an embedding
                 space, which is the direct input for the transformer layers.
             generative_head: Instance of a head layer, which transforms the output of the transformer into logits.
+            dropout: The dropout value.
         """
         super(Transformer, self).__init__()
 
@@ -60,7 +62,7 @@ class Transformer(nn.Module):
             d_model=embed_dim,
             nhead=num_heads,
             dim_feedforward=4 * embed_dim,
-            dropout=0.0,
+            dropout=dropout,
             activation='gelu',
         )
 
@@ -69,7 +71,7 @@ class Transformer(nn.Module):
             d_model=embed_dim,
             nhead=num_heads,
             dim_feedforward=4 * embed_dim,
-            dropout=0.0,
+            dropout=dropout,
             activation='gelu',
         )
 
