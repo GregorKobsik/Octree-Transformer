@@ -7,7 +7,7 @@ from .collate_utils import (
 
 
 class EncoderDecoderCollate():
-    def __init__(self, embeddings, resolution):
+    def __init__(self, embeddings):
         """ Creates a collate module, which pads batched sequences to equal length with the padding token '0'.
 
         Args:
