@@ -49,7 +49,7 @@ class EncoderDecoderSampler():
         )
 
         # compute the number of finished (current) layers and the maximum sampleable layer
-        cur_layer = 0 if len(dep) == 0 else int(max(dep))
+        cur_layer = len(val)
         max_layer = int(math.log2(min(target_resolution, self.max_resolution)))
 
         with torch.no_grad():
@@ -59,9 +59,9 @@ class EncoderDecoderSampler():
 
                 # compute memory / encode sequence
                 seq = (
-                    val.unsqueeze(0),
-                    dep.unsqueeze(0),
-                    pos.unsqueeze(0),
+                    torch.cat(val).unsqueeze(0),
+                    torch.cat(dep).unsqueeze(0),
+                    torch.cat(pos).unsqueeze(0),
                 )
                 memory = self.compute_memory(seq, memory=None, idx=0, is_final=False)
 
@@ -72,15 +72,15 @@ class EncoderDecoderSampler():
 
                 # predict value tokens for current layer / decode sequence
                 layer_val = self.generators[0](
-                    [layer_val], [layer_dep], [layer_pos], memory=memory, layer_idx=1, temperature=temperature
+                    [layer_val], [layer_dep], [layer_pos], memory=memory, idx=1, temperature=temperature
                 )
 
                 if len(layer_val) != len(layer_dep):
                     break  # reached maximum number of tokens which can be generated
 
                 # append sampled tokens to sequence
-                val = torch.cat([val, layer_val])
-                dep = torch.cat([dep, layer_dep])
-                pos = torch.cat([pos, layer_pos])
+                val += [layer_val]
+                dep += [layer_dep]
+                pos += [layer_pos]
 
         return postprocess(val, target_resolution, self.spatial_dim)
