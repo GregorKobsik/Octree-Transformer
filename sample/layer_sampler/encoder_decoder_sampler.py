@@ -22,6 +22,7 @@ class EncoderDecoderSampler():
             position_encoding: Defines the positional encoding of the data.
             device: Device on which, the data should be stored. Either "cpu" or "cuda" (gpu-support).
         """
+        self.head = head[0]
         self.generators = create_token_generator(head, model, spatial_dim)
         self.compute_memory = model.compute_memory
 
@@ -70,10 +71,36 @@ class EncoderDecoderSampler():
                     val, dep, pos, self.spatial_dim, self.max_resolution, self.pos_encoding
                 )
 
+                kwargs = {
+                    "memory": memory,
+                    "idx": 1,
+                    "temperature": temperature,
+                }
+
                 # predict value tokens for current layer / decode sequence
-                layer_val = self.generators[0](
-                    [layer_val], [layer_dep], [layer_pos], memory=memory, idx=1, temperature=temperature
-                )
+                if self.head == 'substitution':
+                    # sampling: decoder part - 'substitution'
+                    layer_val = self.generators[0](
+                        [val[-1], layer_val],
+                        [dep[-1], layer_dep],
+                        [pos[-1], layer_pos],
+                        **kwargs,
+                    )
+                elif self.head == 'double_substitution':
+                    # sampling: decoder part - 'substitution'
+                    layer_val = self.generators[0](
+                        [val[-2], val[-1], layer_val],
+                        [dep[-2], dep[-1], layer_dep],
+                        [pos[-2], pos[-1], layer_pos],
+                        **kwargs,
+                    )
+                else:
+                    layer_val = self.generators[0](
+                        [layer_val],
+                        [layer_dep],
+                        [layer_pos],
+                        **kwargs,
+                    )
 
                 if len(layer_val) != len(layer_dep):
                     break  # reached maximum number of tokens which can be generated
