@@ -33,11 +33,11 @@ if __name__ == "__main__":
     # parse arguments
     parser = ArgumentParser()
     parser.add_argument("logdir", type=str)
-    parser.add_argument("--num_samples", type=int, default=5)
+    parser.add_argument("--num_samples", type=int, default=1000)
     parser.add_argument("--gpus", type=int, default=1)
     parser.add_argument("--outdir", type=str, default="samples/sampled_shapes")
-    parser.add_argument("--resolution", type=int, default=1024)
-    parser.add_argument("--temperature", type=float, default=1.0)
+    parser.add_argument("--resolution", type=int, default=64)
+    parser.add_argument("--temperature", type=float, default=0.8)
     args = parser.parse_args()
 
     # load model
