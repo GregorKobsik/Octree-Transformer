@@ -45,6 +45,8 @@ class CompositeEmbeddingA(nn.Module):
             modules += [SubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
         if resolution >= 128:
             modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
+        if resolution >= 256:
+            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=2**spatial_dim)]
 
         # embeddings
         self.embeddings = nn.ModuleList(modules)
@@ -87,7 +89,7 @@ class CompositeEmbeddingA(nn.Module):
                     val_seq = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
                     dep_seq = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
                     pos_seq = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
-                elif layer_depth == 7:  # third-, second- and last layer
+                elif layer_depth in (7, 8):  # third-, second- and last layer
                     val_seq = torch.cat(
                         [val[dep == (layer_depth - 2)], val[dep == (layer_depth - 1)], val[dep == layer_depth]]
                     )

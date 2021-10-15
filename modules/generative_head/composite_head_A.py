@@ -44,6 +44,8 @@ class CompositeHeadA(nn.Module):
             modules += [SubstitutionHead(**kwargs, conv_size=2**spatial_dim)]
         if resolution >= 128:
             modules += [DoubleSubstitutionHead(**kwargs, conv_size=2**spatial_dim)]
+        if resolution >= 256:
+            modules += [DoubleSubstitutionHead(**kwargs, conv_size=2**spatial_dim)]
 
         # embeddings
         self.heads = nn.ModuleList(modules)
@@ -56,6 +58,7 @@ class CompositeHeadA(nn.Module):
             5: 2**spatial_dim,
             6: 2**spatial_dim,  # Note: 'substitution'
             7: 2**spatial_dim,  # Note: 'double_substitution'
+            8: 2**spatial_dim,  # Note: 'double_substitution'
         }
 
     def forward(self, x, value, depth, position):
@@ -98,7 +101,7 @@ class CompositeHeadA(nn.Module):
                     layer_pos = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
                     # compute number of vectors in latent vector of current layer
                     num_vectors = torch.sum(dep == (layer_depth - 1)) // self.reduction_factor[layer_depth]
-                elif layer_depth == 7:  # handle substitution
+                elif layer_depth in (7, 8):  # handle substitution
                     # get value, depth and position sequence of previous and current layer
                     layer_val = torch.cat(
                         [
