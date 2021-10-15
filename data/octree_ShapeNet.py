@@ -70,7 +70,7 @@ class OctreeShapeNet(Dataset):
     """ Voxelized ShapeNet Dataset. """
     def __init__(
         self,
-        root: str,
+        root: str = None,
         train: bool = True,
         download: bool = False,
         subclass: str = "all",
