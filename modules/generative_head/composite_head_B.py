@@ -8,7 +8,7 @@ from .double_substitution_head import DoubleSubstitutionHead
 
 
 class CompositeHeadB(CompositeHeadA):
-    def __init__(self, num_vocab, embed_dim, resolution, spatial_dim, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, resolution, spatial_dim, **_):
         """ Performs a transformation from transformer latent space into target value logits.
 
         Uses a different heads for each depth layer, possibly increasing the overall sequence lenght.
@@ -23,6 +23,7 @@ class CompositeHeadB(CompositeHeadA):
         super(CompositeHeadB, self).__init__(num_vocab, embed_dim, resolution, spatial_dim)
 
         kwargs = {
+            "spatial_encoding": spatial_encoding,
             "num_vocab": num_vocab,
             "embed_dim": embed_dim,
             "spatial_dim": spatial_dim,

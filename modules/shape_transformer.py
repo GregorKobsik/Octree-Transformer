@@ -61,6 +61,7 @@ class ShapeTransformer(pl.LightningModule):
         architecture='encoder_only',
         attention='basic_full',
         token_encoding='basic',
+        head_pos_encoding='None',
         embedding='basic',
         head='generative_basic',
         transform='linear_max_res',
@@ -83,6 +84,7 @@ class ShapeTransformer(pl.LightningModule):
         # generative head
         head = create_head(
             name=head,
+            positional_encoding=head_pos_encoding,
             num_vocab=num_vocab,
             embed_dim=embed_dim,
             resolution=resolution,
