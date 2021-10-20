@@ -1,71 +1,57 @@
-import math
-
 import torch
 import torch.nn as nn
 
 
-class Embedding(nn.Module):
-    def __init__(self, embed_dim, num_vocab, resolution, spatial_dim):
+class PositionalEncodingLearned(nn.Module):
+    def __init__(self, embed_dim, resolution, spatial_dim):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
 
         Args:
-            embded_dim: Dimension of returned embedding space.
-            num_vocab: Number of different token values (exclusive padding token '0').
+            embed_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
-        super(Embedding, self).__init__()
-        tree_depth = int(math.log2(resolution))
+        super(PositionalEncodingLearned, self).__init__()
 
-        # embeddings
-        self.value_embedding = nn.Embedding(num_vocab + 1, embed_dim, padding_idx=0)
-        self.depth_embedding = nn.Embedding(tree_depth + 1, embed_dim, padding_idx=0)
+        self.embed_dim = embed_dim
         self.spatial_embeddings = nn.ModuleList(
             [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )
 
-    def forward(self, value, depth, position):
+    def forward(self, position):
         """ Transform sequences of token into an embedding space.
 
         Args:
-            value: Value token sequence with the shape [N, S].
-            depth: Depth token sequence with the shape [N, S].
             position: Position token sequence with the shape [N, S, A].
 
         Return:
             Token sequence in the embedding space with the shape [N, S, E].
         """
-        x = self.value_embedding(value)  # [N, S, E]
-        if depth is not None:
-            x = x + self.depth_embedding(depth)  # [N, S, E]
+        x = torch.zeros((position.shape[0], position.shape[1], self.embed_dim), device=position.device)
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
             x = x + spatial_embedding(position[:, :, axis])  # [N, S, E]
         return x  # [N, S, E]
 
 
-class LookAheadEmbedding(nn.Module):
-    def __init__(self, embed_dim, num_vocab, resolution, spatial_dim):
+class PositionalEncodingLearnedLookAhead(nn.Module):
+    def __init__(self, embed_dim, resolution, spatial_dim):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
 
         Args:
-            embded_dim: Dimension of returned embedding space.
-            num_vocab: Number of different token values (exclusive padding token '0').
+            embed_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
-        super(LookAheadEmbedding, self).__init__()
+        super(PositionalEncodingLearnedLookAhead, self).__init__()
 
-        # embeddings
-        self.value_embedding = nn.Embedding(num_vocab + 1, embed_dim, padding_idx=0)
+        self.embed_dim = embed_dim
         self.spatial_embeddings = nn.ModuleList(
             [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )
-        # self.look_ahead = nn.Conv1d(embed_dim, embed_dim, 2)
-
         # end of sequence positional token
         self.eos = torch.nn.Parameter(torch.zeros(embed_dim))
         nn.init.normal_(self.eos)
@@ -76,54 +62,45 @@ class LookAheadEmbedding(nn.Module):
         eos = torch.ones(batch_size, 1, self.eos.shape[0], device=x.device) * self.eos  # [N, 1, E]
         return torch.cat([x, eos], dim=1)  # [N, S, E]
 
-    def forward(self, value, depth, position):
+    def forward(self, position):
         """ Transform sequences of token into an embedding space.
 
         Args:
-            value: Value token sequence with the shape [N, S].
-            depth: Depth token sequence with the shape [N, S].
             position: Position token sequence with the shape [N, S, A].
 
         Return:
             Token sequence in the embedding space with the shape [N, S, E].
         """
-        x = self.value_embedding(value)  # [N, S, E]
-
-        pos_embed = torch.zeros_like(x)
+        x = torch.zeros((position.shape[0], position.shape[1], self.embed_dim), device=position.device)
         for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            pos_embed = pos_embed + spatial_embedding(position[:, :, axis])  # [N, S, E]
+            x = x + spatial_embedding(position[:, :, axis])  # [N, S, E]
 
-        pos_embed = self._append_eos_token(pos_embed)
-        pos_embed = pos_embed[:, :-1] + pos_embed[:, 1:]
-        x += pos_embed
+        x = self._append_eos_token(x)
+        x = x[:, :-1] + x[:, 1:]
 
         return x  # [N, S, E]
 
 
-class LookAheadEmbeddingSplit(nn.Module):
-    def __init__(self, embed_dim, num_vocab, resolution, spatial_dim):
+class PositionalEncodingLearnedLookAheadSplit(nn.Module):
+    def __init__(self, embed_dim, resolution, spatial_dim):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
 
         Args:
-            embded_dim: Dimension of returned embedding space.
-            num_vocab: Number of different token values (exclusive padding token '0').
+            embed_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
-        super(LookAheadEmbeddingSplit, self).__init__()
+        super(PositionalEncodingLearnedLookAheadSplit, self).__init__()
 
-        # embeddings
-        self.value_embedding = nn.Embedding(num_vocab + 1, embed_dim, padding_idx=0)
+        self.embed_dim = embed_dim
         self.spatial_embeddings = nn.ModuleList(
             [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )
         self.spatial_embeddings_look_ahead = nn.ModuleList(
             [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
         )
-        # self.look_ahead = nn.Conv1d(embed_dim, embed_dim, 2)
-
         # end of sequence positional token
         self.eos = torch.nn.Parameter(torch.zeros(embed_dim))
         nn.init.normal_(self.eos)
@@ -133,6 +110,46 @@ class LookAheadEmbeddingSplit(nn.Module):
         batch_size = x.shape[0]
         eos = torch.ones(batch_size, 1, self.eos.shape[0], device=x.device) * self.eos  # [N, 1, E]
         return torch.cat([x, eos], dim=1)  # [N, S, E]
+
+    def forward(self, position):
+        """ Transform sequences of token into an embedding space.
+
+        Args:
+            position: Position token sequence with the shape [N, S, A].
+
+        Return:
+            Token sequence in the embedding space with the shape [N, S, E].
+        """
+        x = torch.zeros((position.shape[0], position.shape[1], self.embed_dim), device=position.device)
+        for axis, spatial_embedding in enumerate(self.spatial_embeddings):
+            x = x + spatial_embedding(position[:, :, axis])  # [N, S, E]
+
+        x_look_ahead = torch.zeros_like(x)
+        for axis, spatial_embedding in enumerate(self.spatial_embeddings_look_ahead):
+            x_look_ahead = x_look_ahead + spatial_embedding(position[:, :, axis])  # [N, S, E]
+
+        x_look_ahead = self._append_eos_token(x_look_ahead)
+        x = x + x_look_ahead[:, 1:]
+
+        return x  # [N, S, E]
+
+
+class Embedding(nn.Module):
+    def __init__(self, spatial_embedding, embed_dim, num_vocab):
+        """ Performs an embedding of token sequences into an embedding space of higher dimension.
+
+        Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
+
+        Args:
+            spatial_embedding: A module that computes a spatiaal embedding based on the position
+            embed_dim: Dimension of returned embedding space.
+            num_vocab: Number of different token values (exclusive padding token '0').
+        """
+        super(Embedding, self).__init__()
+
+        # embeddings
+        self.value_embedding = nn.Embedding(num_vocab + 1, embed_dim, padding_idx=0)
+        self.spatial_embedding = spatial_embedding
 
     def forward(self, value, depth, position):
         """ Transform sequences of token into an embedding space.
@@ -146,17 +163,5 @@ class LookAheadEmbeddingSplit(nn.Module):
             Token sequence in the embedding space with the shape [N, S, E].
         """
         x = self.value_embedding(value)  # [N, S, E]
-
-        pos_embed = torch.zeros_like(x)
-        for axis, spatial_embedding in enumerate(self.spatial_embeddings):
-            pos_embed = pos_embed + spatial_embedding(position[:, :, axis])  # [N, S, E]
-
-        pos_embed_look_ahead = torch.zeros_like(x)
-        for axis, spatial_embedding in enumerate(self.spatial_embeddings_look_ahead):
-            pos_embed_look_ahead = pos_embed_look_ahead + spatial_embedding(position[:, :, axis])  # [N, S, E]
-
-        pos_embed_look_ahead = self._append_eos_token(pos_embed)
-        pos_embed = pos_embed + pos_embed_look_ahead[:, 1:]
-        x += pos_embed
-
+        x += self.spatial_embedding(position)
         return x  # [N, S, E]

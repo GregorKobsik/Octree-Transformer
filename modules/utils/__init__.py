@@ -1,12 +1,14 @@
-from .embedding import Embedding, LookAheadEmbedding, LookAheadEmbeddingSplit
-from .linear import Linear
 from .convolution import Convolution
 from .deconvolution import Deconvolution
+from .embedding import Embedding, PositionalEncodingLearned, PositionalEncodingLearnedLookAhead, \
+    PositionalEncodingLearnedLookAheadSplit
+from .linear import Linear
 
 __all__ = [
     "Embedding",
-    "LookAheadEmbedding",
-    "LookAheadEmbeddingSplit",
+    "PositionalEncodingLearned",
+    "PositionalEncodingLearnedLookAhead",
+    "PositionalEncodingLearnedLookAheadSplit",
     "Linear",
     "Convolution",
     "Deconvolution",

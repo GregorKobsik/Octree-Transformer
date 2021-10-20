@@ -1,6 +1,7 @@
 import torch.nn as nn
 
-from modules.utils import Embedding, LookAheadEmbedding, LookAheadEmbeddingSplit
+from modules.utils import Embedding, PositionalEncodingLearned, PositionalEncodingLearnedLookAhead, \
+    PositionalEncodingLearnedLookAheadSplit
 from .basic_embedding_A import BasicEmbeddingA
 from .composite_embedding_A import CompositeEmbeddingA
 from .composite_embedding_B import CompositeEmbeddingB
@@ -11,7 +12,7 @@ from .multi_conv_embedding_A import MultiConvolutionEmbeddingA
 from .substitution_embedding import SubstitutionEmbedding
 
 
-def _create_embedding(name, token_encoding, num_vocab, embed_dim, resolution, spatial_dim, **_):
+def _create_embedding(name, positional_encoding, num_vocab, embed_dim, resolution, spatial_dim, **_):
     """ Creates a token embedding.
 
     If the module specified in `name` does not exist raises a value error.
@@ -28,14 +29,16 @@ def _create_embedding(name, token_encoding, num_vocab, embed_dim, resolution, sp
         Token embedding initialised with specified parameters.
     """
 
-    if token_encoding == 'basic':
-        encoding = Embedding(embed_dim, num_vocab, resolution, spatial_dim)
-    elif token_encoding == 'look_ahead':
-        encoding = LookAheadEmbedding(embed_dim, num_vocab, resolution, spatial_dim)
-    elif token_encoding == 'look_ahead_split':
-        encoding = LookAheadEmbeddingSplit(embed_dim, num_vocab, resolution, spatial_dim)
+    if positional_encoding == 'basic':
+        spatial_encoding = PositionalEncodingLearned(embed_dim, resolution, spatial_dim)
+    elif positional_encoding == 'look_ahead':
+        spatial_encoding = PositionalEncodingLearnedLookAhead(embed_dim, resolution, spatial_dim)
+    elif positional_encoding == 'look_ahead_split':
+        spatial_encoding = PositionalEncodingLearnedLookAheadSplit(embed_dim, resolution, spatial_dim)
     else:
-        raise ValueError(f"ERROR: {token_encoding} encoding not implemented.")
+        raise ValueError(f"ERROR: {positional_encoding} encoding not implemented.")
+
+    encoding = Embedding(spatial_encoding, embed_dim, num_vocab)
 
     kwargs = {
         "encoding": encoding,
