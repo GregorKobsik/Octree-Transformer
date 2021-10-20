@@ -39,7 +39,8 @@ class ShapeTransformer(pl.LightningModule):
         val_loss_function: Defines the loss function used for validation.
         architecture: Defines the base architecture of the transformer, either 'encoder_only' or 'encoder_decoder'
         attention: Defines the used attention implementation in the transformer.
-        embedding: Defines the used token embedding of the shape transformer.
+        token_encoding: Defines the used token embedding of the shape transformer.
+        embedding: Defines the used token reduction of the shape transformer.
         head: Defines the used generative head of the shape transformer.
     """
     def __init__(
@@ -59,6 +60,7 @@ class ShapeTransformer(pl.LightningModule):
         val_loss_function='cross_entropy',
         architecture='encoder_only',
         attention='basic_full',
+        token_encoding='basic',
         embedding='basic',
         head='generative_basic',
         transform='linear_max_res',
@@ -71,6 +73,7 @@ class ShapeTransformer(pl.LightningModule):
         # token embedding
         embedding = create_embedding(
             name=embedding,
+            token_encoding=token_encoding,
             num_vocab=num_vocab,
             embed_dim=embed_dim,
             resolution=resolution,
