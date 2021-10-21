@@ -91,6 +91,7 @@ def dataloaders(
     embedding,
     architecture,
     batch_size,
+    num_workers,
     position_encoding,
     datapath="datasets",
 ):
@@ -104,6 +105,7 @@ def dataloaders(
         embedding: Defines the used token embedding of the shape transformer.
         architecture: Defines the architecture of the transformer.
         batch_size: Defines the batch size for the data loader
+        num_workers: Defines the number of workers for the data loader
         position_encoding: Defines the positional encoding of the data.
         datapath: Path to the dataset. If the dataset is not found then
             the data is automatically downloaded to the specified location.
@@ -125,7 +127,7 @@ def dataloaders(
         "batch_size": batch_size,
         "pin_memory": True,
         "collate_fn": collate_fn,
-        "num_workers": 1#mp.cpu_count(),
+        "num_workers": num_workers,
     }
 
     # create dataloaders

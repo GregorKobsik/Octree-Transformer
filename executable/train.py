@@ -44,6 +44,7 @@ def train(config):
         embedding=config['embedding'],
         architecture=config['architecture'],
         batch_size=config['batch_size'],
+        num_workers=config['num_workers'],
         datapath=config['datapath'],
         position_encoding=config['position_encoding'],
     )
