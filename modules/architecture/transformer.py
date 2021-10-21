@@ -6,16 +6,17 @@ from utils.masks import look_ahead_mask, full_mask
 
 class Transformer(nn.Module):
     def __init__(
-        self,
-        embed_dim,
-        num_heads,
-        num_layers,
-        num_positions,
-        num_decoders,
-        token_embedding,
-        generative_head,
-        dropout,
-        **_,
+            self,
+            embed_dim,
+            num_heads,
+            num_layers,
+            num_positions,
+            num_decoders,
+            token_embedding,
+            generative_head,
+            dropout,
+            num_classes,
+            **_,
     ):
         """ Creates an instance of a transformer module.
 
@@ -44,6 +45,7 @@ class Transformer(nn.Module):
                 space, which is the direct input for the transformer layers.
             generative_head: Instance of a head layer, which transforms the output of the transformer into logits.
             dropout: The dropout value.
+            num_classes: If bigger, that one the transformer will be class conditional
         """
         super(Transformer, self).__init__()
 
@@ -54,8 +56,12 @@ class Transformer(nn.Module):
         self.embedding = token_embedding
 
         # start of sequence token
-        self.sos = torch.nn.Parameter(torch.zeros(embed_dim))
-        nn.init.normal_(self.sos)
+        if num_classes > 1:
+            self.cls_embedding = nn.Embedding(num_classes, embed_dim)
+        else:
+            self.sos = torch.nn.Parameter(torch.zeros(embed_dim))
+            nn.init.normal_(self.sos)
+        self.cls_conditional = num_classes > 1
 
         # transformer encoder layer
         encoder_layer = nn.TransformerEncoderLayer(
@@ -107,7 +113,7 @@ class Transformer(nn.Module):
         """ Transposes the first and second dimension of the input tensor. """
         return torch.transpose(x, 0, 1)
 
-    def process(self, seq, memory, padding_mask, layer_idx, is_final):
+    def process(self, seq, memory, padding_mask, layer_idx, is_final, cls):
         """ Performs computations in the decoder part of the transformer.
 
         It embeds the target token sequence into the embedding space of the decoder and creates an upper triangular
@@ -132,7 +138,10 @@ class Transformer(nn.Module):
         if is_final:  # attention mask is autoregressive in the final layer
             attn_mask = look_ahead_mask(seq_len, device=seq.device)  # [L, L]
             # shift sequence by one token to right to predict tokens autoregressively
-            seq = self._prepend_sos_token(seq)  # [N, L, E]
+            if self.cls_conditional:
+                seq = torch.cat([self.cls_embedding(cls).unsqueeze(1), seq[:, :-1]], dim=1)
+            else:
+                seq = self._prepend_sos_token(seq)  # [N, L, E]
         else:  # otherwise we allow access to all tokens
             attn_mask = full_mask(seq_len, device=seq.device)  # [L, L]
 
@@ -153,7 +162,7 @@ class Transformer(nn.Module):
 
         return self._transpose(out)  # [N, S/T, E]
 
-    def forward(self, sequence):
+    def forward(self, sequence, cls):
         """ Performs a full transformer pass of the input sequence through embedding, transformer and generative head.
 
         Args:
@@ -169,11 +178,11 @@ class Transformer(nn.Module):
         # process sequence layers individually
         for idx, seq_layer in enumerate(sequence):
             if idx < seq_len - 1:  # intermediate layer
-                memory = self.compute_memory(seq_layer, memory, idx, False)  # [N, L, E]
+                memory = self.compute_memory(seq_layer, memory, idx, False, cls)  # [N, L, E]
             else:  # only final layer
-                return self.compute_logits(seq_layer, memory, idx)  # [N, T, V]
+                return self.compute_logits(seq_layer, memory, idx, cls)  # [N, T, V]
 
-    def compute_memory(self, seq_layer, memory, idx, is_final):
+    def compute_memory(self, seq_layer, memory, idx, is_final, cls):
         """ Computes the output of the corresponding transformer layer, without processing the corresponding head.
 
         Args:
@@ -193,9 +202,9 @@ class Transformer(nn.Module):
         seq_mask = self.embedding[idx].padding_mask(*seq_layer)  # [N, L]
 
         # compute memory / process sequence
-        return self.process(emb, memory, seq_mask, idx, is_final)  # [N, L, E]
+        return self.process(emb, memory, seq_mask, idx, is_final, cls)  # [N, L, E]
 
-    def compute_logits(self, seq_layer, memory, idx):
+    def compute_logits(self, seq_layer, memory, idx, cls):
         """ Performs a full pass of a single transformer layer to computes the logits of given sequence.
 
         Each token can access previous tokens in `seq_layer` only autoregressivelly. All tokens of the `memory`
@@ -212,7 +221,7 @@ class Transformer(nn.Module):
             Logits of the given layer token sequence with the shape [N, L, V]
         """
         # compute memory
-        memory = self.compute_memory(seq_layer, memory, idx, True)  # [N, L, E]
+        memory = self.compute_memory(seq_layer, memory, idx, True, cls)  # [N, L, E]
 
         # return logits
         return self.head[idx](memory, *seq_layer)  # [N, T, V]

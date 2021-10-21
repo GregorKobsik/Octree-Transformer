@@ -17,7 +17,7 @@ class ConvolutionHeadA(nn.Module):
         """
         super(ConvolutionHeadA, self).__init__()
 
-        self.devoncolution = Deconvolution(embed_dim, embed_dim, conv_size)
+        self.deconvolution = Deconvolution(embed_dim, embed_dim, conv_size)
         self.linear = Linear(embed_dim, num_vocab)
 
     def forward(self, x, value, depth, pos):
@@ -33,7 +33,7 @@ class ConvolutionHeadA(nn.Module):
             Logits of target value sequence.
         """
         # deconvolute the latent space - create new tokens
-        x = self.devoncolution(x)  # [N, T, E]
+        x = self.deconvolution(x)  # [N, T, E]
 
         # compute logits for each token
         return self.linear(x)  # [N, T, V]

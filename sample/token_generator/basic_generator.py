@@ -46,7 +46,7 @@ class BasicGenerator():
             # compute logits
             logits = self.compute_logits(seq, memory, idx)[0]
 
-            # retrive only logits for for current index
+            # retrieve only logits for for current index
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + self.num_tokens]
 
             # check transformer token capacity

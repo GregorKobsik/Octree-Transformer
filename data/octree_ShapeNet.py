@@ -65,6 +65,66 @@ _class_folder_map = {
     "washer": "04554684",
 }
 
+_folder_id_map = {
+    "02691156": 0,
+    "02747177": 1,
+    "02773838": 2,
+    "02801938": 3,
+    "02808440": 4,
+    "02818832": 5,
+    "02828884": 6,
+    "02834778": 7,
+    "02843684": 8,
+    "02858304": 9,
+    "02871439": 10,
+    "02876657": 11,
+    "02880940": 12,
+    "02924116": 13,
+    "02933112": 14,
+    "02942699": 15,
+    "02946921": 16,
+    "02954340": 17,
+    "02958343": 18,
+    "02992529": 19,
+    "03001627": 20,
+    "03046257": 21,
+    "03085013": 22,
+    "03207941": 23,
+    "03211117": 24,
+    "03261776": 25,
+    "03325088": 26,
+    "03337140": 27,
+    "03467517": 28,
+    "03513137": 29,
+    "03593526": 30,
+    "03624134": 31,
+    "03636649": 32,
+    "03642806": 33,
+    "03691459": 34,
+    "03710193": 35,
+    "03759954": 36,
+    "03761084": 37,
+    "03790512": 38,
+    "03797390": 39,
+    "03928116": 40,
+    "03938244": 41,
+    "03948459": 42,
+    "03991062": 43,
+    "04004475": 44,
+    "04074963": 45,
+    "04090263": 46,
+    "04099429": 47,
+    "04225987": 48,
+    "04256520": 49,
+    "04330267": 50,
+    "04379243": 51,
+    "04401088": 52,
+    "04460130": 53,
+    "04468005": 54,
+    "04530566": 55,
+    "04554684": 56,
+}
+
 
 class OctreeShapeNet(Dataset):
     """ Voxelized ShapeNet Dataset. """
@@ -102,9 +162,9 @@ class OctreeShapeNet(Dataset):
         voxels = load_hsp(self.data_paths[index], self.resolution)
 
         if self.transform is not None:
-            return self.transform(voxels)
+            return self.transform(voxels) + (self.cls_ids[index],)
         else:
-            return voxels
+            return voxels + (self.cls_ids[index],)
 
     def __len__(self) -> int:
         return len(self.data_paths)
@@ -120,19 +180,27 @@ class OctreeShapeNet(Dataset):
         """ Find and store data paths of input data files. """
         # fetch paths with raw voxel data
         paths = []
+        cls = []
         if self.subclass is list:
             for subclass in self.subclass:
                 subdir = _class_folder_map[subclass]
-                paths += [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
+                cls_paths = [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
+                paths += cls_paths
+                cls += [_folder_id_map[subdir]] * len(cls_paths[0])
         elif self.subclass == "all":
             for subdir in _class_folder_map.items():
-                paths += [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
+                cls_paths = [sorted(glob(self.dataset_path + '/' + subdir[1] + '/*.mat'))]
+                paths += cls_paths
+                cls += [_folder_id_map[subdir[1]]] * len(cls_paths[0])
         else:
             subdir = _class_folder_map[self.subclass]
             paths = [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
+            cls = [_folder_id_map[subdir]] * len(paths[0])
 
         # repeatable train-test split (80-20)
         self.data_paths = []
+        self.cls_ids = []
         for p in paths:
             idx = int(0.8 * len(p))
             self.data_paths += p[:idx] if train else p[idx:]
+            self.cls_ids += cls[:idx] if train else cls[idx:]

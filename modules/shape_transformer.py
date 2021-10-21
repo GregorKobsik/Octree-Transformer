@@ -61,6 +61,7 @@ class ShapeTransformer(pl.LightningModule):
         attention='basic_full',
         embedding='basic',
         head='generative_basic',
+        num_classes=1,
         transform='linear_max_res',
         **kwargs,
     ):
@@ -97,6 +98,7 @@ class ShapeTransformer(pl.LightningModule):
             num_layers=num_layers,
             num_positions=num_positions,
             dropout=dropout,
+            num_classes=num_classes
         )
 
         # training loss function
@@ -134,7 +136,7 @@ class ShapeTransformer(pl.LightningModule):
         }
         return [optimizer], [scheduler]
 
-    def forward(self, sequence):
+    def forward(self, sequence, cls):
         """ Performs a full transformer pass of the input sequence.
 
         Args:
@@ -146,13 +148,13 @@ class ShapeTransformer(pl.LightningModule):
         Return:
             Logits which describe the autoregressive likelihood of the next target token.
         """
-        return self.model(sequence)
+        return self.model(sequence, cls)
 
     def training_step(self, batch, batch_idx):
         """ Perform one training step with the given batch and log the loss. """
-        sequence, target = batch
+        sequence, target, cls = batch
 
-        logits = self.forward(sequence)
+        logits = self.forward(sequence, cls)
         loss = self.compute_and_log_loss(logits, target, self.loss_function, prefix='training/train_')
         self.compute_and_log_loss(logits, target, self.val_loss_function, prefix='training/val_')
 
@@ -160,9 +162,9 @@ class ShapeTransformer(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         """ Perform one validation step with the given batch and log the loss as well the allocated memory. """
-        sequence, target = batch
+        sequence, target, cls = batch
 
-        logits = self.forward(sequence)
+        logits = self.forward(sequence, cls)
         self.compute_and_log_loss(logits, target, self.loss_function, prefix='validation/train_', log_per_layer=True)
         loss = self.compute_and_log_loss(
             logits, target, self.val_loss_function, prefix='validation/val_', log_per_layer=True

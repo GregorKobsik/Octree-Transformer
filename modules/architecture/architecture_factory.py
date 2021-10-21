@@ -12,6 +12,7 @@ def create_architecture(
     num_layers,
     num_positions,
     dropout,
+    num_classes
 ):
     """ Creates a transformer model.
 
@@ -27,6 +28,7 @@ def create_architecture(
         num_layers: Number of layers for each of 'decoder' and 'encoder' part in the transformer.
         num_positions: Maximal length of processed input tokens by the attention layers.
         dropout: The dropout value.
+        num_classes: If bigger, that one the transformer will be class conditional
 
     Return:
         Transformer model initialised with given parameters.
@@ -40,6 +42,7 @@ def create_architecture(
         'num_layers': num_layers,
         'num_positions': num_positions,
         'dropout': dropout,
+        'num_classes': num_classes
     }
 
     if architecture == "autoencoder":

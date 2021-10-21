@@ -125,7 +125,7 @@ def dataloaders(
         "batch_size": batch_size,
         "pin_memory": True,
         "collate_fn": collate_fn,
-        "num_workers": mp.cpu_count(),
+        "num_workers": 1#mp.cpu_count(),
     }
 
     # create dataloaders
