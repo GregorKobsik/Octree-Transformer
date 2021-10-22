@@ -1,5 +1,6 @@
 import os
 
+import torch
 from glob import glob
 from torch.utils.data import Dataset
 from typing import Tuple, Any, Callable
@@ -186,21 +187,21 @@ class OctreeShapeNet(Dataset):
                 subdir = _class_folder_map[subclass]
                 cls_paths = [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
                 paths += cls_paths
-                cls += [_folder_id_map[subdir]] * len(cls_paths[0])
+                cls += [[_folder_id_map[subdir]] * len(cls_paths[0])]
         elif self.subclass == "all":
             for subdir in _class_folder_map.items():
                 cls_paths = [sorted(glob(self.dataset_path + '/' + subdir[1] + '/*.mat'))]
                 paths += cls_paths
-                cls += [_folder_id_map[subdir[1]]] * len(cls_paths[0])
+                cls += [[_folder_id_map[subdir[1]]] * len(cls_paths[0])]
         else:
             subdir = _class_folder_map[self.subclass]
             paths = [sorted(glob(self.dataset_path + '/' + subdir + '/*.mat'))]
-            cls = [_folder_id_map[subdir]] * len(paths[0])
+            cls = [[_folder_id_map[subdir]] * len(paths[0])]
 
         # repeatable train-test split (80-20)
         self.data_paths = []
         self.cls_ids = []
-        for p in paths:
+        for i, p in enumerate(paths):
             idx = int(0.8 * len(p))
             self.data_paths += p[:idx] if train else p[idx:]
-            self.cls_ids += cls[:idx] if train else cls[idx:]
+            self.cls_ids += cls[i][:idx] if train else cls[i][idx:]
