@@ -1,13 +1,15 @@
-from argparse import ArgumentParser
-from sample import ShapeSampler
-from skimage import measure
-from tqdm.auto import tqdm
-from glob import glob
-from data.octree_ShapeNet import OctreeShapeNet
-
 import os
 import random
 import sys
+from argparse import ArgumentParser
+from glob import glob
+
+import torch
+from skimage import measure
+from tqdm.auto import tqdm
+
+from data.octree_ShapeNet import OctreeShapeNet
+from sample import ShapeSampler
 
 
 def save_obj(sample, path="", file_name="chair_mesh"):
@@ -43,6 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("--resolution", type=int, default=64)
     parser.add_argument("--temperature", type=float, default=0.8)
     parser.add_argument("--subclass", type=str, default="chair")
+    parser.add_argument("--class_label", type=int, default=None)
     args = parser.parse_args()
 
     # load model
@@ -66,9 +69,13 @@ if __name__ == "__main__":
         resolution=args.resolution,
     )
 
+    if args.class_label is not None:
+        cls_label = torch.tensor([args.cls_label], device="cuda")
+    else:
+        cls_label = None
+
     # sample shapes and save mesh as OBJ-file (marching cubes)
     for i in tqdm(range(args.num_samples), leave=True, desc="Samples"):
-
         r = random.randrange(len(ds_test))
         precon = ds_test[r]
 
@@ -77,5 +84,6 @@ if __name__ == "__main__":
             precondition_resolution=args.resolution // 8,
             target_resolution=args.resolution,
             temperature=args.temperature,
+            cls=cls_label
         )
         save_obj(output, path, f"shape_{i}")

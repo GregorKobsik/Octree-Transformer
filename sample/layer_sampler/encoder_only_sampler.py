@@ -1,16 +1,17 @@
-import torch
 import math
+
+import torch
 from tqdm.auto import tqdm
 
-from ..token_generator import create_token_generator
 from ..sample_utils import (
     next_layer_tokens,
     preprocess,
     postprocess,
 )
+from ..token_generator import create_token_generator
 
 
-class EncoderOnlySampler():
+class EncoderOnlySampler:
     def __init__(self, model, head, spatial_dim, max_resolution, position_encoding, device, **_):
         """ Provides a basic implementation of the sampler for the 'encoder_only' architecture.
 
@@ -29,7 +30,7 @@ class EncoderOnlySampler():
         self.pos_encoding = position_encoding
         self.device = device
 
-    def __call__(self, precondition, precondition_resolution, target_resolution, temperature):
+    def __call__(self, precondition, precondition_resolution, target_resolution, temperature, cls):
         """ Perform an iterative sampling of the given sequence until reaching the end of sequence, the maximum sequence
             length or the desired resolution.
 
@@ -38,6 +39,7 @@ class EncoderOnlySampler():
             precondition_resolution: Resolution at which the autoencoder will reconstruct the layer.
             target_resolution: Resolution up to which an object should be sampled.
             temperature: Defines the randomness of the samples.
+            cls: class label for conditional generation.
 
         Return:
             A token sequence with values, encoding the final sample.
@@ -60,7 +62,6 @@ class EncoderOnlySampler():
                 next_val, next_dep, next_pos = next_layer_tokens(
                     val, dep, pos, self.spatial_dim, self.max_resolution, self.pos_encoding
                 )
-
                 # predict value tokens for current layer
                 next_val = self.generators[0](
                     val=val + [next_val],
@@ -68,6 +69,7 @@ class EncoderOnlySampler():
                     pos=pos + [next_pos],
                     memory=None,
                     temperature=temperature,
+                    cls=cls
                 )
 
                 # append sampled tokens to current sequence

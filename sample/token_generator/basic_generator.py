@@ -3,7 +3,7 @@ import torch
 from tqdm.auto import trange
 
 
-class BasicGenerator():
+class BasicGenerator:
     def __init__(self, compute_logits_fn, num_tokens=1, **_):
         """ Create token generator instance which samples 'num_tokens' in one pass.
 
@@ -14,7 +14,7 @@ class BasicGenerator():
         self.compute_logits = compute_logits_fn
         self.num_tokens = num_tokens
 
-    def __call__(self, val, dep, pos, memory=None, idx=0, temperature=1.0, slice_sequence=True, **_):
+    def __call__(self, val, dep, pos, memory=None, idx=0, temperature=1.0, slice_sequence=True, cls=None, **_):
         """ Sample autoregressively current value token sequence and return updated value sequence.
 
         Args:
@@ -24,6 +24,7 @@ class BasicGenerator():
             memory: Latent sequence vector of the previous layer.
             idx: Currently sampled transformer layer index.
             temperature: Defines the randomness of the samples.
+            cls: class label for conditional generation.
 
         Return:
             Sampled token sequence with values of the current layer.
@@ -44,7 +45,7 @@ class BasicGenerator():
             )
 
             # compute logits
-            logits = self.compute_logits(seq, memory, idx)[0]
+            logits = self.compute_logits(seq, memory, idx, cls)[0]
 
             # retrieve only logits for for current index
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + self.num_tokens]

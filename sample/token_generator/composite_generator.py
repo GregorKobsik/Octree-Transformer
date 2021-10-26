@@ -16,7 +16,7 @@ class CompositeGenerator():
         self.compute_logits_fn = compute_logits_fn
         self.num_tokens_list = num_tokens
 
-    def __call__(self, val, dep, pos, memory=None, layer_idx=0, temperature=1.0, **_):
+    def __call__(self, val, dep, pos, memory=None, layer_idx=0, temperature=1.0, cls=None, **_):
         """ Sample autoregressively current value token sequence and return sampled value sequence.
 
         Args:
@@ -26,6 +26,7 @@ class CompositeGenerator():
             memory: Latent sequence vector of the previous layer.
             layer_idx: Currently sampled layer index.
             temperature: Defines the randomness of the samples.
+            cls: class label for conditional generation.
 
         Return:
             Sampled token sequence with values of the current layer.
@@ -42,4 +43,4 @@ class CompositeGenerator():
         else:  # 'double_substitution'
             generator = DoubleSubstitutionGenerator(self.compute_logits_fn, num_tokens)
         # sample a single layer
-        return generator(val, dep, pos, memory, layer_idx, temperature)
+        return generator(val, dep, pos, memory, layer_idx, temperature, cls=cls)

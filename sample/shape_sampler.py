@@ -36,7 +36,8 @@ class ShapeSampler:
             device,
         )
 
-    def sample_preconditioned(self, precondition, precondition_resolution=1, target_resolution=32, temperature=1.0):
+    def sample_preconditioned(self, precondition, precondition_resolution=1, target_resolution=32, temperature=1.0,
+                              cls=None):
         """ Samples a single array of elements from the model.
 
         Args:
@@ -49,6 +50,8 @@ class ShapeSampler:
             temperature: Defines the randomness of the samples. Lower temperatures make the model increasingly
                 confident in its top choices, while temperatures greater than 1 decrease confidence. 0 temperature is
                 equivalent to argmax/max likelihood, while infinite temperature corresponds to a uniform sampling.
+            cls: if the transformer has been trained class conditional, we can add a class label
+                from which to draw samples, otherwise this argument will be ignored.
 
         Return:
             A sampled array of elements (pixels/voxels) with the size of `target_resolution` as a numpy array.
@@ -59,9 +62,9 @@ class ShapeSampler:
         if input is None:
             raise ValueError("ERROR: `input` cannot be `None`.")
         precon_res = min(self.trained_resolution, precondition_resolution)
-        return self.sampler(precondition, precon_res, target_resolution, temperature)
+        return self.sampler(precondition, precon_res, target_resolution, temperature, cls)
 
-    def sample_random(self, target_resolution=32, temperature=1.0):
+    def sample_random(self, target_resolution=32, temperature=1.0, cls=None):
         """ Sample a single unconditioned random array of elements from the model.
 
         Args:
@@ -70,6 +73,8 @@ class ShapeSampler:
             temperature: Defines the randomness of the samples. Lower temperatures make the model increasingly
                 confident in its top choices, while temperatures greater than 1 decrease confidence. 0 temperature is
                 equivalent to argmax/max likelihood, while infinite temperature corresponds to a uniform sampling.
+            cls: if the transformer has been trained class conditional, we can add a class label
+                from which to draw samples, otherwise this argument will be ignored.
 
         Return:
             A sampled array of elements (pixels/voxels) with the size of `target_resolution` as a numpy array.
@@ -78,4 +83,4 @@ class ShapeSampler:
         array_size = self.spatial_dim * [self.trained_resolution]
         random_element_array = torch.randint(low=0, high=2, size=array_size, dtype=torch.long).numpy()
 
-        return self.sampler(random_element_array, 2, target_resolution, temperature)
+        return self.sampler(random_element_array, 2, target_resolution, temperature, cls)

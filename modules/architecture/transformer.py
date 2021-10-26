@@ -125,6 +125,7 @@ class Transformer(nn.Module):
             padding_mask: Value token layer sequence padding mask - [N, L].
             layer_idx: Defines which transformer layer should be used.
             is_final: Defines if the current layer is final, e.g. if the transformer should be 'autoregressive'.
+            cls: class label for conditional generation.
 
         Return:
             The output of the last layer of the decoder in latent decoder space - [N, L, E].
@@ -193,6 +194,7 @@ class Transformer(nn.Module):
             idx: Index of the transformer layer.
             is_final: Defines the used mask. True - uses an autoregressive mask, False - each token can access each
                 other token.
+            cls: class label for conditional generation.
 
         Return:
             Memory latent vector of the selecter transformer layer with the shape [N, L, E].
@@ -216,6 +218,7 @@ class Transformer(nn.Module):
             memory: Memory sequence of the previous transformer layer, with the shape [N, T]. Should be 'None' iff
                 `idx` is 0.
             idx: Index of the transformer layer.
+            cls: class label for conditional generation.
 
         Return
             Logits of the given layer token sequence with the shape [N, L, V]

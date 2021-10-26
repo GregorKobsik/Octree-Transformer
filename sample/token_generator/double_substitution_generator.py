@@ -15,7 +15,7 @@ class DoubleSubstitutionGenerator():
         self.num_tokens = num_tokens
         self.kernel_size = num_tokens
 
-    def __call__(self, val, dep, pos, memory=None, idx=0, temperature=1.0, **_):
+    def __call__(self, val, dep, pos, memory=None, idx=0, temperature=1.0, cls=None, **_):
         """ Sample autoregressively current value token sequence and return updated value sequence.
 
         Note: Needs at least, the third-, second- and last layer sequence.
@@ -27,6 +27,7 @@ class DoubleSubstitutionGenerator():
             memory: Latent sequence vector of the previous layer.
             idx: Currently sampled transformer layer index.
             temperature: Defines the randomness of the samples.
+            cls: class label for conditional generation.
 
         Return:
             Sampled token sequence with values of the current layer.
@@ -59,7 +60,7 @@ class DoubleSubstitutionGenerator():
 
             # concat and pack token sequences to compute logits
             seq = (torch.cat(val).unsqueeze(0), torch.cat(dep).unsqueeze(0), torch.cat(pos).unsqueeze(0))
-            logits = self.compute_logits(seq, memory, idx)[0]
+            logits = self.compute_logits(seq, memory, idx, cls)[0]
 
             # retrive only logits for tokens which were actually sampled
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + num_sampled]

@@ -1,9 +1,12 @@
+import os
 from argparse import ArgumentParser
-from sample import ShapeSampler
+from glob import glob
+
+import torch
 from skimage import measure
 from tqdm.auto import tqdm
-from glob import glob
-import os
+
+from sample import ShapeSampler
 
 
 def save_obj(sample, path="", file_name="chair_mesh"):
@@ -38,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--outdir", type=str, default="samples/sampled_shapes")
     parser.add_argument("--resolution", type=int, default=64)
     parser.add_argument("--temperature", type=float, default=0.8)
+    parser.add_argument("--class_label", type=int, default=None)
     args = parser.parse_args()
 
     # load model
@@ -50,7 +54,12 @@ if __name__ == "__main__":
     os.makedirs(path, exist_ok=True)
     num_objs = len(glob(path + '*.obj'))
 
+    if args.class_label is not None:
+        cls_label = torch.tensor([args.cls_label], device="cuda")
+    else:
+        cls_label = None
+
     # sample shapes and save mesh as OBJ-file (marching cubes)
     for i in tqdm(range(args.num_samples), leave=True, desc="Samples"):
-        output = sampler.sample_random(args.resolution, args.temperature)
+        output = sampler.sample_random(args.resolution, args.temperature, cls_label)
         save_obj(output, path, f"shape_{num_objs + i}")
