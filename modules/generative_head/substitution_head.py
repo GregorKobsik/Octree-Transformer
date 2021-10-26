@@ -5,7 +5,7 @@ from ..utils import Deconvolution, Linear
 
 
 class SubstitutionHead(nn.Module):
-    def __init__(self, num_vocab, embed_dim, spatial_dim, conv_size, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, spatial_dim, conv_size, **_):
         """ Performs a substitution transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -19,9 +19,10 @@ class SubstitutionHead(nn.Module):
         super(SubstitutionHead, self).__init__()
         self.embed_dim = embed_dim
 
-        self.deconvolution_1 = Deconvolution(embed_dim, embed_dim // 2, conv_size)
-        self.deconvolution_0 = Deconvolution(embed_dim // 2, embed_dim // 4, conv_size)
-        self.linear = Linear(embed_dim // 4, num_vocab)
+        self.deconvolution_1 = Deconvolution(embed_dim, embed_dim, conv_size)
+        self.deconvolution_0 = Deconvolution(embed_dim, embed_dim, conv_size)
+        self.linear = Linear(embed_dim, num_vocab)
+        self.spatial_encoding = spatial_encoding
 
     def forward(self, x, value, depth, pos):
         """ Transforms the output of the transformer target value logits.
@@ -55,7 +56,7 @@ class SubstitutionHead(nn.Module):
         mix_1 = torch.sum(val_1 == 2, dim=1)
 
         # create intermediate list to hold vectors
-        x_0 = torch.zeros((batch_size, torch.max(mix_1), self.embed_dim // 2), device=value.device)
+        x_0 = torch.zeros((batch_size, torch.max(mix_1), self.embed_dim), device=value.device)
 
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
         y_1 = self.deconvolution_1(x)
@@ -66,5 +67,12 @@ class SubstitutionHead(nn.Module):
 
         # deconvolute the intermediate latent space - create new tokens in latent space for each mixed token
         y_0 = self.deconvolution_0(x_0)  # [N, T, C]
+
+        # add spatial decoding if available
+        if self.spatial_encoding is not None:
+            len_last = torch.sum(depth == max_depth, dim=1)
+            assert((depth[:, -len_last:] == max_depth).all())
+            y_0 = y_0 + self.spatial_encoding(pos[:, -len_last:])
+
         # compute logits of generated tokens
         return self.linear(y_0)  # [N, T, V]
