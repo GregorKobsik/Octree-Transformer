@@ -49,10 +49,6 @@ class SubstitutionGenerator():
             # retrive only logits for tokens which were actually sampled
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + num_sampled]
 
-            # check transformer token capacity
-            if len(sampled_token_logits) != num_sampled:
-                return val[-1][:token_idx]  # reached maximum number of tokens
-
             # compute token probabilities from logits
             probs = torch.nn.functional.softmax(sampled_token_logits / temperature, dim=-1)  # [t, V]
             probs[:, 0] = 0  # 'padding' token

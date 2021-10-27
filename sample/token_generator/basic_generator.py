@@ -50,10 +50,6 @@ class BasicGenerator:
             # retrieve only logits for for current index
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + self.num_tokens]
 
-            # check transformer token capacity
-            if len(sampled_token_logits) == 0:
-                return val[-1][:token_idx]  # reached maximum number of tokens
-
             # compute token probabilities from logits
             probs = torch.nn.functional.softmax(sampled_token_logits / temperature, dim=-1)  # [t, V]
             probs[:, 0] = 0  # 'padding' token
