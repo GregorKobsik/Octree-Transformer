@@ -28,7 +28,6 @@ def datasets(
     subclass="all",
     resolution=32,
     transform='basic',
-    position_encoding='centered',
     datapath="datasets",
 ):
     """ Loads datasets for training, validation and testing.
@@ -37,9 +36,7 @@ def datasets(
         dataset: Select a dataset. Currently only 'mnist' and 'shapenet' available.
         subclass: Select a subclass of a dataset, if available.
         resolution: Select the underlying resolution of the selected dataset, if available.
-        transform: Defines data transformation and augmentation functions.
-        batch_size: Defines the batch size for the data loader.
-        position_encoding: Defines the positional encoding of the data.
+        transform: Data transformation and augmentation functions.
         datapath: Path to the dataset. If the dataset is not found then
             the data is automatically downloaded to the specified location.
 
@@ -49,21 +46,13 @@ def datasets(
         test_ds: Dataset with test data.
 
     """
-    # select data transform function
-    transform_fn = create_data_transform(
-        name=transform,
-        spatial_dim=spatial_dim[dataset],
-        resolution=resolution,
-        position_encoding=position_encoding,
-    )
-
     # initialize arguments
     kwargs = {
         "root": datapath,
         "download": True,
         "subclass": subclass,
         "resolution": resolution,
-        "transform": transform_fn,
+        "transform": transform,
     }
 
     # load train and test datasets
@@ -93,6 +82,7 @@ def dataloaders(
     batch_size,
     num_workers,
     position_encoding,
+    num_positions,
     datapath="datasets",
 ):
     """ Creates dataloaders for training, validation and testing.
@@ -107,6 +97,7 @@ def dataloaders(
         batch_size: Defines the batch size for the data loader
         num_workers: Defines the number of workers for the data loader
         position_encoding: Defines the positional encoding of the data.
+        num_positions: Maximum length of the input token sequence after embedding.
         datapath: Path to the dataset. If the dataset is not found then
             the data is automatically downloaded to the specified location.
 
@@ -115,9 +106,18 @@ def dataloaders(
         valid_dl: Dataloader with validation data.
         test_dl: Dataloader with test data.
     """
+    # select data transform function
+    transform_fn = create_data_transform(
+        name=transform,
+        spatial_dim=spatial_dim[dataset],
+        resolution=resolution,
+        position_encoding=position_encoding,
+        num_positions=num_positions,
+        embedding=embedding,
+    )
 
     # load datasets
-    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, transform, position_encoding, datapath)
+    train_ds, valid_ds, test_ds = datasets(dataset, subclass, resolution, transform_fn, datapath)
 
     # select padding function
     collate_fn = create_data_collate(architecture, embedding, resolution)

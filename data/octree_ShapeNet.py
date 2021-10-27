@@ -1,6 +1,6 @@
 import os
+import random
 
-import torch
 from glob import glob
 from torch.utils.data import Dataset
 from typing import Tuple, Any, Callable
@@ -161,11 +161,23 @@ class OctreeShapeNet(Dataset):
     def __getitem__(self, index: int) -> Tuple[Any, Any, Tuple]:
         """ Returns a single sample from the dataset. """
         voxels = load_hsp(self.data_paths[index], self.resolution)
+        if self.transform is None:
+            return voxels + (self.cls_ids[index], )
 
-        if self.transform is not None:
-            return self.transform(voxels) + (self.cls_ids[index],)
-        else:
-            return voxels + (self.cls_ids[index],)
+        # iterate n times to find a valid output with data augmentation
+        for _ in range(100):
+            for _ in range(10):
+                # perform data augmentation with transforms is one is given
+                output = self.transform(voxels)
+
+                # return only a valid output
+                if output is not None:
+                    return output + (self.cls_ids[index], )
+
+            # after a few failed iterations get a new random sample and retry data augmentation
+            voxels = load_hsp(random.choice(self.data_paths), self.resolution)
+
+        raise ValueError("Data loader could not create a valid sample within the token limit.")
 
     def __len__(self) -> int:
         return len(self.data_paths)
