@@ -101,7 +101,6 @@ class ShapeTransformer(pl.LightningModule):
             embed_dim=embed_dim,
             num_heads=num_heads,
             num_layers=num_layers,
-            num_positions=num_positions,
             dropout=dropout,
             num_classes=num_classes
         )
@@ -184,11 +183,6 @@ class ShapeTransformer(pl.LightningModule):
     def compute_and_log_loss(self, logits, target, loss_fx, prefix="", log_per_layer=False):
         """ Compute mean loss and per layer loss and log it. Return mean loss. """
         tgt_val, tgt_dep, tgt_pos = target
-
-        # limit target tokens, if we had to limit input size
-        tgt_val = tgt_val[:, :logits.shape[1]]
-        tgt_dep = tgt_dep[:, :logits.shape[1]]
-        tgt_pos = tgt_pos[:, :logits.shape[1]]
 
         # compute loss for each token
         loss = loss_fx(logits, (tgt_val, tgt_dep, tgt_pos))

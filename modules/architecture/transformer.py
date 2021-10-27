@@ -6,17 +6,16 @@ from utils.masks import look_ahead_mask, full_mask
 
 class Transformer(nn.Module):
     def __init__(
-            self,
-            embed_dim,
-            num_heads,
-            num_layers,
-            num_positions,
-            num_decoders,
-            token_embedding,
-            generative_head,
-            dropout,
-            num_classes,
-            **_,
+        self,
+        embed_dim,
+        num_heads,
+        num_layers,
+        num_decoders,
+        token_embedding,
+        generative_head,
+        dropout,
+        num_classes,
+        **_,
     ):
         """ Creates an instance of a transformer module.
 
@@ -37,9 +36,6 @@ class Transformer(nn.Module):
             embed_dim: Number of embedding dimensions used by the attention.
             num_heads: Number of heads used by the attention.
             num_layers: Number of layers for each the 'decoder' and 'encoder' part of the transformer.
-            num_positions: Maximal length of processed input tokens. You can pass longer sequences as input, but they
-                will be truncated before feeding into the transformer, but after the embedding. Thus longer sequences
-                can be accepted by a non-basic embedding and possibly compressed to stay within the limit.
             num_decoders: Defines the number of decoder instances.
             token_embedding: Instance of an embedding layer, which embedds given sequences of tokens into an embedding
                 space, which is the direct input for the transformer layers.
@@ -50,7 +46,6 @@ class Transformer(nn.Module):
         super(Transformer, self).__init__()
 
         self.embed_dim = embed_dim  # E
-        self.num_positions = num_positions
 
         # token embedding
         self.embedding = token_embedding
@@ -130,10 +125,6 @@ class Transformer(nn.Module):
         Return:
             The output of the last layer of the decoder in latent decoder space - [N, L, E].
         """
-        # limit sequence length to max `num_position`
-        seq = seq[:, :self.num_positions]  # [N, L, E]
-        padding_mask = padding_mask[:, :self.num_positions]  # [N, L]
-
         # create attention mask
         seq_len = seq.shape[1]
         if is_final:  # attention mask is autoregressive in the final layer
