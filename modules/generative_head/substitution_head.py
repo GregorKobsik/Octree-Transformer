@@ -62,7 +62,7 @@ class SubstitutionHead(nn.Module):
         y_1 = self.deconvolution_1(x)
         # select only latent vectors, which correspond to mixed tokens in the penultimate layer
         for i in range(batch_size):
-            mix_1_mask_i = (val_1[i] == 2)[:len(y_1[i])]  # handle overflow/clipped values in the embedding
+            mix_1_mask_i = (val_1[i] == 2)
             x_0[i, :torch.sum(mix_1_mask_i)] = y_1[i, mix_1_mask_i]  # [N, T', C]
 
         # deconvolute the intermediate latent space - create new tokens in latent space for each mixed token

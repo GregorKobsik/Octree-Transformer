@@ -102,9 +102,6 @@ class EncoderDecoderSampler():
                         **kwargs,
                     )
 
-                if len(layer_val) != len(layer_dep):
-                    break  # reached maximum number of tokens which can be generated
-
                 # append sampled tokens to sequence
                 val += [layer_val]
                 dep += [layer_dep]

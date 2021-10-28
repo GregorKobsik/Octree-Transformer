@@ -73,9 +73,9 @@ class EncoderOnlySampler:
                 )
 
                 # append sampled tokens to current sequence
-                val += [next_val[:len(next_val)]]
-                dep += [next_dep[:len(next_val)]]
-                pos += [next_pos[:len(next_val)]]
+                val += [next_val]
+                dep += [next_dep]
+                pos += [next_pos]
 
                 if len(next_val) != len(next_dep):
                     break  # reached maximum number of tokens which can be generated

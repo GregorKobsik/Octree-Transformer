@@ -47,6 +47,7 @@ def train(config):
         num_workers=config['num_workers'],
         datapath=config['datapath'],
         position_encoding=config['position_encoding'],
+        num_positions=config['num_positions'],
     )
 
     # setup tensorboard logging

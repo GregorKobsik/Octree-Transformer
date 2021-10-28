@@ -71,14 +71,14 @@ class DoubleSubstitutionHead(nn.Module):
         y_2 = self.deconvolution_2(x)
         # select only latent vectors, which correspond to mixed tokens in third-last layer
         for i in range(batch_size):
-            mix_2_mask_i = (val_2[i] == 2)[:len(y_2[i])]  # handle overflow/clipped values in the embedding
+            mix_2_mask_i = (val_2[i] == 2)
             x_1[i, :torch.sum(mix_2_mask_i)] = y_2[i, mix_2_mask_i]  # [N, T', C]
 
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
         y_1 = self.deconvolution_1(x_1)
         # select only latent vectors, which correspond to mixed tokens in third-last layer
         for i in range(batch_size):
-            mix_1_mask_i = (val_1[i] == 2)[:len(y_1[i])]  # handle overflow/clipped values in the embedding
+            mix_1_mask_i = (val_1[i] == 2)
             x_0[i, :torch.sum(mix_1_mask_i)] = y_1[i, mix_1_mask_i]  # [N, T', C]
 
         # deconvolute the intermediate latent space - create new tokens in latent space for each mixed token
@@ -87,7 +87,7 @@ class DoubleSubstitutionHead(nn.Module):
         # add spatial decoding if available
         if self.spatial_encoding is not None:
             len_last = torch.sum(depth == max_depth, dim=1)
-            assert((depth[:, -len_last:] == max_depth).all())
+            assert ((depth[:, -len_last:] == max_depth).all())
             y_0 = y_0 + self.spatial_encoding(pos[:, -len_last:])
 
         # compute logits of generated tokens

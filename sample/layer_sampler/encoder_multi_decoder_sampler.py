@@ -120,12 +120,9 @@ class EncoderMultiDecoderSampler():
                     nxt_val = self.generators[idx]([nxt_val], [nxt_dep], [nxt_pos], **kwargs)
 
                 # append sampled tokens to sequence
-                val += [nxt_val[:len(nxt_val)]]
-                dep += [nxt_dep[:len(nxt_val)]]
-                pos += [nxt_pos[:len(nxt_val)]]
-
-                if len(nxt_val) != len(nxt_dep):
-                    break  # reached maximum number of tokens which can be generated
+                val += [nxt_val]
+                dep += [nxt_dep]
+                pos += [nxt_pos]
 
                 # prepare sequence to update memory
                 if self.head[idx] == 'substitution':
