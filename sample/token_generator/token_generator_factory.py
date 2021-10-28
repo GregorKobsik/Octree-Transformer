@@ -1,7 +1,7 @@
 from .basic_generator import BasicGenerator
 from .substitution_generator import SubstitutionGenerator
 from .double_substitution_generator import DoubleSubstitutionGenerator
-from .composite_generator import CompositeGenerator
+from .composite_generator import CompositeGenerator, CompositeGeneratorAutoregressive
 
 
 def _create_token_generator(head, model, spatial_dim):
@@ -30,6 +30,9 @@ def _create_token_generator(head, model, spatial_dim):
     if head in ('composite', 'composite_A', 'composite_B'):
         size = 2**spatial_dim
         return CompositeGenerator(model.compute_logits, [1, 1, 1, size // 2, size, size, size, size])
+    if head in ('composite_autoregressive_A'):
+        size = 2**spatial_dim
+        return CompositeGeneratorAutoregressive(model.compute_logits, [1, 1, 1, size // 2, size, size, size, size])
     if head in ('composite_B'):
         size = 2**spatial_dim
         return CompositeGenerator(model.compute_logits, [1, 1, 1, size // 4, size, size, size, size])

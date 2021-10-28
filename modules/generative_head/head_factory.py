@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from modules.utils import PositionalEncodingLearned, PositionalEncodingLearnedLookAhead, \
     PositionalEncodingLearnedLookAheadSplit
-from .composite_head_A import CompositeHeadA
+from .composite_head_A import CompositeHeadA, CompositeHeadAutoregressiveA
 from .composite_head_B import CompositeHeadB
 from .composite_head_C import CompositeHeadC
 from .convolution_head_A import ConvolutionHeadA
@@ -67,6 +67,8 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, resolution, sp
         return DoubleSubstitutionHead(**kwargs)
     elif name in ('composite', 'composite_A'):
         return CompositeHeadA(**kwargs)
+    elif name in ('composite_autoregressive_A'):
+        return CompositeHeadAutoregressiveA(**kwargs)
     elif name in ('composite_B'):
         return CompositeHeadB(**kwargs)
     elif name in ('composite_C'):
