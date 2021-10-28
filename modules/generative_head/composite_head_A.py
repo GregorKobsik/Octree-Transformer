@@ -166,7 +166,8 @@ class CompositeHeadAutoregressiveA(CompositeHeadA):
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
         """
-        super(CompositeHeadAutoregressiveA, self).__init__()
+        super(CompositeHeadAutoregressiveA, self).__init__(spatial_encoding, num_vocab, embed_dim, resolution,
+                                                           spatial_dim, **_)
 
         kwargs = {
             "spatial_encoding": spatial_encoding,
