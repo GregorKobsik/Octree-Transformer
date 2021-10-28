@@ -66,8 +66,8 @@ class DoubleSubstitutionGenerator:
             sampled_token_logits = logits[sampled_idx + token_idx:sampled_idx + token_idx + num_sampled]
 
             # compute token probabilities from logits
+            sampled_token_logits[:, 0] = -float("Inf")  # 'padding' token
             probs = torch.nn.functional.softmax(sampled_token_logits / temperature, dim=-1)  # [t, V]
-            probs[:, 0] = 0  # 'padding' token
 
             # sample next sequence token
             for i in range(len(probs)):
@@ -138,20 +138,14 @@ class DoubleSubstitutionGeneratorAutoregressive:
                 logits = self.compute_logits(seq, memory, idx, cls)[0]
 
                 # retrive only logits for tokens which were actually sampled
-                sampled_token_logits = logits[
-                                       sampled_idx + token_idx + block_idx:sampled_idx + token_idx + block_idx + 1]
-
-                # check transformer token capacity
-                if len(sampled_token_logits) == 0:
-                    return val[-1][:token_idx]  # reached maximum number of tokens
+                sampled_token_logits = logits[sampled_idx + token_idx + block_idx]
 
                 # compute token probabilities from logits
+                sampled_token_logits[0] = -float("Inf")  # 'padding' token
                 probs = torch.nn.functional.softmax(sampled_token_logits / temperature, dim=-1)  # [t, V]
-                probs[:, 0] = 0  # 'padding' token
 
-                assert (len(probs) == 1)
                 # sample next sequence token
-                val[-1][token_idx + block_idx] = torch.multinomial(probs[0], num_samples=1)[0]
+                val[-1][token_idx + block_idx] = torch.multinomial(probs, num_samples=1)[0]
             token_idx += num_sampled
 
         return val[-1]
