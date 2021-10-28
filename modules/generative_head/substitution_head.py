@@ -153,20 +153,19 @@ class SubstitutionHeadAutoregressive(nn.Module):
 
         x_0 = torch.zeros((batch_size, torch.max(mix_1), self.embed_dim), device=value.device)
 
-        # assert(y_1.shape == emb_1.shape)
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
         y_1 = self.deconvolution_1(x)
-        y_1 = y_1 + emb_1[:, :y_1.shape[1]]
+        assert (y_1.shape == emb_1.shape)
+        y_1 = y_1 + emb_1
         # select only latent vectors, which correspond to mixed tokens in the penultimate layer
         for i in range(batch_size):
-            mix_1_mask_i = (val_1[i] == 2)[:len(y_1[i])]  # handle overflow/clipped values in the embedding
+            mix_1_mask_i = (val_1[i] == 2)
             x_0[i, :torch.sum(mix_1_mask_i)] = y_1[i, mix_1_mask_i]  # [N, T', C]
 
         # deconvolute the intermediate latent space - create new tokens in latent space for each mixed token
-
-        # assert(y_0.shape == emb_0.shape)
         y_0 = self.deconvolution_0(x_0)
-        y_0 = y_0 + emb_0[:, :y_0.shape[1]]  # [N, T, C]
+        assert (y_0.shape == emb_0.shape)
+        y_0 = y_0 + emb_0  # [N, T, C]
 
         # compute logits of generated tokens
         return self.linear(y_0)  # [N, T, V]
