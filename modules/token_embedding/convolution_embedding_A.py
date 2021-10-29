@@ -23,6 +23,7 @@ class ConvolutionEmbeddingA(nn.Module):
         """
         super(ConvolutionEmbeddingA, self).__init__()
         self.chunk_size = conv_size
+        self.mask = None
 
         # embeddings
         self.embedding = encoding
@@ -40,6 +41,9 @@ class ConvolutionEmbeddingA(nn.Module):
         Return:
             Token sequence in the embedding space.
         """
+        # precompute padding mask
+        self.mask = padding_mask(value[:, ::self.chunk_size], device=value.device)
+
         # convolute tokens to reduce sequence length
         return self.convolution(embedding)  # [N, S', E]
 
@@ -56,17 +60,6 @@ class ConvolutionEmbeddingA(nn.Module):
         """
         return self.reduce(self.embedding(value, depth, position), value, depth, position)
 
-    def padding_mask(self, value, depth, position):
-        """ Creates a token padding mask, based on the value and depth sequence token.
-
-        Uses only every n-th value token as input, where n is the convolution kernel size.
-
-        Args:
-            value: Value token sequence.
-            depth: Depth token sequence.
-            position: Position token sequence.
-
-        Return:
-            Padding mask, where padding tokens '0' of the value sequence are masked out.
-        """
-        return padding_mask(value[:, ::self.chunk_size], device=value.device)
+    def padding_mask(self):
+        """ Returns a padding mask, where padding tokens '0' of the value sequence are masked out. """
+        return self.mask
