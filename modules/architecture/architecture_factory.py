@@ -1,5 +1,8 @@
 from .autoencoder import Autoencoder
 from .transformer import Transformer
+from .pytorch_transformer import PytorchTransformer
+from .fast_transformer import FastTransformer
+from .fast_recurrent_transformer import FastRecurrentTransformer
 
 
 def create_architecture(
@@ -55,5 +58,11 @@ def create_architecture(
         return Transformer(**kwargs, num_decoders=1)
     elif architecture == "encoder_multi_decoder":
         return Transformer(**kwargs, num_decoders=len(token_embedding) - 1)
+    elif architecture == "pytorch":
+        return PytorchTransformer(**kwargs)
+    elif architecture == "fast":
+        return FastTransformer(**kwargs)
+    elif architecture == "fast-recurrent":
+        return FastRecurrentTransformer(**kwargs)
     else:
         raise ValueError(f"ERROR: {attention}_{architecture} transformer architecture not implemented.")

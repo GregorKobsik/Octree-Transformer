@@ -17,7 +17,7 @@ def create_data_collate(architecture, embeddings, resolution):
     """
     if architecture == "autoencoder":
         return AutoencoderCollate(embeddings)
-    if architecture == "encoder_only":
+    if architecture in ("encoder_only", 'pytorch', 'fast', 'fast-recurrent'):
         return EncoderOnlyCollate()
     if architecture == "encoder_decoder":
         return EncoderDecoderCollate(embeddings)
