@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class PositionalEncodingLearned(nn.Module):
-    def __init__(self, embed_dim, resolution, spatial_dim):
+    def __init__(self, embed_dim, resolution):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -11,13 +11,12 @@ class PositionalEncodingLearned(nn.Module):
         Args:
             embed_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
-            spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
         super(PositionalEncodingLearned, self).__init__()
 
         self.embed_dim = embed_dim
         self.spatial_embeddings = nn.ModuleList(
-            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
+            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(3)]
         )
 
     def forward(self, position):
@@ -36,7 +35,7 @@ class PositionalEncodingLearned(nn.Module):
 
 
 class PositionalEncodingLearnedLookAhead(nn.Module):
-    def __init__(self, embed_dim, resolution, spatial_dim):
+    def __init__(self, embed_dim, resolution):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -44,13 +43,12 @@ class PositionalEncodingLearnedLookAhead(nn.Module):
         Args:
             embed_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
-            spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
         super(PositionalEncodingLearnedLookAhead, self).__init__()
 
         self.embed_dim = embed_dim
         self.spatial_embeddings = nn.ModuleList(
-            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
+            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(3)]
         )
         # end of sequence positional token
         self.eos = torch.nn.Parameter(torch.zeros(embed_dim))
@@ -82,7 +80,7 @@ class PositionalEncodingLearnedLookAhead(nn.Module):
 
 
 class PositionalEncodingLearnedLookAheadSplit(nn.Module):
-    def __init__(self, embed_dim, resolution, spatial_dim):
+    def __init__(self, embed_dim, resolution):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -90,16 +88,15 @@ class PositionalEncodingLearnedLookAheadSplit(nn.Module):
         Args:
             embed_dim: Dimension of returned embedding space.
             resolution: Spatial resolution of sequence encoding.
-            spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
         super(PositionalEncodingLearnedLookAheadSplit, self).__init__()
 
         self.embed_dim = embed_dim
         self.spatial_embeddings = nn.ModuleList(
-            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
+            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(3)]
         )
         self.spatial_embeddings_look_ahead = nn.ModuleList(
-            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(spatial_dim)]
+            [nn.Embedding(2 * resolution, embed_dim, padding_idx=0) for _ in range(3)]
         )
         # end of sequence positional token
         self.eos = torch.nn.Parameter(torch.zeros(embed_dim))

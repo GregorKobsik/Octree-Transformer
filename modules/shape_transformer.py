@@ -46,6 +46,8 @@ class ShapeTransformer(pl.LightningModule):
     def __init__(
         self,
         embed_dim=16,
+        head_dim=16,
+        n_layer_head=1,
         num_heads=2,
         num_layers=8,
         num_positions=512,
@@ -88,8 +90,9 @@ class ShapeTransformer(pl.LightningModule):
             positional_encoding=head_pos_encoding,
             num_vocab=num_vocab,
             embed_dim=embed_dim,
+            head_dim=head_dim,
+            n_layer=n_layer_head,
             resolution=resolution,
-            spatial_dim=spatial_dim,
         )
 
         # transformer model

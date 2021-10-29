@@ -4,7 +4,7 @@ from ..utils import Linear
 
 
 class LinearHead(nn.Module):
-    def __init__(self, spatial_encoding, num_vocab, embed_dim, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, **_):
         """ Performs a linear transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -12,10 +12,20 @@ class LinearHead(nn.Module):
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
+            head_dim: Size of embedding dimensions used in the head layers.
+            n_layer: Number of layers used in each linear or convolution block.
         """
         super(LinearHead, self).__init__()
 
-        self.linear = Linear(embed_dim, num_vocab)
+        if n_layer > 1:
+            linear = [nn.GELU(), nn.Linear(embed_dim, head_dim)]
+            for i in range(n_layer - 2):
+                linear += [nn.GELU(), nn.Linear(head_dim, head_dim)]
+            linear += [nn.GELU(), Linear(head_dim, num_vocab)]
+            self.linear = nn.Sequential(*linear)
+        else:
+            self.linear = Linear(embed_dim, num_vocab)
+
         self.spatial_encoding = spatial_encoding
 
     def forward(self, x, value, depth, pos):

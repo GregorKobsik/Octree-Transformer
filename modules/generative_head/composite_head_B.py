@@ -8,7 +8,7 @@ from .double_substitution_head import DoubleSubstitutionHead
 
 
 class CompositeHeadB(CompositeHeadA):
-    def __init__(self, spatial_encoding, num_vocab, embed_dim, resolution, spatial_dim, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, resolution, **_):
         """ Performs a transformation from transformer latent space into target value logits.
 
         Uses a different heads for each depth layer, possibly increasing the overall sequence lenght.
@@ -16,17 +16,19 @@ class CompositeHeadB(CompositeHeadA):
 
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
-            embded_dim: Dimension of the latent embedding space of the transformer.
+            embed_dim: Dimension of the latent embedding space of the transformer.
+            head_dim: Size of embedding dimensions used in the head layers.
+            n_layer: Number of layers used in each linear or convolution block.
             resolution: Spatial resolution of sequence encoding.
-            spatial_dim: Spatial dimension (2D/3D) of the sequence data.
         """
-        super(CompositeHeadB, self).__init__(num_vocab, embed_dim, resolution, spatial_dim)
+        super(CompositeHeadB, self).__init__(spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, resolution)
 
         kwargs = {
             "spatial_encoding": spatial_encoding,
             "num_vocab": num_vocab,
             "embed_dim": embed_dim,
-            "spatial_dim": spatial_dim,
+            "head_dim": head_dim,
+            "n_layer": n_layer
         }
 
         modules = []
@@ -37,13 +39,13 @@ class CompositeHeadB(CompositeHeadA):
         if resolution >= 8:
             modules += [LinearHead(**kwargs)]
         if resolution >= 16:
-            modules += [ConvolutionHeadA(**kwargs, conv_size=2**(spatial_dim - 2))]
+            modules += [ConvolutionHeadA(**kwargs, conv_size=4)]
         if resolution >= 32:
-            modules += [ConvolutionHeadA(**kwargs, conv_size=2**spatial_dim)]
+            modules += [ConvolutionHeadA(**kwargs, conv_size=8)]
         if resolution >= 64:
-            modules += [SubstitutionHead(**kwargs, conv_size=2**spatial_dim)]
+            modules += [SubstitutionHead(**kwargs, conv_size=8)]
         if resolution >= 128:
-            modules += [DoubleSubstitutionHead(**kwargs, conv_size=2**spatial_dim)]
+            modules += [DoubleSubstitutionHead(**kwargs, conv_size=8)]
 
         # embeddings
         self.heads = nn.ModuleList(modules)
@@ -52,8 +54,8 @@ class CompositeHeadB(CompositeHeadA):
             1: 1,
             2: 1,
             3: 1,
-            4: 2**(spatial_dim - 2),
-            5: 2**spatial_dim,
-            6: 2**spatial_dim,  # Note: 'substitution'
-            7: 2**spatial_dim,  # Note: 'double_substitution'
+            4: 4,
+            5: 8,
+            6: 8,  # Note: 'substitution'
+            7: 8,  # Note: 'double_substitution'
         }

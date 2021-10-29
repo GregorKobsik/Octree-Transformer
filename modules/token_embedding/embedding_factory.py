@@ -30,11 +30,11 @@ def _create_embedding(name, positional_encoding, num_vocab, embed_dim, resolutio
     """
 
     if positional_encoding == 'basic':
-        spatial_encoding = PositionalEncodingLearned(embed_dim, resolution, spatial_dim)
+        spatial_encoding = PositionalEncodingLearned(embed_dim, resolution)
     elif positional_encoding == 'look_ahead':
-        spatial_encoding = PositionalEncodingLearnedLookAhead(embed_dim, resolution, spatial_dim)
+        spatial_encoding = PositionalEncodingLearnedLookAhead(embed_dim, resolution)
     elif positional_encoding == 'look_ahead_split':
-        spatial_encoding = PositionalEncodingLearnedLookAheadSplit(embed_dim, resolution, spatial_dim)
+        spatial_encoding = PositionalEncodingLearnedLookAheadSplit(embed_dim, resolution)
     else:
         raise ValueError(f"ERROR: {positional_encoding} encoding not implemented.")
 

@@ -1,10 +1,10 @@
 import torch.nn as nn
 
-from ..utils import Deconvolution, BlockConvolution, Linear
+from ..utils import Deconvolution, Convolution, BlockConvolution, Linear
 
 
 class ConvolutionHeadA(nn.Module):
-    def __init__(self, spatial_encoding, num_vocab, embed_dim, spatial_dim, conv_size, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, conv_size, **_):
         """ Performs a convolutional transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -12,13 +12,24 @@ class ConvolutionHeadA(nn.Module):
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
+            head_dim: Size of embedding dimensions used in the head layers.
+            n_layer: Number of layers used in each linear or convolution block.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
             conv_size: Convolution kernel size and stride.
         """
         super(ConvolutionHeadA, self).__init__()
 
-        self.deconvolution = Deconvolution(embed_dim, embed_dim, conv_size)
-        self.linear = Linear(embed_dim, num_vocab)
+        deconvolution = [nn.GELU(), Deconvolution(embed_dim, head_dim, conv_size)]
+        for i in range(n_layer - 1):
+            deconvolution += [nn.GELU(), Convolution(head_dim, head_dim, (1,))]
+        self.deconvolution = nn.Sequential(*deconvolution)
+
+        linear = []
+        for i in range(n_layer - 1):
+            linear += [nn.GELU(), nn.Linear(head_dim, head_dim)]
+        linear += [nn.GELU(), Linear(head_dim, num_vocab)]
+        self.linear = nn.Sequential(*linear)
+
         self.spatial_encoding = spatial_encoding
 
     def forward(self, x, value, depth, pos):
@@ -45,7 +56,7 @@ class ConvolutionHeadA(nn.Module):
 
 
 class ConvolutionHeadAutoregressive(nn.Module):
-    def __init__(self, spatial_encoding, num_vocab, embed_dim, spatial_dim, conv_size, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, conv_size, **_):
         """ Performs a convolutional transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -53,17 +64,33 @@ class ConvolutionHeadAutoregressive(nn.Module):
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
+            head_dim: Size of embedding dimensions used in the head layers.
+            n_layer: Number of layers used in each linear or convolution block.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
             conv_size: Convolution kernel size and stride.
         """
         super(ConvolutionHeadAutoregressive, self).__init__()
 
         self.conv_size = conv_size
-        self.deconvolution = Deconvolution(embed_dim, embed_dim, conv_size)
-        self.convolution = BlockConvolution(embed_dim, embed_dim, conv_size)
-        self.linear = Linear(embed_dim, num_vocab)
+
+        deconvolution = [nn.GELU(), Deconvolution(embed_dim, head_dim, conv_size)]
+        for i in range(n_layer - 1):
+            deconvolution += [nn.GELU(), Convolution(head_dim, head_dim, (1,))]
+        self.deconvolution = nn.Sequential(*deconvolution)
+
+        convolution = [BlockConvolution(head_dim, head_dim, conv_size)]
+        for i in range(n_layer - 1):
+            convolution += [nn.GELU(), BlockConvolution(head_dim, head_dim, conv_size)]
+        self.convolution = nn.Sequential(*convolution)
+
+        linear = []
+        for i in range(n_layer - 1):
+            linear += [nn.GELU(), nn.Linear(head_dim, head_dim)]
+        linear += [nn.GELU(), Linear(head_dim, num_vocab)]
+        self.linear = nn.Sequential(*linear)
+
         self.spatial_encoding = spatial_encoding
-        self.value_embedding = nn.Embedding(num_vocab + 1, embed_dim, padding_idx=0)
+        self.value_embedding = nn.Embedding(num_vocab + 1, head_dim, padding_idx=0)
 
     def forward(self, x, value, depth, pos):
         """ Transforms the output of the transformer target value logits.

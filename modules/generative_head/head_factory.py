@@ -12,7 +12,7 @@ from .multi_conv_head_A import MultiConvolutionHeadA
 from .substitution_head import SubstitutionHead
 
 
-def _create_head(name, positional_encoding, num_vocab, embed_dim, resolution, spatial_dim):
+def _create_head(name, positional_encoding, num_vocab, embed_dim, head_dim, n_layer, resolution):
     """ Creates a generative head.
 
     If the module specified in `name` does not exist raises a value error.
@@ -22,8 +22,9 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, resolution, sp
         name: Defines which generative head will be created.
         num_vocab: Number of different vocabs in the vocabulary set.
         embed_dim: Size of embedding dimensions used by the transformer model.
+        head_dim: Size of embedding dimensions used in the head layers.
+        n_layer: Number of layers used in each linear or convolution block.
         resolution: Spatial resolution of sequence encoding.
-        spatial_dim: Spatial dimensionality of input data.
 
     Return:
         Generative head initialised with specified parameters.
@@ -32,11 +33,11 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, resolution, sp
     if positional_encoding == 'None':
         spatial_encoding = None
     elif positional_encoding == 'basic':
-        spatial_encoding = PositionalEncodingLearned(embed_dim, resolution, spatial_dim)
+        spatial_encoding = PositionalEncodingLearned(head_dim, resolution)
     elif positional_encoding == 'look_ahead':
-        spatial_encoding = PositionalEncodingLearnedLookAhead(embed_dim, resolution, spatial_dim)
+        spatial_encoding = PositionalEncodingLearnedLookAhead(head_dim, resolution)
     elif positional_encoding == 'look_ahead_split':
-        spatial_encoding = PositionalEncodingLearnedLookAheadSplit(embed_dim, resolution, spatial_dim)
+        spatial_encoding = PositionalEncodingLearnedLookAheadSplit(head_dim, resolution)
     else:
         raise ValueError(f"ERROR: {positional_encoding} encoding not implemented.")
 
@@ -44,18 +45,19 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, resolution, sp
         "spatial_encoding": spatial_encoding,
         "num_vocab": num_vocab,
         "embed_dim": embed_dim,
+        "head_dim": head_dim,
+        "n_layer": n_layer,
         "resolution": resolution,
-        "spatial_dim": spatial_dim,
-        "conv_size": 2 ** spatial_dim,
+        "conv_size": 8,
     }
 
     if name in ('generative_basic', 'linear', 'basic'):
         return LinearHead(**kwargs)
     elif name == 'discrete_transformation':
-        kwargs["num_vocab"] = num_vocab ** 2 ** spatial_dim
+        kwargs["num_vocab"] = num_vocab ** 2 ** 3
         return LinearHead(**kwargs)
     elif name in ('half_conv', 'half_conv_A'):
-        kwargs["conv_size"] = 2 ** (spatial_dim - 1)
+        kwargs["conv_size"] = 2 ** (3 - 1)
         return ConvolutionHeadA(**kwargs)
     elif name in ('single_conv', 'single_conv_A'):
         return ConvolutionHeadA(**kwargs)
@@ -77,7 +79,7 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, resolution, sp
         raise ValueError(f"ERROR: {name} head not implemented.")
 
 
-def create_head(name, positional_encoding, num_vocab, embed_dim, resolution, spatial_dim):
+def create_head(name, positional_encoding, num_vocab, embed_dim, head_dim, n_layer, resolution):
     """ Creates a generative head.
 
     If `name` is a list, creates a list of heads for each element of the list, otherwise a single one. If the module
@@ -89,14 +91,16 @@ def create_head(name, positional_encoding, num_vocab, embed_dim, resolution, spa
         name: Defines which generative head will be created.
         num_vocab: Number of different vocabs in the vocabulary set.
         embed_dim: Size of embedding dimensions used by the transformer model.
+        head_dim: Size of embedding dimensions used in the head layers.
+        n_layer: Number of layers used in each linear or convolution block.
         resolution: Spatial resolution of sequence encoding.
-        spatial_dim: Spatial dimensionality of input data.
 
     Return:
         Generative head or a list of heads initialised with specified parameters.
     """
     if type(name) == list:
         return nn.ModuleList(
-            [_create_head(n, positional_encoding, num_vocab, embed_dim, resolution, spatial_dim) for n in name])
+            [_create_head(n, positional_encoding, num_vocab, embed_dim, head_dim, n_layer, resolution) for n
+             in name])
     else:
-        return _create_head(name, positional_encoding, num_vocab, embed_dim, resolution, spatial_dim)
+        return _create_head(name, positional_encoding, num_vocab, embed_dim, head_dim, n_layer, resolution)

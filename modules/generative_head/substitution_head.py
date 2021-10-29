@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 
-from ..utils import BlockConvolution, Deconvolution, Linear
+from ..utils import Convolution, BlockConvolution, Deconvolution, Linear
 
 
 class SubstitutionHead(nn.Module):
-    def __init__(self, spatial_encoding, num_vocab, embed_dim, spatial_dim, conv_size, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, conv_size, **_):
         """ Performs a substitution transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -13,15 +13,30 @@ class SubstitutionHead(nn.Module):
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
+            head_dim: Size of embedding dimensions used in the head layers.
+            n_layer: Number of layers used in each linear or convolution block.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
             conv_size: Convolution kernel size and stride.
         """
         super(SubstitutionHead, self).__init__()
-        self.embed_dim = embed_dim
+        self.head_dim = head_dim
 
-        self.deconvolution_1 = Deconvolution(embed_dim, embed_dim, conv_size)
-        self.deconvolution_0 = Deconvolution(embed_dim, embed_dim, conv_size)
-        self.linear = Linear(embed_dim, num_vocab)
+        deconvolution_1 = [nn.GELU(), Deconvolution(embed_dim, head_dim, conv_size)]
+        for i in range(n_layer - 1):
+            deconvolution_1 += [nn.GELU(), Convolution(head_dim, head_dim, 1)]
+        self.deconvolution_1 = nn.Sequential(*deconvolution_1)
+
+        deconvolution_0 = [nn.GELU(), Deconvolution(head_dim, head_dim, 8)]
+        for i in range(n_layer - 1):
+            deconvolution_0 += [nn.GELU(), Convolution(head_dim, head_dim, 1)]
+        self.deconvolution_0 = nn.Sequential(*deconvolution_0)
+
+        linear = []
+        for i in range(n_layer - 1):
+            linear += [nn.GELU(), nn.Linear(head_dim, head_dim)]
+        linear += [nn.GELU(), Linear(head_dim, num_vocab)]
+        self.linear = nn.Sequential(*linear)
+
         self.spatial_encoding = spatial_encoding
 
     def forward(self, x, value, depth, pos):
@@ -56,7 +71,7 @@ class SubstitutionHead(nn.Module):
         mix_1 = torch.sum(val_1 == 2, dim=1)
 
         # create intermediate list to hold vectors
-        x_0 = torch.zeros((batch_size, torch.max(mix_1), self.embed_dim), device=value.device)
+        x_0 = torch.zeros((batch_size, torch.max(mix_1), self.head_dim), device=value.device)
 
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
         y_1 = self.deconvolution_1(x)
@@ -79,7 +94,7 @@ class SubstitutionHead(nn.Module):
 
 
 class SubstitutionHeadAutoregressive(nn.Module):
-    def __init__(self, spatial_encoding, num_vocab, embed_dim, spatial_dim, conv_size, **_):
+    def __init__(self, spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, conv_size, **_):
         """ Performs a substitution transformation from transformer latent space into target value logits.
 
         Note: The token value '0' is reserved as a padding value, which does not propagate gradients.
@@ -87,22 +102,43 @@ class SubstitutionHeadAutoregressive(nn.Module):
         Args:
             num_vocab: Number of different target token values (exclusive padding token '0').
             embded_dim: Dimension of the latent embedding space of the transformer.
+            head_dim: Size of embedding dimensions used in the head layers.
+            n_layer: Number of layers used in each linear or convolution block.
             spatial_dim: Spatial dimension (2D/3D) of the sequence data.
             conv_size: Convolution kernel size and stride.
         """
         super(SubstitutionHeadAutoregressive, self).__init__()
-        self.embed_dim = embed_dim
+        self.head_dim = head_dim
         self.conv_size = conv_size
 
-        self.deconvolution_1 = Deconvolution(embed_dim, embed_dim, conv_size)
-        self.deconvolution_0 = Deconvolution(embed_dim, embed_dim, conv_size)
+        deconvolution_1 = [nn.GELU(), Deconvolution(embed_dim, head_dim, conv_size)]
+        for i in range(n_layer - 1):
+            deconvolution_1 += [nn.GELU(), Convolution(head_dim, head_dim, 1)]
+        self.deconvolution_1 = nn.Sequential(*deconvolution_1)
 
-        self.convolution_1 = BlockConvolution(embed_dim, embed_dim, conv_size)
-        self.convolution_0 = BlockConvolution(embed_dim, embed_dim, conv_size)
+        deconvolution_0 = [nn.GELU(), Deconvolution(head_dim, head_dim, 8)]
+        for i in range(n_layer - 1):
+            deconvolution_0 += [nn.GELU(), Convolution(head_dim, head_dim, 1)]
+        self.deconvolution_0 = nn.Sequential(*deconvolution_0)
 
-        self.linear = Linear(embed_dim, num_vocab)
+        convolution_1 = []
+        for i in range(n_layer):
+            convolution_1 += [nn.GELU(), BlockConvolution(head_dim, head_dim, conv_size)]
+        self.convolution_1 = nn.Sequential(*convolution_1)
+
+        convolution_0 = [BlockConvolution(head_dim, head_dim, 8)]
+        for i in range(n_layer - 1):
+            convolution_0 += [nn.GELU(), BlockConvolution(head_dim, head_dim, 8)]
+        self.convolution_0 = nn.Sequential(*convolution_0)
+
+        linear = []
+        for i in range(n_layer - 1):
+            linear += [nn.GELU(), nn.Linear(head_dim, head_dim)]
+        linear += [nn.GELU(), Linear(head_dim, num_vocab)]
+        self.linear = nn.Sequential(*linear)
+
         self.spatial_encoding = spatial_encoding
-        self.value_embedding = nn.Embedding(num_vocab + 1, embed_dim, padding_idx=0)
+        self.value_embedding = nn.Embedding(num_vocab + 1, head_dim, padding_idx=0)
 
     def forward(self, x, value, depth, pos):
         """ Transforms the output of the transformer target value logits.
@@ -146,12 +182,12 @@ class SubstitutionHeadAutoregressive(nn.Module):
             emb_0 = emb_0 + self.spatial_encoding(pos[:, -len_0:])
         emb_0 = self.convolution_0(emb_0)
 
-        emb_1 = torch.zeros((batch_size, torch.max(len_1), self.embed_dim), dtype=torch.float, device=value.device)
+        emb_1 = torch.zeros((batch_size, torch.max(len_1), self.head_dim), dtype=torch.float, device=value.device)
         # substitite all mixed token embeddings of penultimate layer, with token embeddings of last layer
         emb_1[val_1 == 2] = emb_0[:, (self.conv_size - 1)::self.conv_size]  # [N, T1, C]
         emb_1 = self.convolution_1(emb_1)
 
-        x_0 = torch.zeros((batch_size, torch.max(mix_1), self.embed_dim), device=value.device)
+        x_0 = torch.zeros((batch_size, torch.max(mix_1), self.head_dim), device=value.device)
 
         # deconvolute the latent space - sequence length equals number of tokens in the penultimate layer
         y_1 = self.deconvolution_1(x)
