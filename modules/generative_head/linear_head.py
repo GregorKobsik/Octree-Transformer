@@ -27,10 +27,13 @@ class LinearHead(nn.Module):
             self.linear = Linear(embed_dim, num_vocab)
 
         # quick fix as this is the only place, where the output should be embed_dim instead of head_dim
-        self.spatial_encoding = nn.Sequential(
-            spatial_encoding,
-            nn.Linear(head_dim, embed_dim)
-        )
+        if spatial_encoding is not None:
+            self.spatial_encoding = nn.Sequential(
+                spatial_encoding,
+                nn.Linear(head_dim, embed_dim)
+            )
+        else:
+            self.spatial_encoding = None
 
     def forward(self, x, value, depth, pos):
         """ Transforms the output of the transformer target value logits.
