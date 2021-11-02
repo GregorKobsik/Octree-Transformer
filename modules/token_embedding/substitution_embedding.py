@@ -114,17 +114,6 @@ class SubstitutionEmbedding(nn.Module):
 
         return self.reduce(self.embedding(value, depth, position), value, depth, position)
 
-    def padding_mask(self, value, depth, position):
-        """ Creates a token padding mask, based on the value and depth sequence token.
-
-        Uses only every n-th value token as input, where n is the convolution kernel size.
-
-        Args:
-            value: Value token sequence, with penultimate and last layer.
-            depth: Depth token sequence, with penultimate and last layer.
-            position: Position token sequence, with penultimate and last layer.
-
-        Return:
-            Padding mask, where padding tokens '0' of the value sequence are masked out.
-        """
+    def padding_mask(self):
+        """ Returns a padding mask, where padding tokens '0' of the value sequence are masked out. """
         return self.mask

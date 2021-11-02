@@ -192,7 +192,7 @@ class Transformer(nn.Module):
         """
         # embed sequence tokens
         emb = self.embedding[idx](*seq_layer)  # [N, L, E]
-        seq_mask = self.embedding[idx].padding_mask(*seq_layer)  # [N, L]
+        seq_mask = self.embedding[idx].padding_mask()  # [N, L]
 
         # compute memory / process sequence
         return self.process(emb, memory, seq_mask, idx, is_final, cls)  # [N, L, E]

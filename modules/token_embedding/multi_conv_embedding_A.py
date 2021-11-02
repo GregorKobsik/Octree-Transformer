@@ -39,6 +39,9 @@ class MultiConvolutionEmbeddingA(nn.Module):
         Return:
             Reduced token sequence in the embedding space.
         """
+        # precompute padding mask
+        return padding_mask(value[:, ::self.chunk_size**2], device=value.device)
+
         # embed tokens into higher dimension
         x = self.embedding(value, depth, position)  # [N, S, C]
 
@@ -48,17 +51,6 @@ class MultiConvolutionEmbeddingA(nn.Module):
         # convolute tokens to reduce sequence length even more
         return self.convolution_2(y)  # [N, S'', E]
 
-    def padding_mask(self, value, depth, position):
-        """ Creates a token padding mask, based on the value and depth sequence token.
-
-        Uses only every n-th value token as input, where n is the convolution kernel size.
-
-        Args:
-            value: Value token sequence.
-            depth: Depth token sequence.
-            position: Position token sequence.
-
-        Return:
-            Padding mask, where padding tokens '0' of the value sequence are masked out.
-        """
-        return padding_mask(value[:, ::self.chunk_size**2], device=value.device)
+    def padding_mask(self):
+        """ Returns a padding mask, where padding tokens '0' of the value sequence are masked out. """
+        return self.mask

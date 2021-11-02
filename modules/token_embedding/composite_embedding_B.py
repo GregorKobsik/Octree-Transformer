@@ -139,17 +139,6 @@ class CompositeEmbeddingB(nn.Module):
 
         return self.reduce(self.embedding(value, depth, position), value, depth, position)
 
-    def padding_mask(self, value, depth, position):
-        """ Creates a token padding mask based on sequence tokens.
-
-        Note: Creates the padding mask during the forward pass. Only a getter function.
-
-        Args:
-            value: unused.
-            depth: unused.
-            position: unused.
-
-        Return:
-            Padding mask, where padding tokens '0' of the value sequence are masked out.
-        """
+    def padding_mask(self):
+        """ Returns a padding mask, where padding tokens '0' of the value sequence are masked out. """
         return self.mask
