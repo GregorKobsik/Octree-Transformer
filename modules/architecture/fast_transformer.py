@@ -109,7 +109,7 @@ class FastTransformer(nn.Module):
         output_seq = self.transformer(
             x=input_seq,  # [N, L, E]
             attn_mask=TriangularCausalMask(input_seq.shape[1], device=input_seq.device),  # [L, L]
-            length_mask=FullMask(mask=seq[0] != 0, device=input_seq.device),  # [N, L]
+            length_mask=FullMask(mask=self.embedding[0].padding_mask() == 0, device=input_seq.device),  # [N, L]
         )  # [S, N, E]
 
         # return logits

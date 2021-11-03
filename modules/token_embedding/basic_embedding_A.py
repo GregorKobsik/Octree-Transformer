@@ -17,6 +17,7 @@ class BasicEmbeddingA(nn.Module):
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
         super(BasicEmbeddingA, self).__init__()
+        self.mask = None
 
         # embeddings
         self.embedding = encoding
@@ -33,6 +34,8 @@ class BasicEmbeddingA(nn.Module):
         Return:
             Token sequence in the embedding space.
         """
+        # precompute padding mask
+        self.mask = padding_mask(value, device=value.device)
 
         return embedding
 
@@ -49,15 +52,6 @@ class BasicEmbeddingA(nn.Module):
         """
         return self.reduce(self.embedding(value, depth, position), value, depth, position)
 
-    def padding_mask(self, value, depth, position):
-        """ Creates a token padding mask based on sequence tokens.
-
-        Args:
-            value: Value token sequence.
-            depth: Depth token sequence.
-            position: Position token sequence.
-
-        Return:
-            Padding mask, where padding tokens '0' of the value sequence are masked out.
-        """
-        return padding_mask(value, device=value.device)
+    def padding_mask(self):
+        """ Returns a padding mask, where padding tokens '0' of the value sequence are masked out. """
+        return self.mask
