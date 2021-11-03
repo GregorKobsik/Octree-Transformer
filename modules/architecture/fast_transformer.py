@@ -114,3 +114,7 @@ class FastTransformer(nn.Module):
 
         # return logits
         return self.head[0](output_seq, *seq)  # [N, L, V]
+
+    def compute_logits(self, seq_layer, memory, idx, cls):
+        """ Alias for 'forward' to make this module compatible to old sampling pipeline. """
+        return self.forward([seq_layer], cls)
