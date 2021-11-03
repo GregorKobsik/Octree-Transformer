@@ -127,7 +127,6 @@ class DoubleSubstitutionHeadAutoRegressive(nn.Module):
         """
         super(DoubleSubstitutionHeadAutoRegressive, self).__init__()
         self.head_dim = head_dim
-        self.conv_size = conv_size
 
         deconvolution_2 = [nn.GELU(), Deconvolution(embed_dim, head_dim, conv_size)]
         for i in range(n_layer - 1):
@@ -214,12 +213,12 @@ class DoubleSubstitutionHeadAutoRegressive(nn.Module):
 
         emb_1 = torch.zeros((batch_size, torch.max(len_1), self.head_dim), dtype=torch.float, device=value.device)
         # substitute all mixed token embeddings of penultimate layer, with token embeddings of last layer
-        emb_1[val_1 == 2] = emb_0[:, (self.conv_size - 1)::self.conv_size]  # [N, T1, C]
+        emb_1[val_1 == 2] = emb_0[:, 7::8]  # [N, T1, C]
         emb_1 = self.convolution_1(emb_1)
 
         emb_2 = torch.zeros((batch_size, torch.max(len_2), self.head_dim), dtype=torch.float, device=value.device)
         # substitute all mixed token embeddings of third to last layer, with token embeddings of penultimate layer
-        emb_2[val_2 == 2] = emb_1[:, (self.conv_size - 1)::self.conv_size]  # [N, T1, C]
+        emb_2[val_2 == 2] = emb_1[:, 7::8]  # [N, T1, C]
         emb_2 = self.convolution_2(emb_2)
 
         # create intermediate list to hold vectors

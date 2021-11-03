@@ -5,6 +5,7 @@ from modules.utils import PositionalEncodingLearned, PositionalEncodingLearnedLo
 from .composite_head_A import CompositeHeadA, CompositeHeadAutoregressiveA
 from .composite_head_B import CompositeHeadB
 from .composite_head_C import CompositeHeadC
+from .composite_head_D import CompositeHeadD, CompositeHeadAutoregressiveD
 from .convolution_head_A import ConvolutionHeadA
 from .double_substitution_head import DoubleSubstitutionHead
 from .linear_head import LinearHead
@@ -75,6 +76,10 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, head_dim, n_la
         return CompositeHeadB(**kwargs)
     elif name in ('composite_C'):
         return CompositeHeadC(**kwargs)
+    elif name in ('composite_D'):
+        return CompositeHeadD(**kwargs)
+    elif name in ('composite_autoregressive_D'):
+        return CompositeHeadAutoregressiveD(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")
 
