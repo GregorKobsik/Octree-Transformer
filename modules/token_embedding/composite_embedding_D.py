@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 
-from .basic_embedding_A import BasicEmbeddingA
-from .convolution_embedding_A import ConvolutionEmbeddingA
+from .basic_embedding import BasicEmbedding
+from .convolution_embedding import ConvolutionEmbedding
 from .double_substitution_embedding import DoubleSubstitutionEmbedding
 from .substitution_embedding import SubstitutionEmbedding
 
@@ -34,17 +34,17 @@ class CompositeEmbeddingD(nn.Module):
 
         modules = []
         if resolution >= 2:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 4:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 8:
-            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=2)]
+            modules += [ConvolutionEmbedding(**kwargs, conv_size=4)]
         if resolution >= 16:
-            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=8)]
+            modules += [ConvolutionEmbedding(**kwargs, conv_size=8)]
         if resolution >= 32:
             modules += [SubstitutionEmbedding(**kwargs, conv_size=4)]
         if resolution >= 64:
-            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=2)]
+            modules += [SubstitutionEmbedding(**kwargs, conv_size=8)]
         if resolution >= 128:
             modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=4)]
         if resolution >= 256:
@@ -90,12 +90,12 @@ class CompositeEmbeddingD(nn.Module):
                     val_seq = val[dep == layer_depth]
                     dep_seq = dep[dep == layer_depth]
                     pos_seq = pos[dep == layer_depth]
-                elif layer_depth == 5:  # penultimate and last layer
+                elif layer_depth in (5, 6):  # penultimate and last layer
                     emb_seq = torch.cat([emb[dep == (layer_depth - 1)], emb[dep == layer_depth]])
                     val_seq = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
                     dep_seq = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
                     pos_seq = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
-                elif layer_depth in (6, 7, 8):  # third-, second- and last layer
+                elif layer_depth in (7, 8):  # third-, second- and last layer
                     emb_seq = torch.cat(
                         [emb[dep == (layer_depth - 2)], emb[dep == (layer_depth - 1)], emb[dep == layer_depth]]
                     )

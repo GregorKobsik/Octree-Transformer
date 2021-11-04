@@ -2,9 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 
-from .basic_embedding_A import BasicEmbeddingA
-from .convolution_embedding_A import ConvolutionEmbeddingA
-from .double_substitution_embedding import DoubleSubstitutionEmbedding
+from .basic_embedding import BasicEmbedding
+from .convolution_embedding import ConvolutionEmbedding
 from .substitution_embedding import SubstitutionEmbedding
 
 
@@ -34,19 +33,17 @@ class CompositeEmbeddingB(nn.Module):
 
         modules = []
         if resolution >= 2:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 4:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 8:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 16:
-            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=2 ** (spatial_dim - 2))]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 32:
-            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=2 ** spatial_dim)]
+            modules += [ConvolutionEmbedding(**kwargs, conv_size=8)]
         if resolution >= 64:
-            modules += [SubstitutionEmbedding(**kwargs, conv_size=2 ** spatial_dim)]
-        if resolution >= 128:
-            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=2 ** spatial_dim)]
+            modules += [SubstitutionEmbedding(**kwargs, conv_size=8)]
 
         # embeddings
         self.embedding = encoding
@@ -93,7 +90,7 @@ class CompositeEmbeddingB(nn.Module):
                     val_seq = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
                     dep_seq = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
                     pos_seq = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
-                elif layer_depth == 7:  # third-, second- and last layer
+                elif layer_depth in (7, 8):  # third-, second- and last layer
                     emb_seq = torch.cat(
                         [emb[dep == (layer_depth - 2)], emb[dep == (layer_depth - 1)], emb[dep == layer_depth]]
                     )

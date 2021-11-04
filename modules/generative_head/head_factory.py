@@ -2,11 +2,11 @@ import torch.nn as nn
 
 from modules.utils import PositionalEncodingLearned, PositionalEncodingLearnedLookAhead, \
     PositionalEncodingLearnedLookAheadSplit
-from .composite_head_A import CompositeHeadA, CompositeHeadAutoregressiveA
+from .composite_head_A import CompositeHeadA
 from .composite_head_B import CompositeHeadB
 from .composite_head_C import CompositeHeadC
-from .composite_head_D import CompositeHeadD, CompositeHeadAutoregressiveD
-from .convolution_head_A import ConvolutionHeadA
+from .composite_head_D import CompositeHeadD
+from .convolution_head import ConvolutionHead
 from .double_substitution_head import DoubleSubstitutionHead
 from .linear_head import LinearHead
 from .multi_conv_head_A import MultiConvolutionHeadA
@@ -59,9 +59,9 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, head_dim, n_la
         return LinearHead(**kwargs)
     elif name in ('half_conv', 'half_conv_A'):
         kwargs["conv_size"] = 2 ** (3 - 1)
-        return ConvolutionHeadA(**kwargs)
+        return ConvolutionHead(**kwargs)
     elif name in ('single_conv', 'single_conv_A'):
-        return ConvolutionHeadA(**kwargs)
+        return ConvolutionHead(**kwargs)
     elif name == 'multi_conv_A':
         return MultiConvolutionHeadA(**kwargs)
     elif name == 'substitution':
@@ -70,16 +70,12 @@ def _create_head(name, positional_encoding, num_vocab, embed_dim, head_dim, n_la
         return DoubleSubstitutionHead(**kwargs)
     elif name in ('composite', 'composite_A'):
         return CompositeHeadA(**kwargs)
-    elif name in ('composite_autoregressive_A'):
-        return CompositeHeadAutoregressiveA(**kwargs)
     elif name in ('composite_B'):
         return CompositeHeadB(**kwargs)
     elif name in ('composite_C'):
         return CompositeHeadC(**kwargs)
     elif name in ('composite_D'):
         return CompositeHeadD(**kwargs)
-    elif name in ('composite_autoregressive_D'):
-        return CompositeHeadAutoregressiveD(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} head not implemented.")
 
