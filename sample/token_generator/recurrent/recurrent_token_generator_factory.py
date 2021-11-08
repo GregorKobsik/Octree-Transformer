@@ -1,4 +1,4 @@
-from .recurrent_composite_generator import RecurrentCompositeGeneratorAutoregressive
+from .recurrent_composite_generator import RecurrentCompositeGenerator
 
 
 def _create_recurrent_token_generator(head, model, spatial_dim):
@@ -20,8 +20,8 @@ def _create_recurrent_token_generator(head, model, spatial_dim):
         'head_fn': model.generative_head,
     }
 
-    if head in ('composite_autoregressive_A'):
-        return RecurrentCompositeGeneratorAutoregressive(num_tokens=[1, 1, 1, 4, 8, 8, 8, 8], **kwargs)
+    if head in ('composite_A'):
+        return RecurrentCompositeGenerator(num_tokens=[1, 1, 1, 4, 8, 8, 8, 8], **kwargs)
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 

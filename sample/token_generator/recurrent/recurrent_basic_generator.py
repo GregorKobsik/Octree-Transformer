@@ -3,7 +3,7 @@ import torch
 from tqdm.auto import trange
 
 
-class RecurrentBasicGeneratorAutoregressive:
+class RecurrentBasicGenerator:
     def __init__(self, embed_fn, transformer_fn, head_fn, num_tokens=1, **_):
         """ Create token generator instance which samples 'num_tokens' in one pass.
 
@@ -37,7 +37,7 @@ class RecurrentBasicGeneratorAutoregressive:
         token_idx = 0
         memory_idx = len(memory[0]) if memory is not None else 0
 
-        # sample tokens autoregressively
+        # sample tokens autoregressive
         for idx in trange(len(val[-1]) // self.kernel_size, leave=False, desc="Tokens"):
             # embed sequence
             seq = (torch.cat(val).unsqueeze(0), torch.cat(dep).unsqueeze(0), torch.cat(pos).unsqueeze(0))

@@ -1,10 +1,10 @@
 import torch
 
-from .recurrent_basic_generator import RecurrentBasicGeneratorAutoregressive
-from .recurrent_substitution_generator import RecurrentSubstitutionGeneratorAutoregressive
+from .recurrent_basic_generator import RecurrentBasicGenerator
+from .recurrent_substitution_generator import RecurrentSubstitutionGenerator
 
 
-class RecurrentCompositeGeneratorAutoregressive:
+class RecurrentCompositeGenerator:
     def __init__(self, embed_fn, transformer_fn, head_fn, num_tokens=[1], **_):
         """ Create token generator instance for a 'basic' head.
 
@@ -22,7 +22,7 @@ class RecurrentCompositeGeneratorAutoregressive:
         self.num_tokens_list = num_tokens
 
     def __call__(self, val, dep, pos, memory=None, state=None, temperature=1.0, cls=None, **_):
-        """ Sample autoregressively current value token sequence and return sampled value sequence.
+        """ Sample autoregressive current value token sequence and return sampled value sequence.
 
         Args:
             val: Value token sequence of current layer.
@@ -42,10 +42,10 @@ class RecurrentCompositeGeneratorAutoregressive:
         num_tokens = self.num_tokens_list[cur_depth - 1]
         # create a generator according to layer depth
         if cur_depth < 6:
-            generator = RecurrentBasicGeneratorAutoregressive(num_tokens=num_tokens, **self.model_fn)
+            generator = RecurrentBasicGenerator(num_tokens=num_tokens, **self.model_fn)
         elif cur_depth == 6:  # 'substitution'
-            generator = RecurrentSubstitutionGeneratorAutoregressive(num_tokens=num_tokens, **self.model_fn)
+            generator = RecurrentSubstitutionGenerator(num_tokens=num_tokens, **self.model_fn)
         # else:  # 'double_substitution'
-        #     generator = RecurrentDoubleSubstitutionGeneratorAutoregressive(num_tokens=num_tokens, **self.model_fn)
+        #     generator = RecurrentDoubleSubstitutionGenerator(num_tokens=num_tokens, **self.model_fn)
         # sample a single layer
         return generator(val, dep, pos, memory, state, temperature, cls=cls)

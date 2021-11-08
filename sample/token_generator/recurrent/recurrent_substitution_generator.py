@@ -3,7 +3,7 @@ import torch
 from tqdm.auto import trange
 
 
-class RecurrentSubstitutionGeneratorAutoregressive:
+class RecurrentSubstitutionGenerator:
     def __init__(self, embed_fn, transformer_fn, head_fn, num_tokens=8, **_):
         """ Create token generator instance which samples 'num_tokens' in one pass.
 
@@ -38,7 +38,7 @@ class RecurrentSubstitutionGeneratorAutoregressive:
         second_last_idx = 0
         memory_idx = len(memory[0]) if memory is not None else 0
 
-        # sample tokens autoregressively
+        # sample tokens autoregressive
         for idx in trange(0, len(val[-2]) // self.kernel_size, leave=False, desc="Tokens"):
             # compute number of tokens which can be sampled
             mix_second_last = torch.sum(val[-2][second_last_idx:second_last_idx + self.kernel_size] == 2)
