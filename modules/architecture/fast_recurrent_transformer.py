@@ -98,17 +98,51 @@ class FastRecurrentTransformer(nn.Module):
         """
         seq = sequence[0]
 
-        # embed sequence tokens, get input sequence
-        input_seq = self.embedding[0](*seq)  # [N, L, E]
-
-        # shift sequence by one token to right to predict tokens autoregressively
-        input_seq = self._prepend_sos_token(input_seq, cls)  # [N, L, E]
+        # embed sequence tokens and shift sequence by one token to right
+        input_seq = self.token_embedding(seq, cls)  # [N, L, E]
 
         # process input sequence by the Transformer stack, get output sequence
-        output_seq = torch.zeros_like(input_seq)
+        memory = torch.zeros_like(input_seq)
         state = None
         for i in range(input_seq.shape[1]):
-            output_seq[:, i], state = self.transformer(input_seq[:, i], state=state)
+            memory[:, i], state = self.transformer_module(input_seq[:, i], state=state)
 
         # return logits
-        return self.head[0](output_seq, *seq)  # [N, L, V]
+        return self.generative_head(memory, seq)  # [N, L, V]
+
+    def token_embedding(self, x, cls):
+        """ Embeds the octree sequence and prepends a class or sos token.
+
+        Args:
+            x: Octree sequence ([N, L], [N, L], [N, L, A]).
+
+        Returns:
+            Input token sequence.
+        """
+        # embed sequence tokens, get input sequence
+        input_seq = self.embedding[0](*x)  # [N, L, E]
+
+        # shift sequence by one token to right to predict tokens autoregressively
+        return self._prepend_sos_token(input_seq, cls)  # [N, L, E]
+
+    def transformer_module(self, x, state):
+        """ Performs a single Transformer module operation on the given input
+
+        Args:
+            x: A single input sequence token [N, E].
+            state: The Transformer state.
+        """
+        return self.transformer(x, state=state)
+
+    def generative_head(self, x, seq, last_only=True):
+        """ Process the generative head once and return logits for given output token sequence.
+
+        Args:
+            x: Output token sequence [N, L, E].
+            seq: Original octree sequence.
+            last_only: Process only last depth layer.
+
+        Returns:
+            Logits for each output token.
+        """
+        return self.head[0](x, *seq, last_only)  # [N, L, V]

@@ -5,17 +5,22 @@ from .layer_sampler import create_sampler
 
 
 class ShapeSampler:
-    def __init__(self, checkpoint_path: str, device="cuda"):
+    def __init__(self, checkpoint_path: str, fast_recurrent=True, device="cuda"):
         """ Initializes the sampler class. Loads the correct model and sets functions and parameters according to the
             given model.
 
         Args:
             checkpoint_path: Relative or absolute path to a checkpoint file ("*.ckpt") containing a trained model.
+            fast_recurrent: Changes the 'fast' architecture of the Transformer into an equivalent, but recurrent
+                formulation durring inference time.
             device: Selects the device on which the sampling should be performed. Either "cpu" or "cuda" (gpu-support)
                 available.
         """
         # load and restore model from checkpoint
-        pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path)
+        if fast_recurrent is True:
+            pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path, architecture='fast-recurrent')
+        else:
+            pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path)
         pl_module.freeze()
 
         # extract hyperparameters from the model
@@ -36,8 +41,14 @@ class ShapeSampler:
             device,
         )
 
-    def sample_preconditioned(self, precondition, precondition_resolution=1, target_resolution=32, temperature=1.0,
-                              cls=None):
+    def sample_preconditioned(
+        self,
+        precondition,
+        precondition_resolution=1,
+        target_resolution=32,
+        temperature=1.0,
+        cls=None,
+    ):
         """ Samples a single array of elements from the model.
 
         Args:

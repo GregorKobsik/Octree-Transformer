@@ -64,7 +64,7 @@ class CompositeHeadA(nn.Module):
             8: 8,  # Note: 'double_substitution'
         }
 
-    def forward(self, x, value, depth, position):
+    def forward(self, x, value, depth, position, last_only=False):
         """ Transforms the output of the transformer target value logits.
 
         Args:
@@ -72,6 +72,7 @@ class CompositeHeadA(nn.Module):
             value: Target value token sequence [N, T].
             depth: Target depth token sequence [N, T].
             position: Target position token sequence [N, T, A].
+            last_only: Flag to switch processing, to decode only last depth layer.
 
         Return
             Logits of target value sequence.
@@ -87,6 +88,9 @@ class CompositeHeadA(nn.Module):
             # compute logits layerwise
             for layer_idx, head in enumerate(self.heads):
                 layer_depth = layer_idx + 1
+
+                if last_only and layer_depth != batch_depth:
+                    continue  # process only last depth layer
                 if layer_depth > batch_depth:
                     break  # reached max depth layer
 
@@ -133,10 +137,6 @@ class CompositeHeadA(nn.Module):
                 # filter latent vector of current layer
                 layer_vec = latent_vec[vector_idx:vector_idx + num_vectors]
 
-                # handle clipped values in transformer
-                if len(layer_vec) == 0:
-                    continue
-
                 # compute layer logits
                 layer_logits = head(
                     layer_vec.unsqueeze(0),
@@ -169,8 +169,15 @@ class CompositeHeadAutoregressiveA(CompositeHeadA):
             n_layer: Number of layers used in each linear or convolution block.
             resolution: Spatial resolution of sequence encoding.
         """
-        super(CompositeHeadAutoregressiveA, self).__init__(spatial_encoding, num_vocab, embed_dim, head_dim, n_layer,
-                                                           resolution, **_)
+        super(CompositeHeadAutoregressiveA, self).__init__(
+            spatial_encoding,
+            num_vocab,
+            embed_dim,
+            head_dim,
+            n_layer,
+            resolution,
+            **_,
+        )
 
         kwargs = {
             "spatial_encoding": spatial_encoding,

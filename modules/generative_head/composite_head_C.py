@@ -58,7 +58,7 @@ class CompositeHeadC(nn.Module):
             6: 8,  # Note: 'double_substitution'
         }
 
-    def forward(self, x, value, depth, position):
+    def forward(self, x, value, depth, position, last_only=False):
         """ Transforms the output of the transformer target value logits.
 
         Args:
@@ -81,6 +81,9 @@ class CompositeHeadC(nn.Module):
             # compute logits layerwise
             for layer_idx, head in enumerate(self.heads):
                 layer_depth = layer_idx + 1
+
+                if last_only and layer_depth != batch_depth:
+                    continue  # process only last depth layer
                 if layer_depth > batch_depth:
                     break  # reached max depth layer
 

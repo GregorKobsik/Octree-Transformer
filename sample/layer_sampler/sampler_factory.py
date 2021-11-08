@@ -2,6 +2,7 @@ from .autoencoder_sampler import AutoencoderSampler
 from .encoder_only_sampler import EncoderOnlySampler
 from .encoder_decoder_sampler import EncoderDecoderSampler
 from .encoder_multi_decoder_sampler import EncoderMultiDecoderSampler
+from .recurrent_sampler import RecurrentSampler
 
 
 def create_sampler(
@@ -38,6 +39,8 @@ def create_sampler(
         return AutoencoderSampler(**kwargs)
     elif architecture in ("encoder_only", "fast", "pytorch"):
         return EncoderOnlySampler(**kwargs)
+    elif architecture in ("fast-recurrent"):
+        return RecurrentSampler(**kwargs)
     elif architecture == "encoder_decoder":
         return EncoderDecoderSampler(**kwargs)
     elif architecture == "encoder_multi_decoder":
