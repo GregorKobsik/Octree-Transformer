@@ -1,5 +1,4 @@
-from .recurrent_basic_generator import RecurrentBasicGenerator
-from .recurrent_composite_generator import RecurrentCompositeGenerator, RecurrentCompositeGeneratorAutoregressive
+from .recurrent_composite_generator import RecurrentCompositeGeneratorAutoregressive
 
 
 def _create_recurrent_token_generator(head, model, spatial_dim):
@@ -21,23 +20,8 @@ def _create_recurrent_token_generator(head, model, spatial_dim):
         'head_fn': model.generative_head,
     }
 
-    if head in ('generative_basic', 'basic', 'linear'):
-        return RecurrentBasicGenerator(num_tokens=1, **kwargs)
-    if head in ('half_conv', 'half_conv_A'):
-        return RecurrentBasicGenerator(num_tokens=4, **kwargs)
-    if head in ('single_conv', 'single_conv_A'):
-        return RecurrentBasicGenerator(num_tokens=8, **kwargs)
-    # if head in ('substitution'):
-    #     return RecurrentSubstitutionGenerator(model.compute_logits, 2**spatial_dim)
-    # if head in ('double_substitution'):
-    #     return RecurrentDoubleSubstitutionGenerator(model.compute_logits, 2**spatial_dim)
-    if head in ('composite', 'composite_A', 'composite_B'):
-        return RecurrentCompositeGenerator(num_tokens=[1, 1, 1, 4, 8, 8, 8, 8], **kwargs)
     if head in ('composite_autoregressive_A'):
         return RecurrentCompositeGeneratorAutoregressive(num_tokens=[1, 1, 1, 4, 8, 8, 8, 8], **kwargs)
-    # if head in ('composite_B'):
-    #     size = 2**spatial_dim
-    #     return RecurrentCompositeGenerator(model.compute_logits, [1, 1, 1, size // 4, size, size, size, size])
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 

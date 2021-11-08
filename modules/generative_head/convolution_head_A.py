@@ -111,7 +111,7 @@ class ConvolutionHeadAutoregressive(nn.Module):
         # add spatial decoding if available
         if self.spatial_encoding is not None:
             emb = emb + self.spatial_encoding(pos)
-        emb = self.convolution(emb)
+        emb = self.convolution(emb[:, :x.shape[1]])
 
         x = x + emb
 

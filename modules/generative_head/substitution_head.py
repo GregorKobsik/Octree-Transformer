@@ -180,7 +180,7 @@ class SubstitutionHeadAutoregressive(nn.Module):
         # add spatial decoding if available
         if self.spatial_encoding is not None:
             emb_0 = emb_0 + self.spatial_encoding(pos[:, -len_0:])
-        emb_0 = self.convolution_0(emb_0)
+        emb_0 = self.convolution_0(emb_0[:, :mix_1 * 8])
 
         emb_1 = torch.zeros((batch_size, torch.max(len_1), self.head_dim), dtype=torch.float, device=value.device)
         # substitite all mixed token embeddings of penultimate layer, with token embeddings of last layer
