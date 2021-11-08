@@ -2,11 +2,12 @@ import torch.nn as nn
 
 from modules.utils import Embedding, PositionalEncodingLearned, PositionalEncodingLearnedLookAhead, \
     PositionalEncodingLearnedLookAheadSplit
-from .basic_embedding_A import BasicEmbeddingA
+from .basic_embedding import BasicEmbedding
 from .composite_embedding_A import CompositeEmbeddingA
 from .composite_embedding_B import CompositeEmbeddingB
 from .composite_embedding_C import CompositeEmbeddingC
-from .convolution_embedding_A import ConvolutionEmbeddingA
+from .composite_embedding_D import CompositeEmbeddingD
+from .convolution_embedding import ConvolutionEmbedding
 from .double_substitution_embedding import DoubleSubstitutionEmbedding
 from .multi_conv_embedding_A import MultiConvolutionEmbeddingA
 from .substitution_embedding import SubstitutionEmbedding
@@ -50,15 +51,15 @@ def _create_embedding(name, positional_encoding, num_vocab, embed_dim, resolutio
     }
 
     if name in ('basic', 'basic_A'):
-        return BasicEmbeddingA(**kwargs)
+        return BasicEmbedding(**kwargs)
     elif name == 'discrete_transformation':
         kwargs['num_vocab'] = num_vocab ** 2 ** spatial_dim
-        return BasicEmbeddingA(**kwargs)
+        return BasicEmbedding(**kwargs)
     elif name in ('half_conv', 'half_conv_A'):
         kwargs['conv_size'] = 2 ** (spatial_dim - 1)
-        return ConvolutionEmbeddingA(**kwargs)
+        return ConvolutionEmbedding(**kwargs)
     elif name in ('single_conv', 'single_conv_A'):
-        return ConvolutionEmbeddingA(**kwargs)
+        return ConvolutionEmbedding(**kwargs)
     elif name == 'multi_conv_A':
         return MultiConvolutionEmbeddingA(**kwargs)
     elif name == 'substitution':
@@ -71,6 +72,8 @@ def _create_embedding(name, positional_encoding, num_vocab, embed_dim, resolutio
         return CompositeEmbeddingB(**kwargs)
     elif name in ('composite_C'):
         return CompositeEmbeddingC(**kwargs)
+    elif name in ('composite_D'):
+        return CompositeEmbeddingD(**kwargs)
     else:
         raise ValueError(f"ERROR: {name} embedding not implemented.")
 

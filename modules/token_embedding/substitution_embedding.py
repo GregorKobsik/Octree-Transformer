@@ -24,7 +24,7 @@ class SubstitutionEmbedding(nn.Module):
             conv_size: Convolution kernel size and stride.
         """
         super(SubstitutionEmbedding, self).__init__()
-        self.chunck_size = conv_size
+        self.conv_size = conv_size
         self.spatial_dim = spatial_dim
         self.mask = None
 
@@ -32,7 +32,7 @@ class SubstitutionEmbedding(nn.Module):
         self.embedding = encoding
 
         # convolutions
-        self.convolution_0 = Convolution(embed_dim, embed_dim, conv_size)
+        self.convolution_0 = Convolution(embed_dim, embed_dim, 8)
         self.convolution_1 = Convolution(embed_dim, embed_dim, conv_size)
 
     def reduce(self, embedding, value, depth, position):
@@ -83,13 +83,13 @@ class SubstitutionEmbedding(nn.Module):
             pos_0[i, :len_0[i]] = position[i, len_1[i]:len_1[i] + len_0[i]]
 
         # precompute padding mask
-        self.mask = padding_mask(val_1[:, ::self.chunck_size], device=value.device)
+        self.mask = padding_mask(val_1[:, ::self.conv_size], device=value.device)
 
         # convolute embedded tokens of last layer
         y_0 = self.convolution_0(x_0)  # [N, T2', C]
 
         # substitite all mixed token embeddings of penultimate layer, with token embeddings of last layer
-        x_1[val_1 == 2] = y_0[val_0[:, ::self.chunck_size] != 0]  # [N, T1, C]
+        x_1[val_1 == 2] = y_0[val_0[:, ::8] != 0]  # [N, T1, C]
 
         # convolute substituted tokens of penultimate layer
         return self.convolution_1(x_1.contiguous())  # [N, T1', E]

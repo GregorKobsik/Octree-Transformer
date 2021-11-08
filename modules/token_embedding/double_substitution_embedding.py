@@ -32,8 +32,8 @@ class DoubleSubstitutionEmbedding(nn.Module):
         self.embedding = encoding
 
         # convolutions
-        self.convolution_0 = Convolution(embed_dim, embed_dim, conv_size)
-        self.convolution_1 = Convolution(embed_dim, embed_dim, conv_size)
+        self.convolution_0 = Convolution(embed_dim, embed_dim, 8)
+        self.convolution_1 = Convolution(embed_dim, embed_dim, 8)
         self.convolution_2 = Convolution(embed_dim, embed_dim, conv_size)
 
     def reduce(self, embedding, value, depth, position):
@@ -103,12 +103,12 @@ class DoubleSubstitutionEmbedding(nn.Module):
         # convolute embedded tokens of last layer
         y_0 = self.convolution_0(x_0)  # [N, S'_0, E // 4]
         # substitite all mixed token embeddings of second-last layer, with token embeddings of last layer
-        x_1[val_1 == 2] = y_0[val_0[:, ::self.conv_size] != 0]  # [N, S_1, E // 4]
+        x_1[val_1 == 2] = y_0[val_0[:, ::8] != 0]  # [N, S_1, E // 4]
 
         # convolute substituted tokens of second-last layer
         y_1 = self.convolution_1(x_1.contiguous())  # [N, S'_1, E // 4]
         # substitite all mixed token embeddings of third-last layer, with token embeddings of second-last layer
-        x_2[val_2 == 2] = y_1[val_1[:, ::self.conv_size] != 0]  # [N, S_2, E // 2]
+        x_2[val_2 == 2] = y_1[val_1[:, ::8] != 0]  # [N, S_2, E // 2]
 
         # convolute substituted tokens of second-last layer
         return self.convolution_2(x_2.contiguous())  # [N, S'_2, E]

@@ -2,10 +2,9 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 
+from .convolution_head import ConvolutionHead
 from .linear_head import LinearHead
-from .convolution_head_A import ConvolutionHeadA
 from .substitution_head import SubstitutionHead
-from .double_substitution_head import DoubleSubstitutionHead
 
 
 class CompositeHeadC(nn.Module):
@@ -38,13 +37,13 @@ class CompositeHeadC(nn.Module):
         if resolution >= 4:
             modules += [LinearHead(**kwargs)]
         if resolution >= 8:
-            modules += [ConvolutionHeadA(**kwargs, conv_size=4)]
+            modules += [ConvolutionHead(**kwargs, conv_size=2)]
         if resolution >= 16:
-            modules += [ConvolutionHeadA(**kwargs, conv_size=8)]
+            modules += [ConvolutionHead(**kwargs, conv_size=4)]
         if resolution >= 32:
-            modules += [SubstitutionHead(**kwargs, conv_size=8)]
+            modules += [ConvolutionHead(**kwargs, conv_size=8)]
         if resolution >= 64:
-            modules += [DoubleSubstitutionHead(**kwargs, conv_size=8)]
+            modules += [SubstitutionHead(**kwargs, conv_size=4)]
 
         # embeddings
         self.heads = nn.ModuleList(modules)
@@ -52,10 +51,10 @@ class CompositeHeadC(nn.Module):
         self.reduction_factor = {
             1: 1,
             2: 1,
-            3: 4,
-            4: 8,
-            5: 8,  # Note: 'substitution'
-            6: 8,  # Note: 'double_substitution'
+            3: 2,
+            4: 4,
+            5: 8,
+            6: 4,  # Note: 'substitution'
         }
 
     def forward(self, x, value, depth, position, last_only=False):
@@ -87,21 +86,21 @@ class CompositeHeadC(nn.Module):
                 if layer_depth > batch_depth:
                     break  # reached max depth layer
 
-                if layer_depth < 5:
+                if layer_depth < 6:
                     # get value, depth and position sequence of current layer
                     layer_val = val[dep == layer_depth]
                     layer_dep = dep[dep == layer_depth]
                     layer_pos = pos[dep == layer_depth]
                     # compute number of vectors in latent vector of current layer
                     num_vectors = torch.sum(dep == layer_depth) // self.reduction_factor[layer_depth]
-                elif layer_depth == 5:  # handle substitution
+                elif layer_depth == 6:  # handle substitution
                     # get value, depth and position sequence of previous and current layer
                     layer_val = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
                     layer_dep = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
                     layer_pos = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
                     # compute number of vectors in latent vector of current layer
                     num_vectors = torch.sum(dep == (layer_depth - 1)) // self.reduction_factor[layer_depth]
-                elif layer_depth == 6:  # handle double substitution
+                elif layer_depth in (7,8):  # handle double substitution
                     # get value, depth and position sequence of previous and current layer
                     layer_val = torch.cat(
                         [

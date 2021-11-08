@@ -4,10 +4,11 @@ from torch.nn.utils.rnn import pad_sequence
 
 from .basic_embedding import BasicEmbedding
 from .convolution_embedding import ConvolutionEmbedding
+from .double_substitution_embedding import DoubleSubstitutionEmbedding
 from .substitution_embedding import SubstitutionEmbedding
 
 
-class CompositeEmbeddingB(nn.Module):
+class CompositeEmbeddingD(nn.Module):
     def __init__(self, encoding, num_vocab, embed_dim, resolution, spatial_dim, **_):
         """ Performs an embedding of token sequences into an embedding space of higher dimension.
 
@@ -21,7 +22,7 @@ class CompositeEmbeddingB(nn.Module):
             resolution: Spatial resolution of sequence encoding.
             spatial_dim: Spatial dimension (2D, 3D, ...) of sequence encoding.
         """
-        super(CompositeEmbeddingB, self).__init__()
+        super(CompositeEmbeddingD, self).__init__()
 
         kwargs = {
             "encoding": None,
@@ -37,13 +38,17 @@ class CompositeEmbeddingB(nn.Module):
         if resolution >= 4:
             modules += [BasicEmbedding(**kwargs)]
         if resolution >= 8:
-            modules += [BasicEmbedding(**kwargs)]
+            modules += [ConvolutionEmbedding(**kwargs, conv_size=4)]
         if resolution >= 16:
-            modules += [BasicEmbedding(**kwargs)]
-        if resolution >= 32:
             modules += [ConvolutionEmbedding(**kwargs, conv_size=8)]
+        if resolution >= 32:
+            modules += [SubstitutionEmbedding(**kwargs, conv_size=4)]
         if resolution >= 64:
             modules += [SubstitutionEmbedding(**kwargs, conv_size=8)]
+        if resolution >= 128:
+            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=4)]
+        if resolution >= 256:
+            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=8)]
 
         # embeddings
         self.embedding = encoding
@@ -80,12 +85,12 @@ class CompositeEmbeddingB(nn.Module):
                     break  # reached max depth layer
 
                 # filter layers for embeddings
-                if layer_depth < 6:  # only last layer
+                if layer_depth < 5:  # only last layer
                     emb_seq = emb[dep == layer_depth]
                     val_seq = val[dep == layer_depth]
                     dep_seq = dep[dep == layer_depth]
                     pos_seq = pos[dep == layer_depth]
-                elif layer_depth == 6:  # penultimate and last layer
+                elif layer_depth in (5, 6):  # penultimate and last layer
                     emb_seq = torch.cat([emb[dep == (layer_depth - 1)], emb[dep == layer_depth]])
                     val_seq = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
                     dep_seq = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])

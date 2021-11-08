@@ -13,8 +13,9 @@ class CheckSequenceLenghtTransform():
         'double_substitution': 2,  # invalid single module embedding
         'composite': [0, 0, 0, 0, 0, 1, 2, 2],
         'composite_A': [0, 0, 0, 0, 0, 1, 2, 2],
-        'composite_B': [0, 0, 0, 0, 0, 1, 2, 2],
-        'composite_C': [0, 0, 0, 0, 1, 2],
+        'composite_B': [0, 0, 0, 0, 0, 1],
+        'composite_C': [0, 0, 0, 0, 0, 1],
+        'composite_D': [0, 0, 0, 0, 1, 1, 2, 2],
     }
 
     _convolution_factor_map = {
@@ -29,8 +30,9 @@ class CheckSequenceLenghtTransform():
         'double_substitution': 8,
         'composite': [1, 1, 1, 4, 8, 8, 8, 8],
         'composite_A': [1, 1, 1, 4, 8, 8, 8, 8],
-        'composite_B': [1, 1, 1, 2, 8, 8, 8, 8],
-        'composite_C': [1, 1, 4, 8, 8, 8],
+        'composite_B': [1, 1, 1, 1, 8, 8],
+        'composite_C': [1, 1, 2, 4, 8, 4],
+        'composite_D': [1, 1, 4, 8, 4, 8, 4, 8],
     }
 
     def __init__(self, num_positions, embedding):

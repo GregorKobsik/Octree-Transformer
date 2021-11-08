@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
 
-from .basic_embedding_A import BasicEmbeddingA
-from .convolution_embedding_A import ConvolutionEmbeddingA
+from .basic_embedding import BasicEmbedding
+from .convolution_embedding import ConvolutionEmbedding
 from .double_substitution_embedding import DoubleSubstitutionEmbedding
 from .substitution_embedding import SubstitutionEmbedding
 
@@ -34,21 +34,21 @@ class CompositeEmbeddingA(nn.Module):
 
         modules = []
         if resolution >= 2:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 4:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 8:
-            modules += [BasicEmbeddingA(**kwargs)]
+            modules += [BasicEmbedding(**kwargs)]
         if resolution >= 16:
-            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=2 ** (spatial_dim - 1))]
+            modules += [ConvolutionEmbedding(**kwargs, conv_size=4)]
         if resolution >= 32:
-            modules += [ConvolutionEmbeddingA(**kwargs, conv_size=2 ** spatial_dim)]
+            modules += [ConvolutionEmbedding(**kwargs, conv_size=8)]
         if resolution >= 64:
-            modules += [SubstitutionEmbedding(**kwargs, conv_size=2 ** spatial_dim)]
+            modules += [SubstitutionEmbedding(**kwargs, conv_size=8)]
         if resolution >= 128:
-            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=2 ** spatial_dim)]
+            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=8)]
         if resolution >= 256:
-            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=2 ** spatial_dim)]
+            modules += [DoubleSubstitutionEmbedding(**kwargs, conv_size=8)]
 
         # embeddings
         self.embedding = encoding

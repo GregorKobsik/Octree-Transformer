@@ -8,7 +8,7 @@ from .linear_head import LinearHead
 from .substitution_head import SubstitutionHead
 
 
-class CompositeHeadA(nn.Module):
+class CompositeHeadD(nn.Module):
     def __init__(self, spatial_encoding, num_vocab, embed_dim, head_dim, n_layer, resolution, **_):
         """ Performs a transformation from transformer latent space into target value logits.
 
@@ -22,7 +22,7 @@ class CompositeHeadA(nn.Module):
             n_layer: Number of layers used in each linear or convolution block.
             resolution: Spatial resolution of sequence encoding.
         """
-        super(CompositeHeadA, self).__init__()
+        super(CompositeHeadD, self).__init__()
 
         kwargs = {
             "spatial_encoding": spatial_encoding,
@@ -38,15 +38,15 @@ class CompositeHeadA(nn.Module):
         if resolution >= 4:
             modules += [LinearHead(**kwargs)]
         if resolution >= 8:
-            modules += [LinearHead(**kwargs)]
-        if resolution >= 16:
             modules += [ConvolutionHead(**kwargs, conv_size=4)]
-        if resolution >= 32:
+        if resolution >= 16:
             modules += [ConvolutionHead(**kwargs, conv_size=8)]
+        if resolution >= 32:
+            modules += [SubstitutionHead(**kwargs, conv_size=4)]
         if resolution >= 64:
             modules += [SubstitutionHead(**kwargs, conv_size=8)]
         if resolution >= 128:
-            modules += [DoubleSubstitutionHead(**kwargs, conv_size=8)]
+            modules += [DoubleSubstitutionHead(**kwargs, conv_size=4)]
         if resolution >= 256:
             modules += [DoubleSubstitutionHead(**kwargs, conv_size=8)]
 
@@ -56,15 +56,15 @@ class CompositeHeadA(nn.Module):
         self.reduction_factor = {
             1: 1,
             2: 1,
-            3: 1,
-            4: 4,
-            5: 8,
+            3: 4,
+            4: 8,
+            5: 4,  # Note: 'substitution'
             6: 8,  # Note: 'substitution'
-            7: 8,  # Note: 'double_substitution'
+            7: 4,  # Note: 'double_substitution'
             8: 8,  # Note: 'double_substitution'
         }
 
-    def forward(self, x, value, depth, position, last_only=False):
+    def forward(self, x, value, depth, position):
         """ Transforms the output of the transformer target value logits.
 
         Args:
@@ -72,7 +72,6 @@ class CompositeHeadA(nn.Module):
             value: Target value token sequence [N, T].
             depth: Target depth token sequence [N, T].
             position: Target position token sequence [N, T, A].
-            last_only: Flag to switch processing, to decode only last depth layer.
 
         Return
             Logits of target value sequence.
@@ -88,27 +87,24 @@ class CompositeHeadA(nn.Module):
             # compute logits layerwise
             for layer_idx, head in enumerate(self.heads):
                 layer_depth = layer_idx + 1
-
-                if last_only and layer_depth != batch_depth:
-                    continue  # process only last depth layer
                 if layer_depth > batch_depth:
                     break  # reached max depth layer
 
-                if layer_depth < 6:
+                if layer_depth < 5:
                     # get value, depth and position sequence of current layer
                     layer_val = val[dep == layer_depth]
                     layer_dep = dep[dep == layer_depth]
                     layer_pos = pos[dep == layer_depth]
                     # compute number of vectors in latent vector of current layer
                     num_vectors = torch.sum(dep == layer_depth) // self.reduction_factor[layer_depth]
-                elif layer_depth == 6:  # handle substitution
+                elif layer_depth in (5, 6):  # handle substitution
                     # get value, depth and position sequence of previous and current layer
                     layer_val = torch.cat([val[dep == (layer_depth - 1)], val[dep == layer_depth]])
                     layer_dep = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
                     layer_pos = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
                     # compute number of vectors in latent vector of current layer
                     num_vectors = torch.sum(dep == (layer_depth - 1)) // self.reduction_factor[layer_depth]
-                elif layer_depth in (7, 8):  # handle substitution
+                elif layer_depth in (7, 8):  # handle double substitution
                     # get value, depth and position sequence of previous and current layer
                     layer_val = torch.cat(
                         [
@@ -136,6 +132,10 @@ class CompositeHeadA(nn.Module):
 
                 # filter latent vector of current layer
                 layer_vec = latent_vec[vector_idx:vector_idx + num_vectors]
+
+                # handle clipped values in transformer
+                if len(layer_vec) == 0:
+                    continue
 
                 # compute layer logits
                 layer_logits = head(
