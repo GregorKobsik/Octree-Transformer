@@ -22,6 +22,12 @@ def _create_recurrent_token_generator(head, model, spatial_dim):
 
     if head in ('composite_A'):
         return RecurrentCompositeGenerator(num_tokens=[1, 1, 1, 4, 8, 8, 8, 8], **kwargs)
+    if head in ('composite_B'):
+        return RecurrentCompositeGenerator(num_tokens=[1, 1, 1, 1, 8, 8], **kwargs)
+    if head in ('composite_C'):
+        return RecurrentCompositeGenerator(num_tokens=[1, 1, 2, 4, 8, 4], **kwargs)
+    if head in ('composite_D'):
+        return RecurrentCompositeGenerator(num_tokens=[1, 1, 4, 8, 4, 8, 4, 8], **kwargs)
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 
