@@ -2,6 +2,7 @@ import torch
 
 from .recurrent_basic_generator import RecurrentBasicGenerator
 from .recurrent_substitution_generator import RecurrentSubstitutionGenerator
+from .recurrent_double_substitution_generator import RecurrentDoubleSubstitutionGenerator
 
 
 class RecurrentCompositeGenerator:
@@ -45,7 +46,7 @@ class RecurrentCompositeGenerator:
             generator = RecurrentBasicGenerator(num_tokens=num_tokens, **self.model_fn)
         elif cur_depth == 6:  # 'substitution'
             generator = RecurrentSubstitutionGenerator(num_tokens=num_tokens, **self.model_fn)
-        # else:  # 'double_substitution'
-        #     generator = RecurrentDoubleSubstitutionGenerator(num_tokens=num_tokens, **self.model_fn)
+        else:  # 'double_substitution'
+            generator = RecurrentDoubleSubstitutionGenerator(num_tokens=num_tokens, **self.model_fn)
         # sample a single layer
         return generator(val, dep, pos, memory, state, temperature, cls=cls)

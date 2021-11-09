@@ -102,7 +102,7 @@ class DoubleSubstitutionHead(nn.Module):
         # add spatial decoding if available
         if self.spatial_encoding is not None:
             emb_0 = emb_0 + self.spatial_encoding(pos[:, -len_0:])
-        emb_0 = self.convolution_0(emb_0)
+        emb_0 = self.convolution_0(emb_0[:, :mix_1 * 8])
 
         emb_1 = torch.zeros((batch_size, torch.max(len_1), self.head_dim), dtype=torch.float, device=value.device)
         # substitute all mixed token embeddings of penultimate layer, with token embeddings of last layer
@@ -142,7 +142,7 @@ class DoubleSubstitutionHead(nn.Module):
         if self.spatial_encoding is not None:
             len_last = torch.sum(depth == max_depth, dim=1)
             assert ((depth[:, -len_last:] == max_depth).all())
-            y_0 = y_0 + self.spatial_encoding(pos[:, -len_last:])
+            y_0 = y_0 + self.spatial_encoding(pos[:, -len_last:])[:, :mix_1 * 8]
 
         # compute logits of generated tokens
         return self.linear(y_0)  # [N, T, V]
