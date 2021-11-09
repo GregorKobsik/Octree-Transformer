@@ -77,7 +77,4 @@ class EncoderOnlySampler:
                 dep += [next_dep]
                 pos += [next_pos]
 
-                if len(next_val) != len(next_dep):
-                    break  # reached maximum number of tokens which can be generated
-
         return postprocess(val, target_resolution, self.spatial_dim)
