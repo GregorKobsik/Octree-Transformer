@@ -61,6 +61,7 @@ if __name__ == "__main__":
     # TESTING
     parser_test = subparsers.add_parser("test")
     parser_test.set_defaults(func=test)
+    parser_test.add_argument("checkpoint_path", type=str)
 
     # SAMPLING
     parser_sample = subparsers.add_parser("sample")

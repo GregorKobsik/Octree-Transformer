@@ -55,7 +55,7 @@ if __name__ == "__main__":
     num_objs = len(glob(path + '*.obj'))
 
     if args.class_label is not None:
-        cls_label = torch.tensor([args.cls_label], device="cuda")
+        cls_label = torch.tensor([args.cls_label], device="cpu")
     else:
         cls_label = None
 

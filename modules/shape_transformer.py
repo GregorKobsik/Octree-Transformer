@@ -183,6 +183,18 @@ class ShapeTransformer(pl.LightningModule):
 
         return loss
 
+    def test_step(self, batch, batch_idx):
+        """ Perform one test step with the given batch and log the loss as well the allocated memory. """
+
+        sequence, target, cls = batch
+
+        logits = self.forward(sequence, cls)
+        loss = self.loss_function(logits, target).mean()
+
+        self.log('loss', loss, on_epoch=True)
+
+        return loss
+
     def compute_and_log_loss(self, logits, target, loss_fx, prefix="", log_per_layer=False):
         """ Compute mean loss and per layer loss and log it. Return mean loss. """
         tgt_val, tgt_dep, tgt_pos = target
