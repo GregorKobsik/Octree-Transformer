@@ -57,7 +57,7 @@ class CompositeHeadB(nn.Module):
             6: 8,  # Note: 'substitution'
         }
 
-    def forward(self, x, value, depth, position):
+    def forward(self, x, value, depth, position, last_only=False):
         """ Transforms the output of the transformer target value logits.
 
         Args:
@@ -65,6 +65,7 @@ class CompositeHeadB(nn.Module):
             value: Target value token sequence [N, T].
             depth: Target depth token sequence [N, T].
             position: Target position token sequence [N, T, A].
+            last_only: Flag to switch processing, to decode only last depth layer.
 
         Return
             Logits of target value sequence.
@@ -80,6 +81,9 @@ class CompositeHeadB(nn.Module):
             # compute logits layerwise
             for layer_idx, head in enumerate(self.heads):
                 layer_depth = layer_idx + 1
+
+                if last_only and layer_depth != batch_depth:
+                    continue  # process only last depth layer
                 if layer_depth > batch_depth:
                     break  # reached max depth layer
 
@@ -125,10 +129,6 @@ class CompositeHeadB(nn.Module):
 
                 # filter latent vector of current layer
                 layer_vec = latent_vec[vector_idx:vector_idx + num_vectors]
-
-                # handle clipped values in transformer
-                if len(layer_vec) == 0:
-                    continue
 
                 # compute layer logits
                 layer_logits = head(
