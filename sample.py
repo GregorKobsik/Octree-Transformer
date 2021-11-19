@@ -2,6 +2,7 @@ import os
 from argparse import ArgumentParser
 from glob import glob
 
+import numpy as np
 import torch
 from skimage import measure
 from tqdm.auto import tqdm
@@ -12,6 +13,7 @@ from sample import ShapeSampler
 def save_obj(sample, path="", file_name="chair_mesh"):
     """ Use marching cubes to obtain the surface mesh and save it to an *.obj file """
     # convert volume to mesh
+    sample = np.pad(sample, ((1, 1), (1, 1), (1, 1)))
     verts, faces, normals, values = measure.marching_cubes(sample, 0)
     # scale to normalized cube [-1.0, 1.0]^3
     verts /= sample.shape
@@ -46,7 +48,7 @@ if __name__ == "__main__":
 
     # load model
     checkpoint = os.path.join(args.logdir, 'checkpoints/last.ckpt')
-    sampler = ShapeSampler(checkpoint_path=checkpoint, device="cuda")
+    sampler = ShapeSampler(checkpoint_path=checkpoint, device="cpu")
 
     # create path & check number of existing shapes
     path = os.path.normpath(args.outdir)
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     num_objs = len(glob(path + '*.obj'))
 
     if args.class_label is not None:
-        cls_label = torch.tensor([args.cls_label], device="cpu")
+        cls_label = torch.tensor([args.class_label], device="cpu")
     else:
         cls_label = None
 
