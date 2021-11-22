@@ -65,6 +65,7 @@ class CompositeHeadC(nn.Module):
             value: Target value token sequence [N, T].
             depth: Target depth token sequence [N, T].
             position: Target position token sequence [N, T, A].
+            last_only: Flag to switch processing, to decode only last depth layer.
 
         Return
             Logits of target value sequence.
@@ -100,7 +101,7 @@ class CompositeHeadC(nn.Module):
                     layer_pos = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
                     # compute number of vectors in latent vector of current layer
                     num_vectors = torch.sum(dep == (layer_depth - 1)) // self.reduction_factor[layer_depth]
-                elif layer_depth in (7,8):  # handle double substitution
+                elif layer_depth in (7, 8):  # handle double substitution
                     # get value, depth and position sequence of previous and current layer
                     layer_val = torch.cat(
                         [
@@ -128,10 +129,6 @@ class CompositeHeadC(nn.Module):
 
                 # filter latent vector of current layer
                 layer_vec = latent_vec[vector_idx:vector_idx + num_vectors]
-
-                # handle clipped values in transformer
-                if len(layer_vec) == 0:
-                    continue
 
                 # compute layer logits
                 layer_logits = head(

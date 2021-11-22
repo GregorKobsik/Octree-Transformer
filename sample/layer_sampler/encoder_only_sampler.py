@@ -77,4 +77,7 @@ class EncoderOnlySampler:
                 dep += [next_dep]
                 pos += [next_pos]
 
+                if torch.sum(next_val == 2) == 0:
+                    break  # early-out, no mixed tokens sampled
+
         return postprocess(val, target_resolution, self.spatial_dim)

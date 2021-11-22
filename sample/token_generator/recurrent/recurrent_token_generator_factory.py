@@ -1,4 +1,5 @@
 from .recurrent_composite_generator import RecurrentCompositeGenerator
+from .recurrent_composite_generator_D import RecurrentCompositeGeneratorD
 
 
 def _create_recurrent_token_generator(head, model, spatial_dim):
@@ -27,7 +28,7 @@ def _create_recurrent_token_generator(head, model, spatial_dim):
     if head in ('composite_C'):
         return RecurrentCompositeGenerator(num_tokens=[1, 1, 2, 4, 8, 4], **kwargs)
     if head in ('composite_D'):
-        return RecurrentCompositeGenerator(num_tokens=[1, 1, 4, 8, 4, 8, 4, 8], **kwargs)
+        return RecurrentCompositeGeneratorD(num_tokens=[1, 1, 4, 8, 4, 8, 4, 8], **kwargs)
     raise ValueError(f"ERROR: {head} token generator not implemented.")
 
 

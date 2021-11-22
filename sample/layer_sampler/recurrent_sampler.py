@@ -89,5 +89,8 @@ class RecurrentSampler:
                 dep += [next_dep]
                 pos += [next_pos]
 
+                if torch.sum(next_val == 2) == 0:
+                    break  # early-out, no mixed tokens sampled
+
         # transform the sampled octree sequence back into a regular-grid voxel array and return
         return postprocess(val, target_resolution, self.spatial_dim)

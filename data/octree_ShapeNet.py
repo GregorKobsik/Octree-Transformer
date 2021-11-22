@@ -162,12 +162,12 @@ class OctreeShapeNet(Dataset):
         """ Returns a single sample from the dataset. """
         voxels = load_hsp(self.data_paths[index], self.resolution)
         if self.transform is None:
-            return voxels + (self.cls_ids[index], )
+            return (voxels, self.cls_ids[index])
 
         # iterate n times to find a valid output with data augmentation
         for _ in range(100):
             for _ in range(10):
-                # perform data augmentation with transforms is one is given
+                # perform data augmentation with transform
                 output = self.transform(voxels)
 
                 # return only a valid output
@@ -175,7 +175,8 @@ class OctreeShapeNet(Dataset):
                     return output + (self.cls_ids[index], )
 
             # after a few failed iterations get a new random sample and retry data augmentation
-            voxels = load_hsp(random.choice(self.data_paths), self.resolution)
+            index = random.randrange(len(self.data_paths))
+            voxels = load_hsp(self.data_paths[index], self.resolution)
 
         raise ValueError("Data loader could not create a valid sample within the token limit.")
 
