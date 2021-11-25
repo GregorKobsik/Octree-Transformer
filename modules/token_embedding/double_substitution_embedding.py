@@ -111,7 +111,20 @@ class DoubleSubstitutionEmbedding(nn.Module):
         x_2[val_2 == 2] = y_1[val_1[:, ::8] != 0]  # [N, S_2, E // 2]
 
         # convolute substituted tokens of second-last layer
-        return self.convolution_2(x_2.contiguous())  # [N, S'_2, E]
+        x_out = self.convolution_2(x_2.contiguous())  # [N, S'_2, E]
+
+        # filter out all tokens, that do not have any descendants in last layer
+        mask_1 = (val_1.view(batch_size, -1, 8) == 2).max(dim=-1)[0]
+        mask_2 = torch.zeros_like(val_2, dtype=torch.bool)
+        mask_2[val_2 == 2] = mask_1
+        mask_2 = mask_2.view(batch_size, -1, self.conv_size).max(dim=-1)[0]
+        len_out = torch.max(torch.sum(mask_2, dim=-1)).item()
+
+        x_masked = torch.zeros(batch_size, len_out, embedding.shape[2], dtype=torch.float, device=value.device)
+        for i in range(batch_size):
+            x_masked[i] = x_out[i, mask_2[i].nonzero().squeeze(-1)]
+
+        return x_masked
 
     def forward(self, value, depth, position):
         """ Transform sequences into embedding space for the encoder.

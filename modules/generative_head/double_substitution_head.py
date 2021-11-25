@@ -20,6 +20,7 @@ class DoubleSubstitutionHead(nn.Module):
         """
         super(DoubleSubstitutionHead, self).__init__()
         self.head_dim = head_dim
+        self.conv_size = conv_size
 
         deconvolution_2 = [nn.GELU(), Deconvolution(embed_dim, head_dim, conv_size)]
         for i in range(n_layer - 1):
@@ -113,6 +114,14 @@ class DoubleSubstitutionHead(nn.Module):
         emb_2 = torch.zeros((batch_size, torch.max(len_2), self.head_dim), dtype=torch.float, device=value.device)
         # substitute all mixed token embeddings of third to last layer, with token embeddings of penultimate layer
         emb_2[val_2 == 2] = self.down_convolution_1(emb_1)  # [N, T1, C]
+
+        # filter out all tokens, that do not have any descendants in last layer
+        mask_1 = (val_1.view(batch_size, -1, 8) == 2).max(dim=-1)[0]
+        mask_2 = torch.zeros_like(val_2, dtype=torch.bool)
+        mask_2[val_2 == 2] = mask_1
+        mask_2 = mask_2.view(batch_size, -1, self.conv_size).max(dim=-1)[0]
+        emb_2 = emb_2.view(batch_size, -1, self.conv_size, self.head_dim)[mask_2].view(batch_size, -1, self.head_dim)
+        val_2 = val_2.view(batch_size, -1, self.conv_size)[mask_2].view(batch_size, -1)
 
         emb_0 = self.convolution_0(emb_0[:, :mix_1 * 8])
         emb_1 = self.convolution_1(emb_1)
