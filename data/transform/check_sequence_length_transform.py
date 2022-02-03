@@ -1,3 +1,6 @@
+import torch
+
+
 class CheckSequenceLenghtTransform():
 
     # TODO: make this maps actually properties of the embedding class or decouple them from this module
@@ -66,7 +69,24 @@ class CheckSequenceLenghtTransform():
             conv_fac = self.convolution_factor[i]
             dep_level = i + 1 - sub_diff
 
-            sum_sequence_length += len(dep[dep == dep_level]) // conv_fac
+            if sub_diff == 0:
+                num_vectors = torch.sum(torch.from_numpy(dep) == dep_level) // conv_fac
+            elif sub_diff == 1:
+                val_1 = torch.from_numpy(val)[torch.from_numpy(dep) == (dep_level - 1)]
+                num_vectors = (val_1.view(-1, conv_fac) == 2).max(dim=-1)[0].sum()
+            elif sub_diff == 2:
+                val_1 = torch.from_numpy(val)[torch.from_numpy(dep) == (dep_level - 1)]
+                val_2 = torch.from_numpy(val)[torch.from_numpy(dep) == (dep_level - 2)]
+                mask_1 = (val_1.view(-1, 8) == 2).max(dim=-1)[0]
+                mask_2 = torch.zeros_like(val_2, dtype=torch.bool)
+                mask_2[val_2 == 2] = mask_1
+                mask_2 = mask_2.view(-1, conv_fac).max(dim=-1)[0]
+                num_vectors = mask_2.sum()
+            else:
+                print("ERROR: substitution factors bigger than 2 are not implemented")
+                return None
+
+            sum_sequence_length += num_vectors
 
         if sum_sequence_length > self.num_positions:
             return None

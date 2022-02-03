@@ -97,9 +97,6 @@ class DoubleSubstitutionEmbedding(nn.Module):
             dep_0[i, :len_0[i]] = depth[i, len_2[i] + len_1[i]:len_2[i] + len_1[i] + len_0[i]]
             pos_0[i, :len_0[i]] = position[i, len_2[i] + len_1[i]:len_2[i] + len_1[i] + len_0[i]]
 
-        # precompute padding mask
-        self.mask = padding_mask(val_2[:, ::self.conv_size], device=value.device)  # [N, S'_2, E]
-
         # convolute embedded tokens of last layer
         y_0 = self.convolution_0(x_0)  # [N, S'_0, E // 4]
         # substitite all mixed token embeddings of second-last layer, with token embeddings of last layer
@@ -121,8 +118,13 @@ class DoubleSubstitutionEmbedding(nn.Module):
         len_out = torch.max(torch.sum(mask_2, dim=-1)).item()
 
         x_masked = torch.zeros(batch_size, len_out, embedding.shape[2], dtype=torch.float, device=value.device)
+        val_masked = torch.zeros((batch_size, len_out), dtype=torch.long, device=value.device)
         for i in range(batch_size):
             x_masked[i] = x_out[i, mask_2[i].nonzero().squeeze(-1)]
+            val_masked[i] = val_2[:, ::self.conv_size][i, mask_2[i].nonzero().squeeze(-1)]
+
+        # precompute padding mask
+        self.mask = padding_mask(val_masked, device=value.device)  # [N, S'_2, E]
 
         return x_masked
 
