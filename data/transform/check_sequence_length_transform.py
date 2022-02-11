@@ -67,7 +67,7 @@ class CheckSequenceLenghtTransform():
         for i in range(min(len(self.substitution_level), max_depth)):
             sub_diff = self.substitution_level[i]
             conv_fac = self.convolution_factor[i]
-            dep_level = i + 1 - sub_diff
+            dep_level = i + 1
 
             if sub_diff == 0:
                 num_vectors = torch.sum(torch.from_numpy(dep) == dep_level) // conv_fac
