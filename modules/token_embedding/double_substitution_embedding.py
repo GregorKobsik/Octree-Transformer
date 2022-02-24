@@ -97,6 +97,9 @@ class DoubleSubstitutionEmbedding(nn.Module):
             dep_0[i, :len_0[i]] = depth[i, len_2[i] + len_1[i]:len_2[i] + len_1[i] + len_0[i]]
             pos_0[i, :len_0[i]] = position[i, len_2[i] + len_1[i]:len_2[i] + len_1[i] + len_0[i]]
 
+        # precompute padding mask
+        self.mask = padding_mask(val_2[:, ::self.conv_size], device=value.device)  # [N, S'_2, E]
+
         # convolute embedded tokens of last layer
         y_0 = self.convolution_0(x_0)  # [N, S'_0, E // 4]
         # substitite all mixed token embeddings of second-last layer, with token embeddings of last layer
@@ -108,25 +111,7 @@ class DoubleSubstitutionEmbedding(nn.Module):
         x_2[val_2 == 2] = y_1[val_1[:, ::8] != 0]  # [N, S_2, E // 2]
 
         # convolute substituted tokens of second-last layer
-        x_out = self.convolution_2(x_2.contiguous())  # [N, S'_2, E]
-
-        # filter out all tokens, that do not have any descendants in last layer
-        mask_1 = (val_1.view(batch_size, -1, 8) == 2).max(dim=-1)[0]
-        mask_2 = torch.zeros_like(val_2, dtype=torch.bool)
-        mask_2[val_2 == 2] = mask_1
-        mask_2 = mask_2.view(batch_size, -1, self.conv_size).max(dim=-1)[0]
-        len_out = torch.max(torch.sum(mask_2, dim=-1)).item()
-
-        x_masked = torch.zeros(batch_size, len_out, embedding.shape[2], dtype=torch.float, device=value.device)
-        val_masked = torch.zeros((batch_size, len_out), dtype=torch.long, device=value.device)
-        for i in range(batch_size):
-            x_masked[i] = x_out[i, mask_2[i].nonzero().squeeze(-1)]
-            val_masked[i] = val_2[:, ::self.conv_size][i, mask_2[i].nonzero().squeeze(-1)]
-
-        # precompute padding mask
-        self.mask = padding_mask(val_masked, device=value.device)  # [N, S'_2, E]
-
-        return x_masked
+        return self.convolution_2(x_2.contiguous())  # [N, S'_2, E]
 
     def forward(self, value, depth, position):
         """ Transform sequences into embedding space for the encoder.
