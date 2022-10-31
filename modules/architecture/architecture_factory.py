@@ -1,6 +1,7 @@
 from .autoencoder import Autoencoder
 from .transformer import Transformer
 from .pytorch_transformer import PytorchTransformer
+from .sliding_window_tranformer import SlidingWindowTransformer
 
 
 def create_architecture(
@@ -58,6 +59,8 @@ def create_architecture(
         return Transformer(**kwargs, num_decoders=len(token_embedding) - 1)
     elif architecture == "pytorch":
         return PytorchTransformer(**kwargs)
+    elif architecture == "sliding-window":
+        return SlidingWindowTransformer(**kwargs)
     elif architecture == "fast":
         # include `pytorch-fast-transformers` as an optional module
         from .fast_transformer import FastTransformer
