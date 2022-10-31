@@ -37,7 +37,7 @@ def create_sampler(
 
     if architecture == "autoencoder":
         return AutoencoderSampler(**kwargs)
-    elif architecture in ("encoder_only", "fast", "pytorch"):
+    elif architecture in ("encoder_only", "fast", "pytorch", "sliding-window"):
         return EncoderOnlySampler(**kwargs)
     elif architecture in ("fast-recurrent"):
         return RecurrentSampler(**kwargs)
