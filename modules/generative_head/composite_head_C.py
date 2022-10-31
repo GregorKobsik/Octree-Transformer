@@ -100,10 +100,7 @@ class CompositeHeadC(nn.Module):
                     layer_dep = torch.cat([dep[dep == (layer_depth - 1)], dep[dep == layer_depth]])
                     layer_pos = torch.cat([pos[dep == (layer_depth - 1)], pos[dep == layer_depth]])
                     # compute number of vectors in latent vector of current layer
-                    val_1 = val[dep == (layer_depth - 1)]
-                    num_vectors = (val_1.view(-1, self.reduction_factor[layer_depth]) == 2).max(dim=-1)[0].sum()
-
-                    # num_vectors = torch.sum(dep == (layer_depth - 1)) // self.reduction_factor[layer_depth]
+                    num_vectors = torch.sum(dep == (layer_depth - 1)) // self.reduction_factor[layer_depth]
                 elif layer_depth in (7, 8):  # handle double substitution
                     # get value, depth and position sequence of previous and current layer
                     layer_val = torch.cat(
@@ -127,15 +124,8 @@ class CompositeHeadC(nn.Module):
                             pos[dep == layer_depth],
                         ]
                     )
-                    val_1 = val[dep == (layer_depth - 1)]
-                    val_2 = val[dep == (layer_depth - 2)]
-                    mask_1 = (val_1.view(-1, 8) == 2).max(dim=-1)[0]
-                    mask_2 = torch.zeros_like(val_2, dtype=torch.bool)
-                    mask_2[val_2 == 2] = mask_1
-                    num_vectors = mask_2.view(-1, self.reduction_factor[layer_depth]).max(dim=-1)[0].sum()
-
                     # compute number of vectors in latent vector of current layer
-                    # num_vectors = torch.sum(dep == (layer_depth - 2)) // self.reduction_factor[layer_depth]
+                    num_vectors = torch.sum(dep == (layer_depth - 2)) // self.reduction_factor[layer_depth]
 
                 # filter latent vector of current layer
                 layer_vec = latent_vec[vector_idx:vector_idx + num_vectors]

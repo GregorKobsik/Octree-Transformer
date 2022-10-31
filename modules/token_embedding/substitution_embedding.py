@@ -82,6 +82,8 @@ class SubstitutionEmbedding(nn.Module):
             dep_0[i, :len_0[i]] = depth[i, len_1[i]:len_1[i] + len_0[i]]
             pos_0[i, :len_0[i]] = position[i, len_1[i]:len_1[i] + len_0[i]]
 
+        # precompute padding mask
+        self.mask = padding_mask(val_1[:, ::self.conv_size], device=value.device)
 
         # convolve embedded tokens of last layer
         y_0 = self.convolution_0(x_0)  # [N, T2', C]
@@ -90,22 +92,7 @@ class SubstitutionEmbedding(nn.Module):
         x_1[val_1 == 2] = y_0[val_0[:, ::8] != 0]  # [N, T1, C]
 
         # convolve substituted tokens of penultimate layer
-        x_out = self.convolution_1(x_1.contiguous())  # [N, T1', E]
-
-        # filter out all tokens, that do not have any descendants in last layer
-        mask = (val_1.view(batch_size, -1, self.conv_size) == 2).max(dim=-1)[0]
-        len_out = torch.max(torch.sum(mask, dim=-1)).item()
-
-        x_masked = torch.zeros(batch_size, len_out, embedding.shape[2], dtype=torch.float, device=value.device)
-        val_masked = torch.zeros((batch_size, len_out), dtype=torch.long, device=value.device)
-        for i in range(batch_size):
-            x_masked[i] = x_out[i, mask[i].nonzero().squeeze(-1)]
-            val_masked[i] = val_1[i, ::self.conv_size][mask[i].nonzero().squeeze(-1)]
-
-        # precompute padding mask
-        self.mask = padding_mask(val_masked, device=value.device)
-
-        return x_masked
+        return self.convolution_1(x_1.contiguous())  # [N, T1', E]
 
     def forward(self, value, depth, position):
         """ Transform sequences into embedding space for the encoder.
