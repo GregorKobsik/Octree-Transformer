@@ -62,13 +62,13 @@ def create_architecture(
         return Transformer(**kwargs, num_decoders=len(token_embedding) - 1)
     elif architecture == "pytorch":
         return PytorchTransformer(**kwargs)
-    elif architecture == "sliding-window":
+    elif architecture == "sliding_window":
         return SlidingWindowTransformer(**kwargs)
     elif architecture == "fast":
         # include `pytorch-fast-transformers` as an optional module
         from .fast_transformer import FastTransformer
         return FastTransformer(**kwargs)
-    elif architecture == "fast-recurrent":
+    elif architecture in ("fast-recurrent", "fast_recurrent"):
         # include `pytorch-fast-transformers` as an optional module
         from .fast_recurrent_transformer import FastRecurrentTransformer
         return FastRecurrentTransformer(**kwargs)

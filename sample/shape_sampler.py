@@ -20,7 +20,7 @@ class ShapeSampler:
         pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path)
         if fast_recurrent is True and pl_module.hparams['architecture'] == 'fast':
             print("Reload model as a recurrent implementation for a major improvement of inference time.")
-            pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path, architecture='fast-recurrent')
+            pl_module = ShapeTransformer.load_from_checkpoint(checkpoint_path, architecture='fast_recurrent')
         pl_module.freeze()
 
         # extract hyperparameters from the model

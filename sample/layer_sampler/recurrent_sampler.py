@@ -13,7 +13,7 @@ from ..token_generator.recurrent import create_recurrent_token_generator
 
 class RecurrentSampler:
     def __init__(self, model, head, spatial_dim, max_resolution, position_encoding, device, **_):
-        """ Provides a basic implementation of the sampler for the 'fast-recurrent-transformer' architecture.
+        """ Provides a basic implementation of the sampler for the 'fast_recurrent-transformer' architecture.
 
         Args:
             model: Model which is used for sampling.
