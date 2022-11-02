@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser_train.add_argument("--num_layers", type=int, default=None)
     parser_train.add_argument("--num_heads", type=int, default=None)
     parser_train.add_argument("--dropout", type=float, default=None)
+    parser_train.add_argument("--window-size", type=int, default=None)
     # training
     parser_train.add_argument("--pretrained", type=str, default=None)
     parser_train.add_argument("--loss_function", type=str, default=None)

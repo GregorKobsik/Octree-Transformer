@@ -12,6 +12,7 @@ def create_architecture(
     embed_dim,
     num_heads,
     num_layers,
+    window_size,
     dropout,
     num_classes,
 ):
@@ -27,6 +28,7 @@ def create_architecture(
         embed_dim: Size of embedding dimensions used by the transformer model.
         num_heads: Number of heads used by the attention.
         num_layers: Number of layers for each of 'decoder' and 'encoder' part in the transformer.
+        window_size: Windows size for sliding window attention.
         dropout: The dropout value.
         num_classes: If bigger, that one the transformer will be class conditional
 
@@ -41,6 +43,7 @@ def create_architecture(
         'num_heads': num_heads,
         'num_layers': num_layers,
         'dropout': dropout,
+        'window_size': window_size,
         'num_classes': num_classes
     }
 

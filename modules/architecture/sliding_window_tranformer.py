@@ -44,7 +44,15 @@ class SlidingWindowTransformer(PytorchTransformer):
             dropout: The dropout value.
             num_classes: If bigger than one, the transformer will be class conditional
         """
-        super(SlidingWindowTransformer, self).__init__()
+        super(SlidingWindowTransformer, self).__init__(
+            embed_dim,
+            num_heads,
+            num_layers,
+            token_embedding,
+            generative_head,
+            dropout,
+            num_classes,
+        )
 
         self.embed_dim = embed_dim  # E
 
@@ -92,6 +100,7 @@ class SlidingWindowEncoderLayer(nn.TransformerEncoderLayer):
             dropout=dropout,
             activation=activation,
         )
+        self.window_size = window_size
         self.self_attn = LocalAttention(
             dim=d_model,
             window_size=window_size,
@@ -99,5 +108,29 @@ class SlidingWindowEncoderLayer(nn.TransformerEncoderLayer):
             look_backward=1,
             look_forward=0,
             dropout=dropout,
-            exact_windowsize=False,
+            exact_windowsize=True,
         )
+
+    def forward(self, src, src_mask, src_key_padding_mask=None):
+        r"""Pass the input through the encoder layer.
+
+        Args:
+            src: the sequence to the encoder layer (required).
+            src_mask: the mask for the src sequence (unused).
+            src_key_padding_mask: the mask for the src keys per batch (unused).
+
+        Shape:
+            see the docs in Transformer class.
+        """
+        src = src.transpose(0, 1)
+        b, t, e = src.shape
+        reminder = (self.window_size - t % self.window_size) % self.window_size
+        src = torch.cat([src, torch.zeros(b, reminder, e, device=src.device)], dim=1)
+
+        src2 = self.self_attn(src, src, src, input_mask=None)
+        src = src + self.dropout1(src2)
+        src = self.norm1(src)
+        src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
+        src = src + self.dropout2(src2)
+        src = self.norm2(src)
+        return src.transpose(0, 1)[:t]

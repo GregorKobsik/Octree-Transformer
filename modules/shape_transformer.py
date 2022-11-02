@@ -28,6 +28,7 @@ class ShapeTransformer(pl.LightningModule):
             sequences can be accepted by a non-basic embedding and possibly compressed to stay within the limit.
         num_vocab: Number of different vocabs in the vocabulary set.
         resolution: Maximum side length of input data.
+        window_size: Window size for the sliding window transformer
         spatial_dim: Spatial dimensionality of input data.
         learning_rate: Maximum learning rate used durring the training process.
         dropout: The dropout rate.
@@ -54,6 +55,7 @@ class ShapeTransformer(pl.LightningModule):
         num_vocab=16,
         resolution=32,
         spatial_dim=2,
+        window_size=None,
         learning_rate=3e-3,
         dropout=0.1,
         warmup_steps=500,
@@ -104,8 +106,9 @@ class ShapeTransformer(pl.LightningModule):
             embed_dim=embed_dim,
             num_heads=num_heads,
             num_layers=num_layers,
+            window_size=window_size,
             dropout=dropout,
-            num_classes=num_classes
+            num_classes=num_classes,
         )
 
         # training loss function
