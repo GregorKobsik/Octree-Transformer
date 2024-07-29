@@ -46,24 +46,20 @@ To create samples based on given context, run
 python sample_conditional.py <path to model folder>
 ```
 
-## ToDo's
+## Tutorial
 
- - [x] upload code
- - [x] create readme
- - [ ] add license
- - [ ] upload pretrained weights
- - [ ] create hands-on tutorial
+For a quick hands on tutorials follow this [link](https://github.com/lukasVierling/OctreeTransformer-tutorial).
 
 ## Citation
 
 If you find our work useful, please cite our paper:
 ```
-@misc{ibing2021octree,
-      title={Octree Transformer: Autoregressive 3D Shape Generation on Hierarchically Structured Sequences}, 
-      author={Moritz Ibing and Gregor Kobsik and Leif Kobbelt},
-      year={2021},
-      eprint={2111.12480},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+@InProceedings{Ibing_2023_CVPR,
+    author    = {Ibing, Moritz and Kobsik, Gregor and Kobbelt, Leif},
+    title     = {Octree Transformer: Autoregressive 3D Shape Generation on Hierarchically Structured Sequences},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+    month     = {June},
+    year      = {2023},
+    pages     = {2698-2707}
 }
 ```
